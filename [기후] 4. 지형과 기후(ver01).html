@@ -1,0 +1,1574 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지형과 기후 (ver01)</title>
+<style>.ds-page{margin:0}</style>
+</head>
+<body class="ds-page" style="margin:0">
+<div class="ds-terrain-clim">
+<style>
+.ds-terrain-clim{
+  --bg:#f4f3ee; --panel:#f7f7f4; --card:#fff; --ink:#1d2126; --ink2:#5b636d; --line:#e2e0d9;
+  --accent:#1f6feb; --accent-soft:#e7efff;
+  --hot:#d9480f; --hot-soft:#fff1e8; --mild:#1971c2; --mild-soft:#e9f2fc;
+  --wet:#2f9e44; --dry:#c2410c;
+  box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 320px;
+  height:100vh; min-height:560px; background:var(--bg); color:var(--ink);
+  font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  font-size:15px; line-height:1.5; position:relative; overflow:hidden;
+}
+.ds-terrain-clim.tc-pos-left{grid-template-columns:320px minmax(0,1fr)}
+.ds-terrain-clim.tc-pos-float{grid-template-columns:minmax(0,1fr)}
+
+/* 무대: 보기 두 개(SVG) */
+.ds-terrain-clim .tc-stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:linear-gradient(180deg,#f7f9fb 0%,#edf2f6 100%)}
+.ds-terrain-clim .tc-views{position:absolute;left:0;top:0;right:0;bottom:0;box-sizing:border-box;padding:14px 18px;pointer-events:none}
+/* 3D 캔버스: 무대 전체에 깔고, 위의 SVG는 그래프만 마우스를 받음 */
+.ds-terrain-clim .tc-cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab}
+.ds-terrain-clim .tc-cv:focus-visible{box-shadow:inset 0 0 0 3px #74a7ff}
+.ds-terrain-clim .tc-hit{pointer-events:all}
+.ds-terrain-clim .tc-svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;touch-action:none}
+.ds-terrain-clim .tc-title{font-size:19px;font-weight:700;fill:var(--ink)}
+.ds-terrain-clim .tc-tsub{font-size:14px;fill:var(--ink2)}
+.ds-terrain-clim .tc-tick{font-size:13px;fill:var(--ink2)}
+.ds-terrain-clim .tc-small{font-size:12px;fill:var(--ink2)}
+.ds-terrain-clim .tc-grid{stroke:#dde3ea;stroke-width:1}
+.ds-terrain-clim .tc-zero{stroke:#adb5bd;stroke-width:1.2}
+.ds-terrain-clim .tc-axis{stroke:#9aa1a9;stroke-width:1.5}
+.ds-terrain-clim .tc-halo{paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+
+/* 산 단면 */
+.ds-terrain-clim .tc-sky{fill:#e7f1fb}
+.ds-terrain-clim .tc-ground{fill:#b9a98a}
+.ds-terrain-clim .tc-mtnline{fill:none;stroke:#6b5b45;stroke-width:2;stroke-linejoin:round}
+.ds-terrain-clim .tc-vegt{font-size:12.5px;font-weight:700;fill:#2b2f33;paint-order:stroke;stroke:rgba(255,255,255,.85);stroke-width:3.5;stroke-linejoin:round;pointer-events:none}
+.ds-terrain-clim .tc-hguide{stroke:#495057;stroke-width:1;stroke-dasharray:4 4}
+.ds-terrain-clim .tc-hiker{cursor:grab}
+.ds-terrain-clim .tc-hiker:active{cursor:grabbing}
+.ds-terrain-clim .tc-hdot{fill:#343a40;stroke:#fff;stroke-width:3}
+.ds-terrain-clim .tc-tube{fill:#fff;stroke:#adb5bd;stroke-width:1.5}
+.ds-terrain-clim .tc-tag{font-size:17px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:5;stroke-linejoin:round}
+.ds-terrain-clim .tc-city{cursor:pointer}
+.ds-terrain-clim .tc-cdot{fill:#fff;stroke:#495057;stroke-width:2.5}
+.ds-terrain-clim .tc-city.now .tc-cdot{fill:var(--accent);stroke:#fff}
+.ds-terrain-clim .tc-cring{fill:none;stroke:none}
+.ds-terrain-clim .tc-city.now .tc-cring{stroke:var(--accent);stroke-width:3}
+.ds-terrain-clim .tc-lead{stroke:#868e96;stroke-width:1}
+.ds-terrain-clim .tc-city:focus,
+.ds-terrain-clim .tc-hiker:focus,
+.ds-terrain-clim .tc-parcel:focus,
+.ds-terrain-clim .tc-hit:focus{outline:none}
+.ds-terrain-clim .tc-city:focus-visible .tc-cring{stroke:var(--accent);stroke-width:3;stroke-dasharray:4 3}
+.ds-terrain-clim .tc-hiker:focus-visible .tc-hdot{stroke:var(--accent);stroke-width:4}
+.ds-terrain-clim .tc-parcel:focus-visible .tc-pc{stroke:var(--accent);stroke-width:4}
+.ds-terrain-clim .tc-hit:focus-visible{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+.ds-terrain-clim .tc-cname{font-size:13.5px;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-terrain-clim .tc-city.now .tc-cname{font-weight:700}
+.ds-terrain-clim .tc-cmp{font-size:14px;fill:var(--ink)}
+.ds-terrain-clim .tc-cmp.big{font-size:16px;font-weight:700}
+
+/* 보기 ② 산을 넘는 바람 */
+.ds-terrain-clim .tc-wetside{fill:#8cc084}
+.ds-terrain-clim .tc-dryside{fill:#d4b07a}
+.ds-terrain-clim .tc-wetg{fill:#6fae63}
+.ds-terrain-clim .tc-dryg{fill:#c99a5b}
+.ds-terrain-clim .tc-cond{stroke:#5c7cfa;stroke-width:1.5;stroke-dasharray:6 6}
+.ds-terrain-clim .tc-condt{font-size:12.5px;fill:#4263eb}
+.ds-terrain-clim .tc-cloud{fill:#adb5bd}
+.ds-terrain-clim .tc-rain{stroke:#4dabf7;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:8 10}
+.ds-terrain-clim .tc-rainbox{opacity:.35;transition:opacity .3s}
+.ds-terrain-clim .tc-wsvg.raining .tc-rainbox{opacity:1}
+.ds-terrain-clim .tc-dryglow{fill:rgba(255,146,43,.0);transition:fill .4s}
+.ds-terrain-clim .tc-wsvg.dry .tc-dryglow{fill:rgba(255,146,43,.18)}
+.ds-terrain-clim .tc-side{font-size:16px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-terrain-clim .tc-sidet{font-size:12.5px;fill:var(--ink2);paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-terrain-clim .tc-wind{fill:none;stroke:#5c7cfa;stroke-width:4;stroke-linecap:round}
+.ds-terrain-clim .tc-whead{fill:#5c7cfa}
+.ds-terrain-clim .tc-windt{font-size:14px;font-weight:700;fill:#3b5bdb}
+.ds-terrain-clim .tc-parcel{cursor:grab}
+.ds-terrain-clim .tc-pc{stroke:#fff;stroke-width:2.5}
+.ds-terrain-clim .tc-pt{font-size:12.5px;font-weight:700;fill:#fff;pointer-events:none}
+.ds-terrain-clim .tc-pt.dark{fill:#343a40}
+.ds-terrain-clim .tc-plan{fill:none;stroke:#ced4da;stroke-width:2.5;stroke-dasharray:6 6}
+.ds-terrain-clim .tc-trace{fill:none;stroke:var(--hot);stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.ds-terrain-clim .tc-tdot{fill:var(--hot);stroke:#fff;stroke-width:2}
+.ds-terrain-clim .tc-mark{stroke:#adb5bd;stroke-width:1;stroke-dasharray:3 4}
+.ds-terrain-clim .tc-markt{font-size:12px;fill:var(--ink2)}
+.ds-terrain-clim .tc-ptv{font-size:13px;font-weight:700;fill:#495057;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-terrain-clim .tc-ptv.rh{fill:var(--wet)}
+.ds-terrain-clim .tc-rht{font-size:12px;fill:var(--wet)}
+.ds-terrain-clim .tc-planR{fill:none;stroke:#b2dfbc;stroke-width:2.5;stroke-dasharray:6 6}
+.ds-terrain-clim .tc-traceR{fill:none;stroke:var(--wet);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.ds-terrain-clim .tc-tdotR{fill:var(--wet);stroke:#fff;stroke-width:2}
+
+/* 기온 선 그래프 */
+.ds-terrain-clim .tc-tl{fill:none;stroke-width:3.5;stroke-linejoin:round}
+.ds-terrain-clim .tc-hit{fill:transparent;cursor:crosshair}
+.ds-terrain-clim .tc-guide{stroke:#495057;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.ds-terrain-clim .tc-gtxt{font-size:13px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round;pointer-events:none}
+
+/* 패널 */
+.ds-terrain-clim .tc-panel{box-sizing:border-box;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;min-height:0}
+.ds-terrain-clim.tc-pos-left .tc-panel{order:-1;border-left:0;border-right:1px solid var(--line)}
+.ds-terrain-clim.tc-pos-float .tc-panel{position:absolute;top:16px;left:16px;width:320px;max-width:calc(100% - 32px);max-height:calc(100% - 32px);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.16);z-index:20}
+.ds-terrain-clim .tc-head{display:flex;flex-direction:column;gap:2px;padding:12px 16px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.ds-terrain-clim.tc-pos-float .tc-head{cursor:move;border-radius:14px 14px 0 0}
+.ds-terrain-clim.tc-pos-float.tc-collapsed .tc-head{border-bottom:0;border-radius:14px}
+.ds-terrain-clim .tc-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-terrain-clim .tc-ptitle{font-size:18px;margin:0;font-weight:700;line-height:1.35}
+.ds-terrain-clim .tc-src{font-size:12px;color:var(--ink2);margin:0}
+.ds-terrain-clim .tc-fold{display:none}
+.ds-terrain-clim.tc-pos-float .tc-fold{display:inline-block}
+.ds-terrain-clim.tc-collapsed .tc-body{display:none}
+.ds-terrain-clim .tc-body{display:flex;flex-direction:column;gap:8px;padding:10px}
+.ds-terrain-clim .tc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.ds-terrain-clim .tc-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin:0}
+.ds-terrain-clim .tc-h::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--accent)}
+.ds-terrain-clim .tc-sub{font-size:12px;font-weight:600;color:var(--ink2)}
+.ds-terrain-clim .tc-line2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-terrain-clim .tc-line2 .tc-seg{flex:1}
+.ds-terrain-clim .tc-seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ds-terrain-clim .tc-seg.two{grid-template-columns:repeat(2,1fr)}
+.ds-terrain-clim .tc-segb{font:inherit;font-size:13px;padding:5px 0;border:0;background:#fff;color:var(--ink);cursor:pointer}
+.ds-terrain-clim .tc-segb + .tc-segb{border-left:1px solid var(--line)}
+.ds-terrain-clim .tc-segb[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:700}
+.ds-terrain-clim .tc-vlist{display:flex;flex-direction:column;gap:5px}
+.ds-terrain-clim .tc-vbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13.5px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-terrain-clim .tc-vbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-terrain-clim .tc-vno{flex:none;width:20px;height:20px;border-radius:50%;background:#f1f3f5;color:var(--ink2);font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ds-terrain-clim .tc-vbtn[aria-pressed="true"] .tc-vno{background:var(--accent);color:#fff}
+.ds-terrain-clim .tc-vctl{display:flex;flex-direction:column;gap:7px;border-top:1px dashed var(--line);padding-top:8px}
+.ds-terrain-clim .tc-rangerow{display:flex;align-items:center;gap:8px}
+.ds-terrain-clim .tc-range{flex:1;min-width:0;margin:0;accent-color:var(--accent)}
+.ds-terrain-clim .tc-rv{flex:none;min-width:64px;text-align:right;font-size:13px;font-weight:700}
+.ds-terrain-clim .tc-mini{font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.ds-terrain-clim .tc-row{display:flex;gap:4px}
+.ds-terrain-clim .tc-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ds-terrain-clim .tc-btn{font:inherit;font-size:12.5px;padding:5px 4px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
+.ds-terrain-clim .tc-row .tc-btn{flex:1 1 auto}
+.ds-terrain-clim .tc-btn:hover,
+.ds-terrain-clim .tc-mini:hover,
+.ds-terrain-clim .tc-vbtn:hover,
+.ds-terrain-clim .tc-qbtn:hover,
+.ds-terrain-clim .tc-opt:hover{border-color:#b9bfc6}
+.ds-terrain-clim .tc-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-terrain-clim .tc-btn:focus-visible,
+.ds-terrain-clim .tc-mini:focus-visible,
+.ds-terrain-clim .tc-segb:focus-visible,
+.ds-terrain-clim .tc-vbtn:focus-visible,
+.ds-terrain-clim .tc-qbtn:focus-visible,
+.ds-terrain-clim .tc-opt:focus-visible,
+.ds-terrain-clim .tc-range:focus-visible,
+.ds-terrain-clim .tc-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-terrain-clim .tc-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ds-terrain-clim .tc-stat{background:#f8f8f6;border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;min-width:0}
+.ds-terrain-clim .tc-k{font-size:11.5px;color:var(--ink2);line-height:1.3}
+.ds-terrain-clim .tc-v{font-size:15px;font-weight:700;line-height:1.3}
+.ds-terrain-clim .tc-v.warm{color:var(--hot)}
+.ds-terrain-clim .tc-v.cold{color:var(--mild)}
+.ds-terrain-clim .tc-v.wet{color:var(--wet)}
+.ds-terrain-clim .tc-v.dry{color:var(--dry)}
+.ds-terrain-clim .tc-result{border-radius:8px;padding:8px 10px;border-left:4px solid var(--ink2);background:#f8f8f6;display:flex;flex-direction:column;gap:2px}
+.ds-terrain-clim .tc-result.hot{border-left-color:var(--hot);background:var(--hot-soft)}
+.ds-terrain-clim .tc-result.mild{border-left-color:var(--mild);background:var(--mild-soft)}
+.ds-terrain-clim .tc-rk{font-size:15px;font-weight:700}
+.ds-terrain-clim .tc-result.hot .tc-rk{color:var(--hot)}
+.ds-terrain-clim .tc-result.mild .tc-rk{color:var(--mild)}
+.ds-terrain-clim .tc-rt{font-size:12.5px;margin:0;line-height:1.45}
+.ds-terrain-clim .tc-note{font-size:11.5px;color:var(--ink2);margin:0}
+.ds-terrain-clim .tc-credit{font-size:11px;line-height:1.45;color:var(--ink2);margin:0;padding:2px 4px 4px}
+.ds-terrain-clim .tc-p{font-size:12.5px;margin:0;line-height:1.5}
+.ds-terrain-clim .tc-rchart{display:block;width:100%;max-width:300px;height:auto}
+.ds-terrain-clim .tc-rchart .tc-bn{font-size:12.5px;font-weight:700;fill:var(--ink)}
+.ds-terrain-clim .tc-rchart .tc-bvv{font-size:12.5px;font-weight:700;fill:var(--ink2)}
+.ds-terrain-clim .tc-mtab{display:grid;grid-template-columns:1.1fr 1.35fr 1fr 1fr .9fr;font-size:12px;line-height:1.4;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ds-terrain-clim .tc-mc{padding:4px 5px;border-top:1px solid var(--line);white-space:nowrap}
+.ds-terrain-clim .tc-mc.hd{border-top:0;font-weight:700;background:#f8f8f6;color:var(--ink2)}
+.ds-terrain-clim .tc-mc.now{background:var(--accent-soft);font-weight:700}
+.ds-terrain-clim .tc-mc.up{color:var(--hot)}
+.ds-terrain-clim .tc-mc.down{color:var(--mild)}
+.ds-terrain-clim .tc-qlist{display:flex;flex-direction:column;gap:6px}
+.ds-terrain-clim .tc-qbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-terrain-clim .tc-qno{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-terrain-clim .tc-qtt{flex:1;min-width:0}
+.ds-terrain-clim .tc-qst{flex:none;font-size:11.5px;color:var(--ink2)}
+.ds-terrain-clim .tc-qst.ok{color:#2b8a3e;font-weight:700}
+.ds-terrain-clim .tc-qst.no{color:#c92a2a;font-weight:700}
+
+/* 확인 문제 창 */
+.ds-terrain-clim .tc-modal{position:absolute;left:0;top:0;right:0;bottom:0;z-index:60;background:rgba(20,24,30,.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.ds-terrain-clim .tc-modal[hidden]{display:none}
+.ds-terrain-clim .tc-dialog{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:100%;overflow:auto;box-sizing:border-box;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.ds-terrain-clim .tc-dhead{display:flex;align-items:center;justify-content:space-between}
+.ds-terrain-clim .tc-dnum{font-size:13px;font-weight:700;color:var(--accent)}
+.ds-terrain-clim .tc-x{font:inherit;font-size:20px;line-height:1;width:34px;height:34px;border:0;border-radius:50%;background:#f1f3f5;color:var(--ink2);cursor:pointer}
+.ds-terrain-clim .tc-dq{font-size:18px;font-weight:700;margin:0;line-height:1.45}
+.ds-terrain-clim .tc-dopts{display:flex;flex-direction:column;gap:8px}
+.ds-terrain-clim .tc-opt{font:inherit;font-size:15px;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;line-height:1.45}
+.ds-terrain-clim .tc-opt.ok{border-color:#2b8a3e;background:#ebfbee;color:#2b8a3e;font-weight:700}
+.ds-terrain-clim .tc-opt.no{border-color:#e03131;background:#fff5f5;color:#c92a2a}
+.ds-terrain-clim .tc-dfb{font-size:14px;margin:0;padding:10px 12px;border-radius:10px;background:#f8f9fa;color:var(--ink2)}
+.ds-terrain-clim .tc-dfb:empty{display:none}
+.ds-terrain-clim .tc-dfb.ok{background:#ebfbee;color:#2b8a3e}
+.ds-terrain-clim .tc-dfb.no{background:#fff5f5;color:#c92a2a}
+.ds-terrain-clim .tc-dfoot{display:flex;justify-content:space-between;gap:8px}
+.ds-terrain-clim .tc-dfoot .tc-btn{font-size:14px;padding:7px 14px}
+.ds-terrain-clim .tc-dfoot .tc-btn:disabled{opacity:.4;cursor:default}
+.ds-terrain-clim .tc-svg.tc-off,
+.ds-terrain-clim .tc-vctl.tc-off,
+.ds-terrain-clim .tc-card.tc-off{display:none}
+
+@media (max-width:820px){
+  .ds-terrain-clim,
+  .ds-terrain-clim.tc-pos-left{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .ds-terrain-clim .tc-panel,
+  .ds-terrain-clim.tc-pos-left .tc-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
+  .ds-terrain-clim .tc-views{padding:8px}
+}
+</style>
+
+<div class="tc-stage">
+  <canvas class="tc-cv" tabindex="0" role="img" aria-label="3D 산. 끌어서 돌려 봅니다. 위아래 화살표 키로 높이를 바꾸고, 왼쪽·오른쪽 화살표 키로 돌립니다."></canvas>
+  <div class="tc-views"></div>
+</div>
+
+<aside class="tc-panel" aria-label="조작 패널">
+  <div class="tc-head">
+    <div class="tc-head-row">
+      <h2 class="tc-ptitle">지형과 기후</h2>
+      <button type="button" class="tc-mini tc-fold" aria-expanded="true">접기</button>
+    </div>
+    <p class="tc-src">중학 사회 ① · 기후</p>
+  </div>
+
+  <div class="tc-body">
+    <section class="tc-card">
+      <h3 class="tc-h">조작</h3>
+      <div class="tc-line2">
+        <span class="tc-sub">패널 위치</span>
+        <div class="tc-seg tc-posseg" role="group" aria-label="패널 위치">
+          <button type="button" class="tc-segb" data-pos="right" aria-pressed="true">오른쪽</button>
+          <button type="button" class="tc-segb" data-pos="left" aria-pressed="false">왼쪽</button>
+          <button type="button" class="tc-segb" data-pos="float" aria-pressed="false">플로팅</button>
+        </div>
+      </div>
+      <span class="tc-sub">보기</span>
+      <div class="tc-vlist" role="group" aria-label="보기">
+        <button type="button" class="tc-vbtn" data-view="alt" aria-pressed="true"><span class="tc-vno">1</span>높이 올라가면</button>
+        <button type="button" class="tc-vbtn" data-view="wind" aria-pressed="false"><span class="tc-vno">2</span>산을 넘는 바람</button>
+      </div>
+      <div class="tc-line2">
+        <span class="tc-sub">3D 보기</span>
+        <button type="button" class="tc-mini tc-resetview">처음 시점으로</button>
+      </div>
+
+      <div class="tc-vctl" data-for="alt">
+        <span class="tc-sub">해발 고도</span>
+        <div class="tc-rangerow">
+          <input class="tc-range tc-hrange" type="range" min="0" max="5000" step="10" value="100" aria-label="해발 고도">
+          <span class="tc-rv tc-hval"></span>
+        </div>
+        <div class="tc-row">
+          <button type="button" class="tc-btn tc-hplay">높이 단계 재생</button>
+        </div>
+        <span class="tc-sub">실제 도시 (누르면 그 높이로 갑니다)</span>
+        <div class="tc-grid3 tc-citybtns"></div>
+        <div class="tc-line2">
+          <span class="tc-sub">100m마다</span>
+          <div class="tc-seg two tc-lapseseg" role="group" aria-label="100m 올라갈 때마다 내려가는 기온">
+            <button type="button" class="tc-segb" data-lapse="0.5" aria-pressed="true">0.5℃ 내려감</button>
+            <button type="button" class="tc-segb" data-lapse="0.6" aria-pressed="false">0.6℃ 내려감</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tc-vctl tc-off" data-for="wind">
+        <div class="tc-line2">
+          <span class="tc-sub">바람</span>
+          <div class="tc-seg two tc-fromseg" role="group" aria-label="바람 방향">
+            <button type="button" class="tc-segb" data-from="w" aria-pressed="true">서쪽에서 →</button>
+            <button type="button" class="tc-segb" data-from="e" aria-pressed="false">← 동쪽에서</button>
+          </div>
+        </div>
+        <span class="tc-sub">공기의 위치</span>
+        <div class="tc-rangerow">
+          <input class="tc-range tc-srange" type="range" min="0" max="100" step="1" value="0" aria-label="공기의 위치">
+          <span class="tc-rv tc-sval"></span>
+        </div>
+        <div class="tc-row">
+          <button type="button" class="tc-btn tc-wplay">멈춤</button>
+          <button type="button" class="tc-btn tc-wreset">처음부터</button>
+        </div>
+        <div class="tc-line2">
+          <span class="tc-sub">속도</span>
+          <div class="tc-seg tc-spdseg" role="group" aria-label="속도">
+            <button type="button" class="tc-segb" data-spd="0.5" aria-pressed="false">×½</button>
+            <button type="button" class="tc-segb" data-spd="1" aria-pressed="true">×1</button>
+            <button type="button" class="tc-segb" data-spd="2" aria-pressed="false">×2</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tc-card">
+      <h3 class="tc-h tc-readh">읽은 값</h3>
+      <div class="tc-stats">
+        <div class="tc-stat"><span class="tc-k tc-k1"></span><span class="tc-v tc-v1"></span></div>
+        <div class="tc-stat"><span class="tc-k tc-k2"></span><span class="tc-v tc-v2"></span></div>
+        <div class="tc-stat"><span class="tc-k tc-k3"></span><span class="tc-v tc-v3"></span></div>
+        <div class="tc-stat"><span class="tc-k tc-k4"></span><span class="tc-v tc-v4"></span></div>
+      </div>
+      <div class="tc-result" aria-live="polite">
+        <span class="tc-rk"></span>
+        <p class="tc-rt"></p>
+      </div>
+      <p class="tc-note tc-readnote"></p>
+    </section>
+
+    <section class="tc-card tc-aux" data-for="alt">
+      <h3 class="tc-h">높이와 기온</h3>
+      <p class="tc-p">높은 곳은 햇빛에 데워진 땅에서 멀고, 공기가 엷어 열을 붙잡는 힘이 약합니다. 그래서 높이 올라갈수록 기온이 내려갑니다.</p>
+      <p class="tc-p">적도 부근이라도 키토나 보고타처럼 높은 곳에 자리 잡은 도시는 1년 내내 봄처럼 서늘합니다.</p>
+    </section>
+    <section class="tc-card tc-aux" data-for="alt">
+      <h3 class="tc-h">모형과 실제</h3>
+      <div class="tc-mtab" role="group" aria-label="도시별 예상 기온과 실제 연평균 기온"></div>
+      <p class="tc-note tc-mnote"></p>
+    </section>
+    <section class="tc-card tc-aux tc-off" data-for="wind">
+      <h3 class="tc-h">푄과 높새바람</h3>
+      <p class="tc-p">산을 넘어 내려온 바람이 덥고 메말라지는 현상을 푄이라고 합니다.</p>
+      <p class="tc-p">우리나라에서는 늦봄부터 초여름 사이 동해 쪽에서 불어온 바람이 태백산맥을 넘어 영서 지방에 덥고 건조한 바람으로 붑니다. 이 바람을 높새바람이라고 합니다.</p>
+    </section>
+    <section class="tc-card tc-aux tc-off" data-for="wind">
+      <h3 class="tc-h">비교 참고 · 밴쿠버와 덴버</h3>
+      <svg class="tc-rchart tc-shadowchart" viewBox="0 0 288 92" role="img" aria-label="밴쿠버와 덴버의 1년 강수량"></svg>
+      <p class="tc-p">밴쿠버는 로키산맥 서쪽 바닷가에 있고, 덴버는 로키산맥 동쪽 기슭에 있습니다.</p>
+      <p class="tc-note">두 도시는 위도가 약 10° 다르고 바다와의 거리도 달라, 산맥 하나만으로 설명되지는 않습니다.</p>
+    </section>
+
+    <section class="tc-card">
+      <h3 class="tc-h">확인 문제</h3>
+      <div class="tc-qlist"></div>
+    </section>
+
+    <p class="tc-credit">자료: 도시 기온·강수 WMO 기후 평년값 · 식생대 경계 높이는 안데스의 예</p>
+  </div>
+</aside>
+
+<div class="tc-modal" hidden>
+  <div class="tc-dialog" role="dialog" aria-modal="true">
+    <div class="tc-dhead">
+      <span class="tc-dnum"></span>
+      <button type="button" class="tc-x" aria-label="닫기">×</button>
+    </div>
+    <p class="tc-dq"></p>
+    <div class="tc-dopts"></div>
+    <p class="tc-dfb" aria-live="polite"></p>
+    <div class="tc-dfoot">
+      <button type="button" class="tc-btn tc-prev">이전 문제</button>
+      <button type="button" class="tc-btn tc-next">다음 문제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  function Up(root) {
+    var NS = "http://www.w3.org/2000/svg";
+    var uid = "tc" + Math.random().toString(36).slice(2, 8);
+
+    /* 도시 월평균 기온(℃)·강수(mm): 자료발췌/로직/기후/cities.js 에서 필요한 7곳만 */
+    var CITIES = [
+      {"id":"Iquitos","kr":"이키토스","lat":-3.75,"lon":-73.24,"t":[26.4,26.3,26.5,26.4,26.3,26,25.8,26.4,26.8,27,27,26.7],"p":[275,260,315,295,265,215,190,175,205,255,285,280]},
+      {"id":"Bogota","kr":"보고타","lat":4.61,"lon":-74.07,"t":[13.2,13.5,14,14.5,14.8,14.5,14.2,14,14.1,14.3,14,13.5],"p":[35,50,90,145,115,65,55,60,85,160,110,65]},
+      {"id":"Quito","kr":"키토","lat":-0.18,"lon":-78.47,"t":[13.5,13.6,13.8,13.7,13.8,13.9,13.9,14,14.2,13.9,13.6,13.5],"p":[110,125,175,170,125,45,35,45,85,170,125,105]},
+      {"id":"Cusco","kr":"쿠스코","lat":-13.53,"lon":-71.97,"t":[11.5,11.4,11.5,11,9.5,8.2,7.8,9.1,10.5,11.5,11.8,11.6],"p":[155,135,110,50,15,5,5,10,25,50,85,130]},
+      {"id":"La_Paz","kr":"라파스","lat":-16.49,"lon":-68.12,"t":[9.3,9.5,9.8,9.2,8.2,7.1,6.8,7.5,8.5,9.5,10.1,9.5],"p":[115,105,110,50,15,5,10,15,30,45,75,120]},
+      {"id":"Vancouver","kr":"밴쿠버","lat":49.26,"lon":-123.11,"t":[4.1,4.9,7.1,9.8,13.2,15.9,18.4,18.4,15.4,10.5,6.3,3.8],"p":[170,120,115,90,65,55,35,35,50,120,190,160]},
+      {"id":"Denver","kr":"덴버","lat":39.74,"lon":-104.98,"t":[-1.2,0.5,5.2,9.1,14.5,20.5,24.2,23.1,18.5,11.2,4.1,-0.8],"p":[12,11,25,45,55,50,55,40,30,25,18,15]}
+    ];
+
+    /* 해발 고도 모형: 자료발췌/로직/기후/terrain-climate.js 의 VEG · CITY_ALT · altTemp
+       쿠스코는 원본 고도 목록에 없어 약 3,400m로 더함
+       라파스 · 쿠스코는 관측 지점의 고도가 자료에 없어 화면에 「약」을 붙임(담당자 결정 10-19) */
+    var VEG = [
+      [0, 1000, "열대 우림", "#2f8f3a"],
+      [1000, 2500, "산지 숲", "#58a55a"],
+      [2500, 3500, "고산 관목 · 경작지", "#a4c46a"],
+      [3500, 4700, "고산 초원", "#cdb96d"],
+      [4700, 6000, "만년설", "#f2f6fb"]
+    ];
+    var CITY_ALT = [["Iquitos", 100], ["Bogota", 2640], ["Quito", 2850], ["Cusco", 3400], ["La_Paz", 3640]];
+    /* 도시 이름 위치: 고산 도시 넷은 높이가 가까워 이름이 겹치므로, 오른쪽 하늘에 세로 칸(x 650)을 두고 점과 선으로 이음 */
+    var LABEL_Y = { Bogota: 234, Quito: 206, Cusco: 178, La_Paz: 150 }, LABEL_X = 650;
+    var BASE_ALT = 100, LAPSE = 0.5, MAXH = 5000;
+
+    /* 산을 넘는 공기 (예시 모형): 자료발췌/로직/기후/terrain-climate.js 의 model. 꼭대기 2,000m, 응결 고도 1,000m */
+    var TOP = 2000, COND = 1000;
+    function model(z, up) {
+      var t, rh, st;
+      if (up && z <= COND) { t = 25 - z / 100 * 1.0; rh = 60 + 40 * z / COND; st = "올라가며 식음"; }
+      else if (up) { t = 15 - (z - COND) / 100 * 0.5; rh = 100; st = "구름 · 비"; }
+      else { t = 10 + (TOP - z) / 100 * 1.0; rh = Math.max(22, 100 * Math.pow(0.52, (TOP - z) / 1000 * 1.8)); st = z > COND ? "내려가며 데워짐" : "고온 건조"; }
+      return { z: z, t: t, rh: rh, st: st, up: up };
+    }
+
+    var QUIZ = [
+      {
+        title: "적도 부근의 서늘한 도시",
+        q: "키토는 적도 바로 옆에 있는데도 연평균 기온이 약 14℃입니다. 그 까닭으로 알맞은 것은 무엇일까요?",
+        opts: ["해발 약 2,850m의 높은 곳에 있기 때문입니다.", "바다 바로 옆에 있기 때문입니다.", "1년 내내 햇빛을 거의 받지 못하기 때문입니다."],
+        ans: 0,
+        ok: "맞습니다. 높이 올라갈수록 기온이 내려갑니다. 키토는 해발 약 2,850m에 있어, 같은 적도 부근의 이키토스(해발 약 100m)보다 약 13℃ 서늘합니다.",
+        no: "다시 생각해 보세요. 보기 1 「높이 올라가면」에서 키토 높이까지 올라가 기온을 확인해 봅니다."
+      },
+      {
+        title: "비가 많은 바람받이 사면",
+        q: "바람이 산을 타고 올라가는 쪽(바람받이 사면)에 비가 많이 내리는 까닭은 무엇일까요?",
+        opts: [
+          "산을 오르던 공기가 데워져 수증기가 늘어나기 때문입니다.",
+          "산 위의 눈이 녹아 흘러내리기 때문입니다.",
+          "공기가 올라가며 식어 수증기가 물방울이 되기 때문입니다."
+        ],
+        ans: 2,
+        ok: "맞습니다. 공기는 올라가면서 식고, 충분히 식으면 수증기가 물방울이 되어 구름과 비가 생깁니다.",
+        no: "다시 생각해 보세요. 보기 2 「산을 넘는 바람」에서 공기가 응결 고도를 지날 때 어떤 일이 생기는지 살펴봅니다."
+      },
+      {
+        title: "산을 넘어온 바람",
+        q: "산을 넘어 비 그늘 쪽으로 내려온 바람은 어떤 성질을 띨까요?",
+        opts: ["서늘하고 습합니다.", "덥고 건조합니다.", "출발할 때와 똑같습니다."],
+        ans: 1,
+        ok: "맞습니다. 비를 뿌리고 수증기를 잃은 공기가 내려가며 데워져 덥고 건조한 바람이 됩니다. 이를 푄이라고 하며, 우리나라의 높새바람이 그 예입니다.",
+        no: "다시 생각해 보세요. 보기 2 「산을 넘는 바람」에서 공기가 반대편 땅에 닿았을 때 기온과 습도를 확인해 봅니다."
+      },
+      {
+        title: "높은 곳의 기온 구하기",
+        q: "해발 약 100m인 이키토스의 연평균 기온은 약 26.5℃입니다. 100m 올라갈 때마다 0.5℃씩 내려간다면, 같은 지역 해발 3,100m의 연평균 기온은 약 몇 ℃일까요?",
+        opts: ["약 11.5℃", "약 23.5℃", "약 1.5℃"],
+        ans: 0,
+        ok: "맞습니다. 3,100m − 100m = 3,000m를 올라가므로 30 × 0.5℃ = 15℃가 내려갑니다. 26.5 − 15 = 11.5℃입니다.",
+        no: "다시 생각해 보세요. 올라간 높이를 100m 단위로 나눈 뒤 0.5℃를 곱해 봅니다. 보기 1에서 「0.5℃ 내려감」을 고르고 해발 3,100m로 올라가 확인할 수도 있습니다."
+      },
+      {
+        title: "건조한 비 그늘",
+        q: "산을 넘은 쪽(비 그늘)의 땅이 건조한 까닭으로 알맞은 것은 무엇일까요?",
+        opts: [
+          "바람받이 사면에서 수증기가 이미 비로 내려, 메마른 공기가 내려오기 때문입니다.",
+          "비 그늘 쪽이 바람받이 쪽보다 해발 고도가 훨씬 높기 때문입니다.",
+          "비 그늘 쪽에는 바람이 전혀 불지 않기 때문입니다."
+        ],
+        ans: 0,
+        ok: "맞습니다. 공기는 바람받이 사면을 오르며 비를 뿌려 수증기를 잃습니다. 그 공기가 산을 넘어 내려오며 데워지므로 비 그늘은 덥고 건조합니다.",
+        no: "다시 생각해 보세요. 보기 2 아래 그래프에서 산꼭대기를 지난 뒤 초록색 상대 습도 선이 어떻게 바뀌는지 살펴봅니다."
+      }
+    ];
+
+    function $(sel) { return root.querySelector(sel); }
+    function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
+    function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
+    function S(tag, at, parent, text) {
+      var e = document.createElementNS(NS, tag);
+      attrs(e, at);
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function E(tag, cls, parent, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function setText(e, s) { if (e.textContent !== s) e.textContent = s; }
+    function f1(v) { return v.toFixed(1); }
+    function pts(list) { return list.map(function (p) { return f1(p[0]) + "," + f1(p[1]); }).join(" "); }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function signed(v, digits) {
+      var s = Math.abs(v).toFixed(digits || 0);
+      return (v < 0 && Number(s) !== 0 ? "−" : "") + s;
+    }
+    function deg(v) { return signed(v, 1) + "℃"; }
+    function C(id) { for (var i = 0; i < CITIES.length; i++) if (CITIES[i].id === id) return CITIES[i]; return null; }
+    function mean(a) { return a.reduce(function (s, v) { return s + v; }, 0) / a.length; }
+    function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+    function meters(h) { return Math.round(h).toLocaleString("ko-KR") + "m"; }
+    function latTxt(c) { return (c.lat < 0 ? "남위 " : "북위 ") + Math.abs(c.lat).toFixed(1) + "°"; }
+    /* 기온 색: −5℃ 파랑 → 30℃ 빨강 */
+    function tColor(t) {
+      var u = clamp((t + 5) / 35, 0, 1), A = [77, 171, 247], Z = [240, 62, 62];
+      return "rgb(" + [0, 1, 2].map(function (i) { return Math.round(A[i] + (Z[i] - A[i]) * u); }).join(",") + ")";
+    }
+    function svgPoint(svg, e) {
+      var m = svg.getScreenCTM();
+      if (!m) return null;
+      var p = svg.createSVGPoint();
+      p.x = e.clientX; p.y = e.clientY;
+      return p.matrixTransform(m.inverse());
+    }
+    function head(parent, a, b, size, cls) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L;
+      var tip = [b[0] + ux * size * 0.6, b[1] + uy * size * 0.6], w = size * 0.55;
+      return S("polygon", { points: pts([tip, [tip[0] - ux * size - uy * w, tip[1] - uy * size + ux * w], [tip[0] - ux * size + uy * w, tip[1] - uy * size - ux * w]]), "class": cls }, parent);
+    }
+    function cloud(parent, cx, cy, s) {
+      var g = S("g", {}, parent);
+      [[-34, 8, 24], [0, -4, 32], [34, 8, 24], [0, 14, 22]].forEach(function (q) { S("circle", { cx: f1(cx + q[0] * s), cy: f1(cy + q[1] * s), r: f1(q[2] * s), "class": "tc-cloud" }, g); });
+      return g;
+    }
+    function tween(from, to, ms, fn, done) {
+      var t0 = 0, id = 0;
+      function step(t) {
+        if (!t0) t0 = t;
+        var u = clamp((t - t0) / ms, 0, 1), e = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        fn(from + (to - from) * e);
+        if (u < 1) id = requestAnimationFrame(step); else { id = 0; if (done) done(); }
+      }
+      id = requestAnimationFrame(step);
+      return function () { if (id) cancelAnimationFrame(id); id = 0; };
+    }
+
+    var RM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var views = $(".tc-views");
+    var view = "alt";
+
+    /* 기온 선 그래프 부품: 12달 */
+    function makeTempChart(svg, x0, x1, y0, y1, T0, T1, step, title) {
+      var c = { x0: x0, x1: x1, y0: y0, y1: y1 };
+      c.xm = function (m) { return x0 + (m + 0.5) * (x1 - x0) / 12; };
+      c.ty = function (v) { return y0 + (T1 - v) / (T1 - T0) * (y1 - y0); };
+      S("text", { x: x0 - 44, y: y0 - 18, "class": "tc-tsub" }, svg, title);
+      for (var v = T0; v <= T1; v += step) {
+        S("line", { x1: x0, x2: x1, y1: f1(c.ty(v)), y2: f1(c.ty(v)), "class": v === 0 ? "tc-zero" : "tc-grid" }, svg);
+        S("text", { x: x0 - 8, y: f1(c.ty(v) + 4.5), "text-anchor": "end", "class": "tc-tick" }, svg, signed(v));
+      }
+      for (var m = 0; m < 12; m++) S("text", { x: f1(c.xm(m)), y: y1 + 20, "text-anchor": "middle", "class": "tc-small" }, svg, (m + 1) + "월");
+      c.lines = S("g", {}, svg);
+      c.guide = S("line", { y1: y0, y2: y1, "class": "tc-guide", visibility: "hidden" }, svg);
+      c.gtxt = S("g", { visibility: "hidden" }, svg);
+      var hit = S("rect", { x: x0, y: y0, width: x1 - x0, height: y1 - y0, "class": "tc-hit", tabindex: "0", role: "slider", "aria-valuemin": "1", "aria-valuemax": "12", "aria-label": "월평균 기온 그래프. 왼쪽·오른쪽 화살표 키로 달을 옮기며 값을 읽습니다." }, svg);
+      c.rows = function () { return []; };
+      var curM = 0;
+      function show(e) {
+        var p = svgPoint(svg, e);
+        if (!p) return;
+        showM(clamp(Math.floor((p.x - x0) / (x1 - x0) * 12), 0, 11));
+      }
+      function showM(m) {
+        curM = m;
+        var gx = c.xm(m);
+        attrs(c.guide, { x1: f1(gx), x2: f1(gx), visibility: "visible" });
+        c.gtxt.textContent = "";
+        var right = gx < (x0 + x1) / 2, rows = c.rows();
+        S("text", { x: f1(gx + (right ? 8 : -8)), y: y0 + 16, "text-anchor": right ? "start" : "end", "class": "tc-gtxt", fill: "#495057" }, c.gtxt, (m + 1) + "월");
+        rows.forEach(function (r, i) {
+          S("text", { x: f1(gx + (right ? 8 : -8)), y: y0 + 34 + i * 18, "text-anchor": right ? "start" : "end", "class": "tc-gtxt", fill: r[0] }, c.gtxt, r[1].kr + " " + deg(r[1].t[m]));
+        });
+        c.gtxt.setAttribute("visibility", "visible");
+        attrs(hit, { "aria-valuenow": String(m + 1), "aria-valuetext": (m + 1) + "월: " + rows.map(function (r) { return r[1].kr + " " + deg(r[1].t[m]); }).join(", ") });
+      }
+      function hide() { c.guide.setAttribute("visibility", "hidden"); c.gtxt.setAttribute("visibility", "hidden"); }
+      hit.addEventListener("pointermove", show);
+      hit.addEventListener("pointerdown", show);
+      hit.addEventListener("pointerleave", function () { if (document.activeElement !== hit) hide(); });
+      /* 키보드: 초점이 오면 그 달의 값을 보이고 ←→ · Home/End로 달을 옮김 */
+      hit.addEventListener("focus", function () { showM(curM); });
+      hit.addEventListener("blur", hide);
+      hit.addEventListener("keydown", function (e) {
+        var k = e.key, m = curM;
+        if (k === "ArrowRight" || k === "ArrowUp") m++;
+        else if (k === "ArrowLeft" || k === "ArrowDown") m--;
+        else if (k === "Home") m = 0;
+        else if (k === "End") m = 11;
+        else return;
+        e.preventDefault();
+        showM(clamp(m, 0, 11));
+      });
+      c.refresh = function () { if (document.activeElement === hit) showM(curM); };
+      c.line = function (city, color) {
+        return S("polyline", { points: pts(city.t.map(function (v, m) { return [c.xm(m), c.ty(v)]; })), "class": "tc-tl", stroke: color }, c.lines);
+      };
+      return c;
+    }
+
+    /* ================= 3D 장면 부품 (라이브러리 없이 캔버스로 그림) =================
+       높이 격자(산)를 먼 칸부터 칠해 가까운 칸이 가리게 함. 칸마다 붙인 표시(길·등고선·핀·공기 덩어리 등)는
+       그 칸을 칠한 바로 뒤에 그려 함께 가려짐. 그래프·글은 SVG가 맡고, 캔버스는 SVG 위쪽 그림 자리에 맞춰 겹침 */
+    var RAD = Math.PI / 180;
+    var cv = $(".tc-cv"), ctx = cv.getContext("2d");
+    /* TS: 캔버스 글씨 배율. 그림 칸이 작아지면 SVG 글씨처럼 같이 작아짐 */
+    var CW = 1, CH = 1, DPR = 1, TS = 1, FONT = "Pretendard,'Malgun Gothic',system-ui,sans-serif";
+    function sizeCanvas() {
+      var r = cv.getBoundingClientRect();
+      CW = Math.max(1, r.width); CH = Math.max(1, r.height);
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+    }
+    /* SVG 좌표의 사각형 → 캔버스 위 사각형(px) */
+    function svgRect(svg, x, y, w, h) {
+      var m = svg.getScreenCTM(), r = cv.getBoundingClientRect();
+      if (!m) return null;
+      return { x: m.a * x + m.e - r.left, y: m.d * y + m.f - r.top, w: m.a * w, h: m.d * h };
+    }
+    function hexRGB(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+    function mix(a, b, u) { u = clamp(u, 0, 1); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]; }
+    function rgb(c, k) { return "rgb(" + Math.round(clamp(c[0] * k, 0, 255)) + "," + Math.round(clamp(c[1] * k, 0, 255)) + "," + Math.round(clamp(c[2] * k, 0, 255)) + ")"; }
+    /* 햇빛: 앞쪽 왼편 위에서 */
+    var LIGHT = (function () { var v = [-0.5, 0.8, -0.35], l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+
+    function makeTerrain(o) {
+      var NX = o.nx, NZ = o.nz, VX = NX + 1, N = VX * (NZ + 1), NC = NX * NZ;
+      var wx = new Float32Array(N), wy = new Float32Array(N), wz = new Float32Array(N), hm = new Float32Array(N);
+      var px = new Float32Array(N), py = new Float32Array(N), pd = new Float32Array(N);
+      var cd = new Float32Array(NC), col = new Array(NC), order = [], cgx = new Float32Array(NC), cgz = new Float32Array(NC);
+      var T = { yaw: o.yaw, pitch: o.pitch, k: 1, cx: 0, cy: 0 };
+      for (var j = 0; j <= NZ; j++) for (var i = 0; i <= NX; i++) {
+        var n = j * VX + i, x = o.x0 + (o.x1 - o.x0) * i / NX, z = o.z0 + (o.z1 - o.z0) * j / NZ, h = o.hf(x, z);
+        wx[n] = x; wz[n] = z; hm[n] = h; wy[n] = h * o.hs;
+      }
+      for (var c = 0; c < NC; c++) order.push(c);
+      /* 끄는 동안 쓸 성긴 칸(2×2를 한 칸으로) */
+      var order2 = [];
+      for (var j2 = 0; j2 < NZ; j2 += 2) for (var i2 = 0; i2 < NX; i2 += 2) order2.push(j2 * NX + i2);
+      T.lod = false;
+      T.Y = function (x, z) { return o.hf(x, z) * o.hs; };
+      T.cell = function (x, z) {
+        var ii = clamp(Math.floor((x - o.x0) / (o.x1 - o.x0) * NX), 0, NX - 1), jj = clamp(Math.floor((z - o.z0) / (o.z1 - o.z0) * NZ), 0, NZ - 1);
+        return jj * NX + ii;
+      };
+      /* 칸 색 = 높이·위치에 따른 바탕색 × 햇빛 음영 */
+      T.recolor = function () {
+        for (var jj = 0; jj < NZ; jj++) for (var ii = 0; ii < NX; ii++) {
+          var a = jj * VX + ii, b = a + 1, d = a + VX, e = d + 1;
+          var gx = (wy[b] + wy[e] - wy[a] - wy[d]) / 2 / (wx[b] - wx[a]), gz = (wy[d] + wy[e] - wy[a] - wy[b]) / 2 / (wz[d] - wz[a]);
+          var nl = Math.sqrt(gx * gx + 1 + gz * gz), lam = Math.max(0, (-gx * LIGHT[0] + LIGHT[1] - gz * LIGHT[2]) / nl);
+          cgx[jj * NX + ii] = gx; cgz[jj * NX + ii] = gz;
+          var hmean = (hm[a] + hm[b] + hm[d] + hm[e]) / 4;
+          col[jj * NX + ii] = rgb(o.color(hmean, (wx[a] + wx[e]) / 2, (wz[a] + wz[e]) / 2), 0.62 + 0.4 * lam);
+        }
+      };
+      var cY = 1, sY = 0, cP = 1, sP = 0, DP = 5;
+      function rot() { cY = Math.cos(T.yaw * RAD); sY = Math.sin(T.yaw * RAD); cP = Math.cos(T.pitch * RAD); sP = Math.sin(T.pitch * RAD); }
+      function proj(x, y, z, out) {
+        var x1 = cY * x - sY * z, z1 = sY * x + cY * z, up = y * cP + z1 * sP, d = z1 * cP - y * sP, s = DP / (DP + d);
+        out[0] = T.cx + x1 * s * T.k; out[1] = T.cy - up * s * T.k; out[2] = d; out[3] = s;
+        return out;
+      }
+      T.P = function (x, y, z) { return proj(x, y, z, [0, 0, 0, 1]); };
+      /* 칸 c의 비탈이 시선 쪽을 보고 있는지(법선 · 시선 반대 방향 > 0) */
+      T.facing = function (c) { return cgx[c] * sY * cP + sP + cgz[c] * cY * cP > 0; };
+      /* 돌려도 크기가 흔들리지 않게: 지금 내려다보는 각도에서 여러 방향(30°마다)으로 돌려 본 화면 범위를 합쳐 크기·가운데를 정함.
+         내려다보는 각도나 그림 칸이 바뀔 때만 다시 셈 */
+      var fitKey = "", ext = null;
+      T.fit = function (rect) {
+        rot();
+        var key = T.pitch.toFixed(1) + "|" + rect.w.toFixed(0) + "|" + rect.h.toFixed(0);
+        if (key !== fitKey) {
+          fitKey = key;
+          var yaw0 = T.yaw, k0 = T.k, cx0 = T.cx, cy0 = T.cy, q = [0, 0, 0, 1], mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+          T.k = 1; T.cx = 0; T.cy = 0;
+          for (var a = 0; a < 360; a += 30) {
+            T.yaw = a; rot();
+            for (var nn = 0; nn < N; nn++) {
+              proj(wx[nn], wy[nn], wz[nn], q);
+              if (q[0] < mnx) mnx = q[0]; if (q[0] > mxx) mxx = q[0]; if (q[1] < mny) mny = q[1]; if (q[1] > mxy) mxy = q[1];
+              proj(wx[nn], -o.base, wz[nn], q);
+              if (q[1] > mxy) mxy = q[1];
+            }
+          }
+          T.yaw = yaw0; T.k = k0; T.cx = cx0; T.cy = cy0; rot();
+          ext = [mnx, mxx, mny, mxy];
+        }
+        T.k = Math.min(rect.w * o.fill / (ext[1] - ext[0]), rect.h * o.fill / (ext[3] - ext[2]));
+        T.cx = rect.x + rect.w / 2 - (ext[0] + ext[1]) / 2 * T.k;
+        T.cy = rect.y + rect.h * o.vy - (ext[2] + ext[3]) / 2 * T.k;
+      };
+      /* 땅의 시선 쪽 방향각(그 방향으로 놓인 것이 앞에 보임) */
+      T.front = function () { return Math.atan2(-cY, -sY); };
+      T.draw = function (extra) {
+        rot();
+        var q = [0, 0, 0, 1], nn, cc;
+        for (nn = 0; nn < N; nn++) { proj(wx[nn], wy[nn], wz[nn], q); px[nn] = q[0]; py[nn] = q[1]; pd[nn] = q[2]; }
+        var st = T.lod ? 2 : 1, ord = T.lod ? order2 : order;
+        for (var oi = 0; oi < ord.length; oi++) { cc = ord[oi]; var jj = (cc / NX) | 0, a = jj * VX + cc - jj * NX; cd[cc] = pd[a] + pd[a + st] + pd[a + st * VX] + pd[a + st * VX + st]; }
+        ord.sort(function (A1, B1) { return cd[B1] - cd[A1]; });
+        var bucket = {};
+        extra.forEach(function (e2) {
+          var key = e2[0];
+          if (T.lod) { var ej = (key / NX) | 0, ei = key - ej * NX; key = (ej - ej % 2) * NX + ei - ei % 2; }
+          (bucket[key] || (bucket[key] = [])).push(e2[1]);
+        });
+        ctx.lineJoin = "round";
+        for (var t = 0; t < ord.length; t++) {
+          var c2 = ord[t], j2 = (c2 / NX) | 0, a2 = j2 * VX + c2 - j2 * NX, b2 = a2 + st, d2 = a2 + st * VX, e3 = d2 + st;
+          ctx.beginPath(); ctx.moveTo(px[a2], py[a2]); ctx.lineTo(px[b2], py[b2]); ctx.lineTo(px[e3], py[e3]); ctx.lineTo(px[d2], py[d2]); ctx.closePath();
+          ctx.fillStyle = col[c2]; ctx.fill();
+          ctx.strokeStyle = col[c2]; ctx.lineWidth = 0.9; ctx.stroke();
+          var bl = bucket[c2];
+          if (bl) for (var u = 0; u < bl.length; u++) bl[u]();
+        }
+        T.walls();
+      };
+      /* 땅 덩어리의 옆면(시선 쪽 두 면만) */
+      T.walls = function () {
+        var mid = proj((o.x0 + o.x1) / 2, 0, (o.z0 + o.z1) / 2, [0, 0, 0, 1])[2], edges = [[], [], [], []], ii, jj;
+        for (ii = 0; ii <= NX; ii++) { edges[0].push(ii); edges[1].push(NZ * VX + ii); }
+        for (jj = 0; jj <= NZ; jj++) { edges[2].push(jj * VX); edges[3].push(jj * VX + NX); }
+        var q = [0, 0, 0, 1];
+        edges.forEach(function (ed, w) {
+          var dsum = 0;
+          ed.forEach(function (v) { dsum += pd[v]; });
+          if (dsum / ed.length > mid) return;
+          ctx.fillStyle = w < 2 ? o.wall[0] : o.wall[1];
+          ctx.beginPath();
+          ed.forEach(function (v, k) { if (k) ctx.lineTo(px[v], py[v]); else ctx.moveTo(px[v], py[v]); });
+          for (var k = ed.length - 1; k >= 0; k--) { var v = ed[k]; proj(wx[v], -o.base, wz[v], q); ctx.lineTo(q[0], q[1]); }
+          ctx.closePath(); ctx.fill();
+          ctx.strokeStyle = "rgba(80,64,44,.45)"; ctx.lineWidth = 1; ctx.stroke();
+        });
+      };
+      /* 등고선(그 높이를 지나는 칸마다 선분): [칸, 점1, 점2] 목록 */
+      T.contour = function (level, lift) {
+        var out = [], y = level * o.hs + lift;
+        for (var jj = 0; jj < NZ; jj++) for (var ii = 0; ii < NX; ii++) {
+          var a = jj * VX + ii, idx = [a, a + 1, a + VX + 1, a + VX], ps = [];
+          for (var k = 0; k < 4; k++) {
+            var p1 = idx[k], p2 = idx[(k + 1) % 4], h1 = hm[p1], h2 = hm[p2];
+            if ((h1 - level) * (h2 - level) < 0) { var u = (level - h1) / (h2 - h1); ps.push([wx[p1] + (wx[p2] - wx[p1]) * u, y, wz[p1] + (wz[p2] - wz[p1]) * u]); }
+          }
+          if (ps.length >= 2) out.push([jj * NX + ii, ps[0], ps[1]]);
+          if (ps.length === 4) out.push([jj * NX + ii, ps[2], ps[3]]);
+        }
+        return out;
+      };
+      T.recolor();
+      return T;
+    }
+    /* 캔버스 그리기 도우미 */
+    function wline(T, a, b, color, w, dash) {
+      var p = T.P(a[0], a[1], a[2]), q = T.P(b[0], b[1], b[2]);
+      ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    function ctext(text, x, y, o) {
+      o = o || {};
+      ctx.font = (o.bold ? "700 " : "") + ((o.size || 13) * TS).toFixed(1) + "px " + FONT;
+      ctx.textAlign = o.align || "left"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+      if (o.pill) {
+        var w = ctx.measureText(text).width, x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
+        ctx.fillStyle = "rgba(255,255,255,.86)";
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x0 - 7, y - 11, w + 14, 22, 8); else ctx.rect(x0 - 7, y - 11, w + 14, 22);
+        ctx.fill();
+      } else {
+        ctx.lineWidth = o.halo || 4; ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.strokeText(text, x, y);
+      }
+      ctx.fillStyle = o.color || "#1d2126"; ctx.fillText(text, x, y);
+      return ctx.measureText(text).width;
+    }
+    function backdrop(rect) {
+      var g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+      g.addColorStop(0, "#f4f9fe"); g.addColorStop(1, "#e2edf7");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 12); else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.fill();
+    }
+    function shadow(T, rx, rz, base) {
+      var p = T.P(0, -base, 0);
+      ctx.fillStyle = "rgba(30,40,60,.07)";
+      ctx.beginPath(); ctx.ellipse(p[0], p[1] + 8, rx * T.k * 0.8, Math.max(6, rz * T.k * Math.sin(T.pitch * RAD) * 0.75), 0, 0, 2 * Math.PI); ctx.fill();
+    }
+    var rq = 0, retry = 0, layer = document.createElement("canvas"), layerKey = "";
+    function requestRender() { if (!rq) rq = requestAnimationFrame(function () { rq = 0; render(); }); }
+    function render() {
+      var sc = view === "alt" ? alt : wind, rect = svgRect(sc.svg, 20, 40, 960, sc.rh);
+      /* 처음 열 때 SVG 배치가 끝나기 전이면 다음 프레임에 다시 그림(최대 60번) */
+      if (!rect || rect.w < 20 || rect.h < 20) { if (retry++ < 60) requestRender(); return; }
+      retry = 0;
+      TS = clamp(rect.w / 900, 0.72, 1.1);
+      var key = [view, sc.T.yaw.toFixed(2), sc.T.pitch.toFixed(2), sc.T.lod, CW, CH, DPR, rect.x.toFixed(1), rect.y.toFixed(1), rect.w.toFixed(1), rect.h.toFixed(1), sc.skey()].join("|");
+      var main = ctx;
+      if (key !== layerKey) {
+        if (layer.width !== cv.width || layer.height !== cv.height) { layer.width = cv.width; layer.height = cv.height; }
+        ctx = layer.getContext("2d");
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, CW, CH);
+        sc.renderStatic(rect);
+        ctx = main; layerKey = key;
+      }
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(layer, 0, 0);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      sc.renderDynamic(rect);
+    }
+
+    /* ================= 보기 ① 높이 올라가면 ================= */
+    var alt = (function () {
+      var svg = S("svg", { "class": "tc-svg", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "해발 고도에 따른 기온과 식생대, 안데스산맥의 도시" }, views);
+      S("text", { x: 20, y: 30, "class": "tc-title" }, svg, "높이 올라가면");
+      S("text", { x: 150, y: 30, "class": "tc-tsub" }, svg, "적도 부근 안데스산맥의 예 · 예상 기온은 예시 모형입니다");
+      S("text", { x: 24, y: 418, "class": "tc-small" }, svg, "산의 색은 높이에 따른 식생대입니다. 경계 높이는 안데스의 예입니다.");
+
+      /* 3D 산: 가운데 봉우리 5,000m, 둘레는 해발 100m 저지대(열대 우림). 산등성이와 작은 굴곡을 더함 */
+      var CX = 0.05, CZ = 0.05, R = 0.88, HSA = 1.05 / MAXH;
+      function hf(x, z) {
+        var dx = x - CX, dz = z - CZ, r = Math.sqrt(dx * dx + dz * dz), u = clamp(1 - r / R, 0, 1);
+        if (u <= 0) return BASE_ALT;
+        var th = Math.atan2(dz, dx), q = r / R, m = 1 + 0.1 * Math.sin(3 * th + 0.6) * q + 0.05 * Math.sin(5 * th + 1.3) * q;
+        var nz = 0.035 * Math.sin(7.3 * x + 1.1) * Math.sin(6.1 * z + 0.4) * Math.min(1, r / 0.2);
+        return BASE_ALT + (MAXH - BASE_ALT) * clamp(Math.pow(u, 1.35) * m + nz * u, 0, 1);
+      }
+      var VC = VEG.map(function (v) { return hexRGB(v[3]); });
+      /* 식생대 색: 경계 위아래 120m는 두 색을 섞어 부드럽게 */
+      function vegColor(h) {
+        for (var i = 0; i < VEG.length; i++) {
+          if (h < VEG[i][1] || i === VEG.length - 1) {
+            var top = VEG[i][1], c = VC[i];
+            if (i < VEG.length - 1 && h > top - 120) c = mix(c, VC[i + 1], (h - (top - 120)) / 240);
+            if (i > 0 && h < VEG[i][0] + 120) c = mix(VC[i - 1], c, 0.5 + (h - VEG[i][0]) / 240);
+            return c;
+          }
+        }
+        return VC[VC.length - 1];
+      }
+      var T = makeTerrain({ nx: 56, nz: 56, x0: -1, x1: 1, z0: -1, z1: 1, hf: hf, hs: 1.05 / MAXH, hmax: MAXH, rx: 1.414, base: 0.07, fill: 0.9, vy: 0.53,
+        yaw: -14, pitch: 22, wall: ["#a8916c", "#bba684"], color: function (h) { return vegColor(h); } });
+      function rad(th, r) { return [CX + r * Math.cos(th), CZ + r * Math.sin(th)]; }
+      /* 봉우리에서 방향 th로 나간 선 위에서 높이가 alt인 곳까지의 거리 */
+      function rAtAlt(th, a) {
+        var r0 = R + 0.06, p0 = rad(th, r0), h0 = hf(p0[0], p0[1]);
+        if (h0 >= a) return r0;
+        for (var k = 1; k <= 300; k++) {
+          var r = r0 * (1 - k / 300), p = rad(th, r), h = hf(p[0], p[1]);
+          if (h >= a) { var u = (a - h0) / ((h - h0) || 1), rr = r0 + (r - r0) * u; return rr; }
+          r0 = r; h0 = h;
+        }
+        return 0;
+      }
+      function onGround(th, a, lift) { var r = rAtAlt(th, a), p = rad(th, r); return [p[0], T.Y(p[0], p[1]) + (lift || 0), p[1]]; }
+      /* 등산로: 봉우리에서 왼쪽 앞으로 뻗은 등성이. 25m마다 미리 위치를 구해 둠 */
+      var TH_H = Math.atan2(-0.62, -0.78), TRAIL = [];
+      for (var ha = 0; ha <= MAXH; ha += 25) TRAIL.push(onGround(TH_H, Math.max(ha, BASE_ALT + 1), 0.006).concat([ha]));
+      function trailAt(a) { return TRAIL[clamp(Math.round(a / 25), 0, TRAIL.length - 1)]; }
+      /* 도시 핀: 고산 도시는 오른쪽 앞 비탈, 이키토스는 저지대 */
+      var CITY_TH = { Bogota: 0.3, Quito: -0.18, Cusco: -0.62, La_Paz: -1.02 };
+      var PINS = CITY_ALT.map(function (ca) {
+        var c = C(ca[0]), w = ca[0] === "Iquitos" ? [0.8, T.Y(0.8, -0.74), -0.74] : onGround(CITY_TH[ca[0]], ca[1], 0);
+        return { id: ca[0], c: c, alt: ca[1], w: w, txt: c.kr + " · " + (ca[1] >= 3400 ? "약 " : "") + meters(ca[1]) + " · " + deg(mean(c.t)) };
+      });
+
+      /* 아래: 이키토스와 고른 도시의 월평균 기온 */
+      var IQ = C("Iquitos"), IQC = "#2f9e44", CC = "#7048e8";
+      var chart = makeTempChart(svg, 100, 560, 456, 590, 0, 30, 10, "월평균 기온(℃)");
+      var lg = [IQC, CC].map(function (col, i) {
+        var x = 300 + i * 120;
+        S("line", { x1: x, x2: x + 24, y1: 440, y2: 440, stroke: col, "stroke-width": 3.5, "stroke-linecap": "round" }, svg);
+        return S("text", { x: x + 30, y: 444, "class": "tc-tick" }, svg, "");
+      });
+      var cmp = [0, 1, 2, 3].map(function (i) { return S("text", { x: 620, y: 482 + i * 28, "class": "tc-cmp" + (i === 3 ? " big" : "") }, svg, ""); });
+
+      var A = { svg: svg, T: T, h: 100, cmp: "Quito", stop: function () {}, playing: false, hp: null, pins: [], yaw0: -14, pitch0: 22 };
+      A.set = function (hh) {
+        A.h = clamp(Math.round(hh / 10) * 10, 0, MAXH);
+        $(".tc-hrange").value = String(A.h);
+        setText($(".tc-hval"), meters(A.h));
+        if (view === "alt") readAlt();
+        requestRender();
+      };
+      A.temp = function (hh) { return mean(IQ.t) - (hh - BASE_ALT) / 100 * LAPSE; };
+      A.zone = function (hh) { for (var i = 0; i < VEG.length; i++) if (hh < VEG[i][1]) return VEG[i]; return VEG[VEG.length - 1]; };
+      A.setCmp = function (id) {
+        if (id === "Iquitos" || !C(id)) id = A.cmp;
+        A.cmp = id;
+        var c = C(id), ca = CITY_ALT.filter(function (q) { return q[0] === id; })[0];
+        chart.lines.textContent = "";
+        chart.line(IQ, IQC);
+        chart.line(c, CC);
+        chart.rows = function () { return [[IQC, IQ], [CC, c]]; };
+        chart.refresh();
+        if (A.ready) updModel();
+        lg[0].textContent = IQ.kr; lg[1].textContent = c.kr;
+        var dh = ca[1] - BASE_ALT, dt = mean(IQ.t) - mean(c.t);
+        cmp[0].textContent = IQ.kr + " · " + latTxt(IQ) + " · 해발 약 " + meters(BASE_ALT) + " · 연평균 " + deg(mean(IQ.t));
+        cmp[1].textContent = c.kr + " · " + latTxt(c) + " · 해발 " + (ca[1] >= 3400 ? "약 " : "") + meters(ca[1]) + " · 연평균 " + deg(mean(c.t));
+        cmp[2].textContent = "두 도시 모두 1년 내내 기온이 거의 같습니다.";
+        cmp[3].textContent = "높이 차 " + meters(dh) + " → 기온 차 " + f1(dt) + "℃";
+        $$(".tc-citybtns .tc-btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-city") === id ? "true" : "false"); });
+        requestRender();
+      };
+      A.pick = function (id) {
+        var ca = CITY_ALT.filter(function (q) { return q[0] === id; })[0];
+        if (!ca) return;
+        A.halt();
+        A.setCmp(id);
+        if (RM) { A.set(ca[1]); return; }
+        A.stop = tween(A.h, ca[1], 900, A.set);
+        if (id === "Iquitos") $$(".tc-citybtns .tc-btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-city") === id ? "true" : "false"); });
+      };
+      A.halt = function () { A.stop(); A.playing = false; $(".tc-hplay").textContent = "높이 단계 재생"; };
+      A.play = function () {
+        if (A.playing) { A.halt(); return; }
+        var HS = [100, 1000, 2000, 3000, 4000, 5000], k = 0;
+        A.stop();
+        A.playing = true;
+        $(".tc-hplay").textContent = "멈춤";
+        function next() {
+          if (!A.playing) return;
+          if (k >= HS.length) { A.halt(); return; }
+          var to = HS[k++];
+          A.stop = tween(A.h, to, RM ? 1 : 1100, A.set, function () { var id = setTimeout(next, 900); A.stop = function () { clearTimeout(id); }; });
+        }
+        next();
+      };
+
+      A.rh = 362;
+      A.skey = function () { return A.cmp; };
+      /* 시점이 그대로인 동안 다시 그리지 않는 층: 바탕 · 산 · 등산로 · 핀 · 높이 자 · 이름 */
+      A.renderStatic = function (rect) {
+        backdrop(rect);
+        T.fit(rect);
+        shadow(T, 1.05, 1.05, 0.07);
+        var ex = [], k;
+        for (k = 0; k < TRAIL.length - 1; k += 2) {
+          (function (a, b) { ex.push([T.cell((a[0] + b[0]) / 2, (a[2] + b[2]) / 2), function () { wline(T, a, b, "rgba(52,58,64,.55)", 1.6, [4, 4]); }]); })(TRAIL[k], TRAIL[Math.min(k + 2, TRAIL.length - 1)]);
+        }
+        /* 도시 핀: 봉우리보다 앞쪽(시선 쪽)에 있으면 산을 다 그린 뒤 맨 위에, 뒤쪽이면 칸 순서대로(산에 가려짐) */
+        A.pins = [];
+        var dPeak = T.P(CX, 0, CZ)[2], late = [];
+        A.dPeak = dPeak;
+        PINS.forEach(function (pn) {
+          var top = [pn.w[0], pn.w[1] + 0.11, pn.w[2]], on = pn.id === A.cmp, front = T.P(pn.w[0], pn.w[1], pn.w[2])[2] < dPeak;
+          (front ? function (fn) { late.push(fn); } : function (fn) { ex.push([T.cell(pn.w[0], pn.w[2]), fn]); })(function () {
+            wline(T, pn.w, top, "#495057", 1.6);
+            var p2 = T.P(top[0], top[1], top[2]);
+            ctx.beginPath(); ctx.arc(p2[0], p2[1], on ? 7 : 6, 0, 2 * Math.PI);
+            ctx.fillStyle = on ? "#1f6feb" : "#fff"; ctx.fill();
+            ctx.lineWidth = 2.5; ctx.strokeStyle = on ? "#fff" : "#495057"; ctx.stroke();
+          });
+          var hp = T.P(top[0], top[1], top[2]);
+          A.pins.push({ id: pn.id, x: hp[0], y: hp[1], d: T.P(pn.w[0], pn.w[1], pn.w[2])[2], pn: pn, on: on });
+        });
+        T.draw(ex);
+        late.forEach(function (fn) { fn(); });
+
+        /* 높이 자: 화면 왼쪽에 가장 가까운 모서리 */
+        var corners = [[-1, -1], [1, -1], [1, 1], [-1, 1]], best = null;
+        corners.forEach(function (q) { var pq = T.P(q[0], 0, q[1]); if (!best || pq[0] < best.p[0]) best = { q: q, p: pq }; });
+        var cx0 = best.q[0], cz0 = best.q[1];
+        wline(T, [cx0, 0, cz0], [cx0, MAXH * HSA, cz0], "rgba(73,80,87,.7)", 1.5);
+        /* 높이 자 옆 식생대 띠와 이름 */
+        VEG.forEach(function (v) {
+          var b0 = T.P(cx0, v[0] * HSA, cz0), b1 = T.P(cx0, Math.min(v[1], MAXH) * HSA, cz0), bm = T.P(cx0, (v[0] + Math.min(v[1], MAXH)) / 2 * HSA, cz0);
+          ctx.strokeStyle = v[3]; ctx.lineWidth = 7; ctx.lineCap = "butt";
+          ctx.beginPath(); ctx.moveTo(b0[0] + 6, b0[1]); ctx.lineTo(b1[0] + 6, b1[1]); ctx.stroke();
+          ctx.strokeStyle = "rgba(73,80,87,.35)"; ctx.lineWidth = 1;
+          ctx.strokeRect(Math.min(b0[0], b1[0]) + 2.5, b1[1], 7, b0[1] - b1[1]);
+          ctext(v[2], bm[0] + 15, bm[1], { size: 12, bold: true, color: "#2b2f33" });
+        });
+        for (var hh = 0; hh <= MAXH; hh += 1000) {
+          var tp = T.P(cx0, hh * HSA, cz0);
+          ctx.strokeStyle = "rgba(73,80,87,.7)"; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(tp[0] - 5, tp[1]); ctx.lineTo(tp[0] + 5, tp[1]); ctx.stroke();
+          ctext(hh.toLocaleString("ko-KR") + (hh === MAXH ? "m" : ""), tp[0] - 8, tp[1], { align: "right", size: 12, color: "#5b636d" });
+        }
+
+        /* 도시 이름: 겹치지 않게 아래로 밀고, 밀린 이름은 핀과 선으로 이음 */
+        var labs = A.pins.slice().sort(function (a, b) { return a.y - b.y; }), lastY = -1e9;
+        labs.forEach(function (l) {
+          var y = Math.max(l.y - 4, lastY + 17 * TS); lastY = y;
+          ctx.font = (l.on ? "700 " : "") + (13.5 * TS).toFixed(1) + "px " + FONT;
+          var w = ctx.measureText(l.pn.txt).width, right = l.x + 14 + w < rect.x + rect.w - 6, x = right ? l.x + 14 : l.x - 14;
+          ctx.globalAlpha = l.d > dPeak + 0.15 && l.id !== "Iquitos" ? 0.45 : 1;
+          if (Math.abs(y - (l.y - 4)) > 3) { ctx.strokeStyle = "#868e96"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(l.x + (right ? 7 : -7), l.y); ctx.lineTo(x + (right ? -3 : 3), y); ctx.stroke(); }
+          ctext(l.pn.txt, x, y, { align: right ? "left" : "right", bold: l.on, size: 13.5, color: l.on ? "#1f6feb" : "#1d2126" });
+          ctx.globalAlpha = 1;
+        });
+        ctext("끌어서 돌려 봅니다 · 등산객(●)을 끌면 높이가 바뀝니다 · 핀을 누르면 그 도시 높이로 갑니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+      };
+      /* 매번 그리는 것: 지금 높이의 등고선(시선 쪽 비탈만) · 등산객 · 온도계 */
+      A.renderDynamic = function () {
+        if (A.h > BASE_ALT + 40 && A.h < MAXH - 30) {
+          T.contour(A.h, 0.005).forEach(function (sg) {
+            if (!T.facing(sg[0])) return;
+            wline(T, sg[1], sg[2], "rgba(255,255,255,.9)", 4.2); wline(T, sg[1], sg[2], "#1f6feb", 2.2);
+          });
+        }
+        var hw = trailAt(A.h), hps = T.P(hw[0], hw[1], hw[2]);
+        A.hp = hps[2] < A.dPeak ? hps : null;
+        if (!A.hp) return;
+        ctx.beginPath(); ctx.arc(hps[0], hps[1] - 2, 9, 0, 2 * Math.PI);
+        ctx.fillStyle = "#343a40"; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = document.activeElement === cv ? "#1f6feb" : "#fff"; ctx.stroke();
+        var t = A.temp(A.h), tx = hps[0] - 30, ty = hps[1] - 8, lvH = clamp((t + 5) / 35, 0.06, 1) * 40;
+        ctx.fillStyle = "#fff"; ctx.strokeStyle = "#adb5bd"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(tx - 6, ty - 50, 12, 46, 6); else ctx.rect(tx - 6, ty - 50, 12, 46); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = tColor(t);
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(tx - 3, ty - 6 - lvH, 6, lvH + 4, 3); else ctx.rect(tx - 3, ty - 6 - lvH, 6, lvH + 4); ctx.fill();
+        ctx.beginPath(); ctx.arc(tx, ty, 7.5, 0, 2 * Math.PI); ctx.fill();
+        ctext(deg(t), tx - 12, ty - 26, { align: "right", bold: true, size: 17, halo: 5 });
+      };
+      /* 누른 곳이 등산객 · 핀 · 빈 곳 중 어디인지 */
+      A.hit = function (x, y) {
+        if (A.hp && Math.hypot(x - A.hp[0], y - A.hp[1] + 2) < 18) return "hiker";
+        for (var i = 0; i < A.pins.length; i++) if (Math.hypot(x - A.pins[i].x, y - A.pins[i].y) < 13) return { pin: A.pins[i].id };
+        return "rot";
+      };
+      A.dragTo = function (x, y) {
+        var best = 0, bd = 1e9;
+        for (var i = 0; i < TRAIL.length; i++) { var p = T.P(TRAIL[i][0], TRAIL[i][1], TRAIL[i][2]), d = (p[0] - x) * (p[0] - x) + (p[1] - y) * (p[1] - y); if (d < bd) { bd = d; best = TRAIL[i][3]; } }
+        A.set(best);
+      };
+      return A;
+    })();
+
+    /* ================= 보기 ② 산을 넘는 바람 (예시 모형) ================= */
+    var wind = (function () {
+      var svg = S("svg", { "class": "tc-svg tc-wsvg tc-off", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "산을 넘는 공기 덩어리의 기온과 습도 변화" }, views);
+      S("text", { x: 20, y: 30, "class": "tc-title" }, svg, "산을 넘는 바람");
+      S("text", { x: 160, y: 30, "class": "tc-tsub" }, svg, "공기 덩어리의 움직임 (예시 모형)");
+
+      /* 3D 산맥: 남북으로 길게 뻗은 꼭대기 2,000m 산줄기. 바람은 서 → 동(또는 반대)으로 산줄기를 넘음
+         지나는 길은 산줄기 가운데(z = 0)를 가로지름. s(0~1) → 진행 좌표 x = −1.25 ~ 1.25 */
+      var HW = 0.62;
+      function bell(u) { return Math.abs(u) < 1 ? 0.5 + 0.5 * Math.cos(Math.PI * u) : 0; }
+      function hf(x, z) { return TOP * bell(x / HW) * (1 + 0.07 * Math.sin(4.2 * z) + 0.035 * Math.sin(9.5 * z)); }
+      function stateAt(s) {
+        var x = -1.25 + 2.5 * clamp(s, 0, 1), z = clamp(hf(x, 0), 0, TOP);
+        return { x: x, m: model(z, x < 0) };
+      }
+      var sPeak = 0.5, sCond = (-HW / 2 + 1.25) / 2.5;
+      var W = { svg: svg, s: 0, f: 1, run: !RM, spd: 1, phase: 0, dry: false, pp: null, yaw0: -16, pitch0: 24 };
+      var WETL = hexRGB("#6fae63"), WETH = hexRGB("#a9cf9b"), DRYL = hexRGB("#c99a5b"), DRYH = hexRGB("#dcc08f"), GLOW = [255, 160, 70];
+      var T = makeTerrain({ nx: 64, nz: 36, x0: -1.3, x1: 1.3, z0: -0.75, z1: 0.75, hf: hf, hs: 0.42 / TOP, hmax: TOP, rx: 1.5, base: 0.06, fill: 0.95, vy: 0.52,
+        yaw: -16, pitch: 24, wall: ["#a8916c", "#bba684"],
+        color: function (h, x) {
+          var lee = x * W.f > 0, u = h / TOP, c = lee ? mix(DRYL, DRYH, u) : mix(WETL, WETH, u);
+          if (Math.abs(x) < 0.05) c = mix(mix(WETL, WETH, u), mix(DRYL, DRYH, u), 0.5 + x * W.f / 0.1);
+          if (lee && W.dry) c = mix(c, GLOW, 0.2);
+          return c;
+        } });
+      W.T = T;
+
+      /* 아래: 지나온 길의 공기 기온 · 상대 습도 */
+      var GX0 = 100, GX1 = 900, GY0 = 452, GY1 = 590, T0 = 5, T1 = 35, i;
+      function gx(s) { return GX0 + s * (GX1 - GX0); }
+      function gy(t) { return GY0 + (T1 - t) / (T1 - T0) * (GY1 - GY0); }
+      S("text", { x: 56, y: GY0 - 16, "class": "tc-tsub" }, svg, "공기의 기온(℃) · 상대 습도(%)");
+      /* 상대 습도: 오른쪽 눈금 0~100% */
+      function gyR(rh) { return GY0 + (100 - rh) / 100 * (GY1 - GY0); }
+      [100, 50, 0].forEach(function (v) { S("text", { x: GX1 + 8, y: f1(gyR(v) + 4.5), "class": "tc-rht" }, svg, v + "%"); });
+      for (var tv = 10; tv <= 30; tv += 10) {
+        S("line", { x1: GX0, x2: GX1, y1: f1(gy(tv)), y2: f1(gy(tv)), "class": "tc-grid" }, svg);
+        S("text", { x: GX0 - 8, y: f1(gy(tv) + 4.5), "text-anchor": "end", "class": "tc-tick" }, svg, String(tv));
+      }
+      S("line", { x1: GX0, x2: GX1, y1: GY1, y2: GY1, "class": "tc-axis" }, svg);
+      [[0, "출발"], [sCond, "구름이 생기기 시작"], [sPeak, "산꼭대기"], [1, "반대편 땅"]].forEach(function (q) {
+        S("line", { x1: f1(gx(q[0])), x2: f1(gx(q[0])), y1: GY0, y2: GY1, "class": "tc-mark" }, svg);
+        S("text", { x: f1(gx(q[0])), y: GY1 + 20, "text-anchor": q[0] === 0 ? "start" : q[0] === 1 ? "end" : "middle", "class": "tc-markt" }, svg, q[1]);
+      });
+      var plan = [], planR = [], NS_ = 240;
+      for (i = 0; i <= NS_; i++) { var st0 = stateAt(i / NS_); plan.push([gx(i / NS_), gy(st0.m.t)]); planR.push([gx(i / NS_), gyR(st0.m.rh)]); }
+      S("polyline", { points: pts(plan), "class": "tc-plan" }, svg);
+      S("polyline", { points: pts(planR), "class": "tc-planR" }, svg);
+      [[0, 60], [sPeak, 100], [1, 22]].forEach(function (q) {
+        S("text", { x: f1(gx(q[0]) + (q[0] === 1 ? -6 : 6)), y: f1(gyR(q[1]) + 18), "text-anchor": q[0] === 1 ? "end" : "start", "class": "tc-ptv rh" }, svg, q[1] + "%");
+      });
+      [[0, 25], [sPeak, 10], [1, 30]].forEach(function (q) {
+        S("text", { x: f1(gx(q[0]) + (q[0] === 1 ? -6 : 6)), y: f1(gy(q[1]) - 9), "text-anchor": q[0] === 1 ? "end" : "start", "class": "tc-ptv" }, svg, q[1] + "℃");
+      });
+      var traceR = S("polyline", { "class": "tc-traceR" }, svg);
+      var tdotR = S("circle", { r: 5.5, "class": "tc-tdotR" }, svg);
+      var trace = S("polyline", { "class": "tc-trace" }, svg);
+      var tdot = S("circle", { r: 6, "class": "tc-tdot" }, svg);
+      S("text", { x: GX1, y: GY0 - 16, "text-anchor": "end", "class": "tc-small" }, svg, "빨강: 기온 · 초록: 상대 습도 · 점선은 앞으로, 실선은 지나온 길");
+
+      W.draw = function () {
+        var st = stateAt(W.s), m = st.m;
+        var n = Math.round(W.s * NS_), tr = plan.slice(0, n + 1), trR = planR.slice(0, n + 1);
+        tr.push([gx(W.s), gy(m.t)]); trR.push([gx(W.s), gyR(m.rh)]);
+        trace.setAttribute("points", pts(tr));
+        attrs(tdot, { cx: f1(gx(W.s)), cy: f1(gy(m.t)) });
+        traceR.setAttribute("points", pts(trR));
+        attrs(tdotR, { cx: f1(gx(W.s)), cy: f1(gyR(m.rh)) });
+        $(".tc-srange").value = String(Math.round(W.s * 100));
+        setText($(".tc-sval"), m.up ? (m.z < 5 ? "산으로 감" : "바람받이") : (m.z < 5 ? "반대편 땅" : "비 그늘"));
+        var dry = !m.up && m.z < COND * 1.2;
+        if (dry !== W.dry) { W.dry = dry; T.recolor(); }
+        W.m = m;
+        if (view === "wind") readWind();
+        requestRender();
+      };
+      W.set = function (s) { W.s = clamp(s, 0, 1); W.draw(); };
+      W.update = function (dt) {
+        if (!W.run) return;
+        W.phase = (W.phase + dt * 0.04) % 1000;
+        var s = W.s + dt / 9000 * W.spd;
+        if (s > 1) s = 0;
+        W.set(s);
+      };
+      W.setFrom = function (from) {
+        W.f = from === "e" ? -1 : 1;
+        $$(".tc-fromseg .tc-segb").forEach(function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-from") === "e") === (W.f < 0) ? "true" : "false"); });
+        T.recolor();
+        W.draw();
+      };
+      function pw(s, lift) { var x = W.f * (-1.25 + 2.5 * s); return [x, T.Y(x, 0) + lift, 0]; }
+
+      var LANES = [-0.55, -0.22, 0.4];
+      function drawCloud(x, y, sc, alpha) {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#c3cad2";
+        [[-34, 8, 24], [0, -4, 32], [34, 8, 24], [0, 14, 22]].forEach(function (q) { ctx.beginPath(); ctx.arc(x + q[0] * sc, y + q[1] * sc, q[2] * sc, 0, 2 * Math.PI); ctx.fill(); });
+        ctx.fillStyle = "#eef1f4";
+        [[-30, 2, 18], [2, -8, 24], [30, 3, 17]].forEach(function (q) { ctx.beginPath(); ctx.arc(x + q[0] * sc, y + q[1] * sc, q[2] * sc, 0, 2 * Math.PI); ctx.fill(); });
+        ctx.globalAlpha = 1;
+      }
+      W.rh = 360;
+      W.skey = function () { return W.f + "|" + W.dry; };
+      /* 시점이 그대로인 동안 다시 그리지 않는 층: 바탕 · 산맥 · 응결 고도 · 바람 띠 · 이름 */
+      W.renderStatic = function (rect) {
+        backdrop(rect);
+        T.fit(rect);
+        shadow(T, 1.35, 0.8, 0.06);
+        var f = W.f, ex = [];
+        T.contour(COND, 0.004).forEach(function (sg) { ex.push([sg[0], function () { wline(T, sg[1], sg[2], "rgba(66,99,235,.85)", 1.8, [6, 5]); }]); });
+        LANES.forEach(function (lz) {
+          var ptsW = [];
+          for (var x = -1.25; x <= 1.2501; x += 0.05) { var xx = f * x; ptsW.push([xx, T.Y(xx, lz) + 0.035, lz]); }
+          ptsW.forEach(function (a, k) {
+            if (!k) return;
+            var b = ptsW[k - 1], last = k === ptsW.length - 1;
+            ex.push([T.cell((a[0] + b[0]) / 2, lz), function () {
+              var pa = T.P(b[0], b[1], b[2]), cur = T.P(a[0], a[1], a[2]);
+              ctx.strokeStyle = "rgba(76,110,245,.8)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+              if (k % 3 !== 0) { ctx.beginPath(); ctx.moveTo(pa[0], pa[1]); ctx.lineTo(cur[0], cur[1]); ctx.stroke(); }
+              ctx.lineCap = "butt";
+              if (last) {
+                var dx = cur[0] - pa[0], dy = cur[1] - pa[1], l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, tip = [cur[0] + ux * 8, cur[1] + uy * 8];
+                ctx.fillStyle = "rgba(76,110,245,.95)";
+                ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.lineTo(tip[0] - ux * 14 - uy * 7, tip[1] - uy * 14 + ux * 7); ctx.lineTo(tip[0] - ux * 14 + uy * 7, tip[1] - uy * 14 - ux * 7); ctx.closePath(); ctx.fill();
+              }
+            }]);
+          });
+        });
+        T.draw(ex);
+        var wet = T.P(-0.9 * f, 0, -0.75), dryp = T.P(0.9 * f, 0, -0.75);
+        /* 이름표는 땅 앞쪽 가장자리 아래에 두되, 그림 칸 밖으로 나가지 않게 */
+        var lyMax = rect.y + rect.h - 40, wy0 = Math.min(wet[1] + 22, lyMax), dy0 = Math.min(dryp[1] + 22, lyMax);
+        ctext("바람받이 사면", wet[0], wy0, { align: "center", bold: true, size: 15, pill: true });
+        ctext("올라가며 식음 → 구름 · 비", wet[0], wy0 + 24, { align: "center", size: 12.5, color: "#5b636d", pill: true });
+        ctext("비 그늘", dryp[0], dy0, { align: "center", bold: true, size: 15, pill: true });
+        ctext("내려가며 데워짐 → 건조", dryp[0], dy0 + 24, { align: "center", size: 12.5, color: "#5b636d", pill: true });
+        var cl = T.P(-HW / 2 * f, COND * 0.42 / TOP, -0.75);
+        ctext("응결 고도 약 1,000m", cl[0] + (f > 0 ? -10 : 10), cl[1] - 12, { align: f > 0 ? "right" : "left", size: 12.5, color: "#4263eb" });
+        var pk = T.P(0, TOP * 0.42 / TOP + 0.02, 0.75);
+        ctext("산꼭대기 2,000m", pk[0], pk[1] - 12, { align: "center", size: 12, color: "#5b636d" });
+        var w0 = T.P(-1.25 * f, T.Y(-1.25 * f, LANES[0]) + 0.035, LANES[0]);
+        ctext("바람", w0[0], w0[1] - 14, { align: "center", bold: true, size: 14, color: "#3b5bdb" });
+        ctext("끌어서 돌려 봅니다 · 공기 덩어리를 끌어 옮길 수 있습니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+      };
+      /* 매번 그리는 것: 구름 · 비 · 공기 덩어리(바람받이 쪽 앞에서 보이도록 돌리는 범위를 ±40°로 묶음) */
+      W.renderDynamic = function () {
+        var f = W.f, st = stateAt(W.s), m = st.m, raining = m.up && m.z > COND;
+        [-0.5, -0.12, 0.28, 0.58].forEach(function (cz, ci) {
+          var cx2 = f * (-0.3 - (ci % 2) * 0.06), cy2 = 1500 * 0.42 / TOP + 0.05 + (ci % 2) * 0.03;
+          var p = T.P(cx2, cy2, cz), sc = 0.0012 * T.k * p[3];
+          if (raining) {
+            ctx.strokeStyle = "rgba(77,171,247,.9)"; ctx.lineWidth = 2; ctx.setLineDash([7, 8]); ctx.lineDashOffset = -W.phase * 1.4;
+            for (var r = -2; r <= 2; r++) {
+              var gx2 = cx2 + f * r * 0.035, gz2 = cz + r * 0.02, top = T.P(gx2, cy2 - 0.03, gz2), bot = T.P(gx2 - f * 0.02, T.Y(gx2 - f * 0.02, gz2) + 0.004, gz2);
+              ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(bot[0], bot[1]); ctx.stroke();
+            }
+            ctx.setLineDash([]);
+          }
+          drawCloud(p[0], p[1], sc, raining ? 1 : 0.42);
+        });
+        var pwN = pw(W.s, 0.075), pg = T.P(pwN[0], T.Y(pwN[0], 0) + 0.004, 0), pp = T.P(pwN[0], pwN[1], pwN[2]), rr = 0.065 * T.k * pp[3];
+        W.pp = [pp[0], pp[1], rr];
+        ctx.fillStyle = "rgba(30,40,60,.18)";
+        ctx.beginPath(); ctx.ellipse(pg[0], pg[1], rr * 0.9, rr * 0.35, 0, 0, 2 * Math.PI); ctx.fill();
+        var sat = m.rh >= 99.5, base = sat ? [222, 226, 230] : tColor(m.t).match(/\d+/g).map(Number);
+        var gr = ctx.createRadialGradient(pp[0] - rr * 0.35, pp[1] - rr * 0.4, rr * 0.1, pp[0], pp[1], rr);
+        gr.addColorStop(0, rgb(base, 1.25)); gr.addColorStop(1, rgb(base, 0.85));
+        ctx.fillStyle = gr;
+        ctx.beginPath(); ctx.arc(pp[0], pp[1], rr, 0, 2 * Math.PI); ctx.fill();
+        ctx.lineWidth = 2.5; ctx.strokeStyle = document.activeElement === cv ? "#1f6feb" : "#fff"; ctx.stroke();
+        ctext(Math.round(m.t) + "℃", pp[0], pp[1] + 1, { align: "center", bold: true, size: 12.5, color: sat ? "#343a40" : "#fff", halo: 0.01 });
+      };
+      W.hit = function (x, y) { return W.pp && Math.hypot(x - W.pp[0], y - W.pp[1]) < W.pp[2] + 8 ? "parcel" : "rot"; };
+      W.dragTo = function (x, y) {
+        var best = W.s, bd = 1e9;
+        for (var k = 0; k <= NS_; k++) { var a = pw(k / NS_, 0.075), p = T.P(a[0], a[1], a[2]), d = (p[0] - x) * (p[0] - x) + (p[1] - y) * (p[1] - y); if (d < bd) { bd = d; best = k / NS_; } }
+        W.set(best);
+      };
+      return W;
+    })();
+
+    /* ================= 3D 조작: 끌어 돌리기 · 등산객/공기 덩어리 끌기 · 핀 누르기 · 키보드 ================= */
+    (function () {
+      var mode = null, st = null;
+      function scene() { return view === "alt" ? alt : wind; }
+      function local(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+      function turn(T, dyaw, dpitch) {
+        T.yaw += dyaw;
+        if (view === "wind") T.yaw = clamp(T.yaw, -40, 40);
+        T.pitch = clamp(T.pitch + dpitch, 12, 65);
+        requestRender();
+      }
+      cv.addEventListener("pointerdown", function (e) {
+        var p = local(e), sc = scene();
+        mode = sc.hit(p[0], p[1]);
+        st = { x: e.clientX, y: e.clientY, yaw: sc.T.yaw, pitch: sc.T.pitch, moved: false };
+        if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+        if (mode === "hiker") alt.halt();
+        if (mode === "parcel") { wind.run = false; syncWPlay(); }
+        e.preventDefault();
+      });
+      cv.addEventListener("pointermove", function (e) {
+        var p = local(e), sc = scene();
+        if (!mode) {
+          var h = sc.hit(p[0], p[1]);
+          cv.style.cursor = h === "rot" ? "grab" : h === "hiker" ? "ns-resize" : "pointer";
+          return;
+        }
+        var dx = e.clientX - st.x, dy = e.clientY - st.y;
+        if (Math.abs(dx) + Math.abs(dy) > 4) st.moved = true;
+        if (mode === "hiker") alt.dragTo(p[0], p[1]);
+        else if (mode === "parcel") wind.dragTo(p[0], p[1]);
+        else if (st.moved) { cv.style.cursor = "grabbing"; sc.T.lod = true; sc.T.yaw = st.yaw; sc.T.pitch = st.pitch; turn(sc.T, dx * 0.4, dy * 0.25); }
+      });
+      function end() {
+        if (mode && mode.pin && !st.moved) alt.pick(mode.pin);
+        /* 끄기를 마치면 촘촘한 칸으로 다시 그림 */
+        if (alt.T.lod || wind.T.lod) { alt.T.lod = false; wind.T.lod = false; requestRender(); }
+        mode = null;
+        cv.style.cursor = "grab";
+      }
+      cv.addEventListener("pointerup", end);
+      cv.addEventListener("pointercancel", end);
+      cv.addEventListener("focus", requestRender);
+      cv.addEventListener("blur", requestRender);
+      cv.addEventListener("keydown", function (e) {
+        var k = e.key, sc = scene();
+        if (view === "alt") {
+          if (k === "ArrowUp" || k === "ArrowDown") { alt.halt(); alt.set(alt.h + (k === "ArrowUp" ? 100 : -100)); }
+          else if (k === "PageUp" || k === "PageDown") { alt.halt(); alt.set(alt.h + (k === "PageUp" ? 1000 : -1000)); }
+          else if (k === "Home" || k === "End") { alt.halt(); alt.set(k === "Home" ? 0 : MAXH); }
+          else if (k === "ArrowLeft" || k === "ArrowRight") turn(sc.T, k === "ArrowLeft" ? -10 : 10, 0);
+          else return;
+        } else {
+          if (k === "ArrowLeft" || k === "ArrowRight") { wind.run = false; syncWPlay(); wind.set(wind.s + (k === "ArrowRight" ? 0.02 : -0.02)); }
+          else if (k === "Home" || k === "End") { wind.run = false; syncWPlay(); wind.set(k === "Home" ? 0 : 1); }
+          else if (k === "ArrowUp" || k === "ArrowDown") turn(sc.T, 0, k === "ArrowUp" ? 5 : -5);
+          else return;
+        }
+        e.preventDefault();
+      });
+      $(".tc-resetview").addEventListener("click", function () {
+        var sc = scene();
+        sc.T.yaw = sc.yaw0; sc.T.pitch = sc.pitch0;
+        requestRender();
+      });
+    })();
+
+    /* ================= 패널: 읽은 값 ================= */
+    var elReadH = $(".tc-readh"), elRes = $(".tc-result"), elRk = $(".tc-rk"), elRt = $(".tc-rt"), elNote = $(".tc-readnote");
+    var K_ = [1, 2, 3, 4].map(function (i) { return { k: $(".tc-k" + i), v: $(".tc-v" + i) }; });
+    function stat(i, k, v, cls) {
+      var c = "tc-v tc-v" + (i + 1) + (cls ? " " + cls : "");
+      setText(K_[i].k, k); setText(K_[i].v, v);
+      if (K_[i].v.className !== c) K_[i].v.className = c;
+    }
+    function readAlt() {
+      var h = alt.h, t = alt.temp(h), z = alt.zone(h), d = mean(C("Iquitos").t) - t;
+      setText(elReadH, "읽은 값 · 해발 고도");
+      stat(0, "해발 고도", meters(h), "");
+      stat(1, "예상 연평균 기온", deg(t), t < 15 ? "cold" : "warm");
+      stat(2, "식생대", z[2], "");
+      stat(3, "이키토스와 차이", d > 0.05 ? f1(d) + "℃ 낮음" : "거의 같음", "cold");
+      var near = CITY_ALT.filter(function (q) { return Math.abs(q[1] - h) <= 50; })[0];
+      var key = "alt" + h + "_" + LAPSE;
+      if (elRes.getAttribute("data-k") !== key) {
+        elRes.setAttribute("data-k", key);
+        elRes.className = "tc-result " + (t < 15 ? "mild" : "hot");
+        elRk.textContent = "해발 " + meters(h) + "에서는 약 " + deg(t) + "입니다";
+        elRt.textContent = "높이 올라갈수록 기온이 내려갑니다. 100m마다 약 0.5~0.6℃씩 낮아져, 적도 부근이라도 높은 곳은 서늘합니다." +
+          (near ? " 실제 " + C(near[0]).kr + "의 연평균 기온은 " + deg(mean(C(near[0]).t)) + "입니다." : "");
+      }
+      setText(elNote, "예상 기온은 이키토스(해발 약 100m)에서 100m마다 " + LAPSE + "℃씩 낮아진다고 가정한 값입니다. 도시 기온은 WMO 기후 평년값입니다.");
+    }
+    var PHASE = {
+      go: ["바람이 산으로 불어 갑니다", "바다 쪽에서 온 습한 공기가 산을 만납니다.", "mild"],
+      up: ["올라가며 식습니다", "공기가 산을 타고 오르면 100m마다 약 1℃씩 식습니다.", "mild"],
+      rain: ["구름이 생기고 비가 내립니다", "공기가 충분히 식으면 수증기가 물방울이 되어 구름과 비가 생깁니다. 구름 속에서는 100m마다 약 0.5℃씩 식습니다. 바람받이 사면에 비가 많은 까닭입니다.", "mild"],
+      down: ["내려가며 데워집니다", "산을 넘은 공기는 내려가면서 100m마다 약 1℃씩 데워집니다. 수증기는 이미 비로 내렸으므로 공기가 메말라 갑니다.", "hot"],
+      lee: ["덥고 메마른 바람이 붑니다", "출발할 때 25℃였던 공기가 산을 넘은 뒤 30℃가 되었습니다. 비 그늘은 비가 적고 건조합니다.", "hot"]
+    };
+    function readWind() {
+      var m = wind.m;
+      if (!m) return;
+      setText(elReadH, "읽은 값 · 공기 덩어리");
+      stat(0, "공기의 고도", meters(Math.round(m.z / 10) * 10), "");
+      stat(1, "공기의 기온", deg(m.t), m.t >= 20 ? "warm" : "cold");
+      stat(2, "상대 습도", Math.round(m.rh) + "%", m.rh >= 70 ? "wet" : "dry");
+      stat(3, "상태", m.z < 5 ? (m.up ? "산으로 감" : "고온 건조") : m.st, "");
+      var ph = m.up ? (m.z < 5 ? "go" : m.z <= COND ? "up" : "rain") : (m.z < 5 ? "lee" : "down");
+      if (elRes.getAttribute("data-k") !== ph) {
+        elRes.setAttribute("data-k", ph);
+        elRes.className = "tc-result " + PHASE[ph][2];
+        elRk.textContent = PHASE[ph][0];
+        elRt.textContent = PHASE[ph][1];
+      }
+      setText(elNote, "기온과 습도는 산을 넘는 공기를 단순하게 나타낸 예시 모형입니다.");
+    }
+
+    /* 모형과 실제: 도시마다 예상 기온(지금 감률)과 실제 연평균, 차이(실제 − 예상) */
+    function modelGap(lapse) {
+      var base = mean(C("Iquitos").t), hs = CITY_ALT.slice(1);
+      return hs.reduce(function (s, ca) { return s + Math.abs(mean(C(ca[0]).t) - (base - (ca[1] - BASE_ALT) / 100 * lapse)); }, 0) / hs.length;
+    }
+    function updModel() {
+      var tab = $(".tc-mtab");
+      tab.textContent = "";
+      ["도시", "해발", "예상", "실제", "차이"].forEach(function (h) { E("div", "tc-mc hd", tab, h); });
+      CITY_ALT.forEach(function (ca, i) {
+        var c = C(ca[0]), real = mean(c.t), pred = alt.temp(ca[1]), d = real - pred, now = ca[0] === alt.cmp ? " now" : "";
+        E("div", "tc-mc" + now, tab, c.kr);
+        E("div", "tc-mc" + now, tab, (ca[1] >= 3400 ? "약 " : "") + meters(ca[1]));
+        E("div", "tc-mc" + now, tab, i ? deg(pred) : "기준");
+        E("div", "tc-mc" + now, tab, deg(real));
+        E("div", "tc-mc" + now + (i && Math.abs(d) >= 0.05 ? (d > 0 ? " up" : " down") : ""), tab, i ? (d > 0.05 ? "+" : "") + signed(d, 1) : "—");
+      });
+      var g5 = modelGap(0.5), g6 = modelGap(0.6);
+      $(".tc-mnote").textContent = "지금 계산과 실제의 평균 차이는 약 " + f1(modelGap(LAPSE)) + "℃입니다. 이 다섯 도시는 " + (g5 <= g6 ? "0.5" : "0.6") +
+        "℃로 계산한 값이 실제와 더 가깝습니다. 높이에 따라 내려가는 기온은 곳과 계절에 따라 조금씩 다릅니다.";
+    }
+
+    /* 비교 참고: 밴쿠버 · 덴버 1년 강수량 */
+    (function () {
+      var rc = $(".tc-shadowchart");
+      [["Vancouver", "#1c7ed6", 14], ["Denver", "#c2410c", 54]].forEach(function (q) {
+        var c = C(q[0]), v = sum(c.p), w = v / 1300 * 170;
+        S("text", { x: 0, y: q[2] + 15, "class": "tc-bn" }, rc, c.kr);
+        S("rect", { x: 56, y: q[2], width: f1(w), height: 22, rx: 5, fill: q[1] }, rc);
+        S("text", { x: f1(60 + w), y: q[2] + 16, "class": "tc-bvv" }, rc, v.toLocaleString("ko-KR") + "mm");
+      });
+      S("text", { x: 56, y: 90, "class": "tc-bvv" }, rc, "1년 강수량");
+    })();
+
+    /* ================= 애니메이션 ================= */
+    var raf = 0, lastT = 0;
+    function needAnim() { return view === "wind" && wind.run; }
+    function tick(t) {
+      raf = 0;
+      var dt = lastT ? Math.min(100, t - lastT) : 16;
+      lastT = t;
+      if (view === "wind") wind.update(dt);
+      if (needAnim()) raf = requestAnimationFrame(tick); else lastT = 0;
+    }
+    function kick() { if (!raf && needAnim()) { lastT = 0; raf = requestAnimationFrame(tick); } }
+
+    /* ================= 패널: 조작 ================= */
+    var vbtns = $$(".tc-vbtn"), vctls = $$(".tc-vctl"), auxs = $$(".tc-aux");
+    var svgs = { alt: alt.svg, wind: wind.svg };
+    function setView(v) {
+      if (!svgs[v]) v = "alt";
+      if (v !== "alt") alt.halt();
+      view = v;
+      Object.keys(svgs).forEach(function (k) { svgs[k].classList.toggle("tc-off", k !== v); });
+      vbtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-view") === v ? "true" : "false"); });
+      vctls.forEach(function (c) { c.classList.toggle("tc-off", c.getAttribute("data-for") !== v); });
+      auxs.forEach(function (c) { c.classList.toggle("tc-off", c.getAttribute("data-for") !== v); });
+      elRes.removeAttribute("data-k");
+      if (v === "alt") readAlt(); else readWind();
+      cv.setAttribute("aria-label", v === "alt"
+        ? "3D 산. 끌어서 돌려 봅니다. 위아래 화살표 키로 높이를 바꾸고, 왼쪽·오른쪽 화살표 키로 돌립니다."
+        : "3D 산맥을 넘는 공기 덩어리. 끌어서 돌려 봅니다. 왼쪽·오른쪽 화살표 키로 공기 덩어리를 옮기고, 위아래 화살표 키로 내려다보는 각도를 바꿉니다.");
+      requestRender();
+      kick();
+    }
+    vbtns.forEach(function (b) { b.addEventListener("click", function () { setView(b.getAttribute("data-view")); }); });
+
+    $(".tc-hrange").addEventListener("input", function (e) { alt.halt(); alt.set(Number(e.target.value)); });
+    $(".tc-hplay").addEventListener("click", function () { alt.play(); });
+    /* 감률(100m마다 내려가는 기온) 고르기: 예상 기온과 「모형과 실제」 표가 함께 바뀜 */
+    function setLapse(v) {
+      LAPSE = v === 0.6 ? 0.6 : 0.5;
+      $$(".tc-lapseseg .tc-segb").forEach(function (b) { b.setAttribute("aria-pressed", Number(b.getAttribute("data-lapse")) === LAPSE ? "true" : "false"); });
+      alt.set(alt.h);
+      updModel();
+    }
+    $$(".tc-lapseseg .tc-segb").forEach(function (b) { b.addEventListener("click", function () { setLapse(Number(b.getAttribute("data-lapse"))); }); });
+    CITY_ALT.forEach(function (ca) {
+      var c = C(ca[0]);
+      var b = E("button", "tc-btn", $(".tc-citybtns"), c.kr);
+      b.type = "button";
+      b.setAttribute("data-city", c.id);
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { alt.pick(c.id); });
+    });
+
+    var wPlay = $(".tc-wplay");
+    function syncWPlay() { wPlay.textContent = wind.run ? "멈춤" : "재생"; }
+    wPlay.addEventListener("click", function () { if (!wind.run && wind.s >= 1) wind.set(0); wind.run = !wind.run; syncWPlay(); kick(); });
+    $(".tc-wreset").addEventListener("click", function () { wind.set(0); kick(); });
+    $(".tc-srange").addEventListener("input", function (e) { wind.run = false; syncWPlay(); wind.set(Number(e.target.value) / 100); });
+    $$(".tc-fromseg .tc-segb").forEach(function (b) { b.addEventListener("click", function () { wind.setFrom(b.getAttribute("data-from")); }); });
+    $$(".tc-spdseg .tc-segb").forEach(function (b) {
+      b.addEventListener("click", function () {
+        wind.spd = Number(b.getAttribute("data-spd"));
+        $$(".tc-spdseg .tc-segb").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      });
+    });
+
+    /* 패널 위치 · 접기 · 끌어 옮기기 */
+    var panel = $(".tc-panel"), phead = $(".tc-head"), fold = $(".tc-fold");
+    var mode = "right", panelMoved = false;
+    var posBtns = $$(".tc-posseg .tc-segb");
+    function layout() {
+      if (mode === "float" && panelMoved) {
+        /* 화면이 줄어도 옮긴 플로팅 패널이 무대 밖으로 나가지 않게 */
+        var px = parseFloat(panel.style.left) || 0, py = parseFloat(panel.style.top) || 0;
+        panel.style.left = clamp(px, 0, Math.max(0, root.clientWidth - panel.offsetWidth)) + "px";
+        panel.style.top = clamp(py, 0, Math.max(0, root.clientHeight - Math.min(panel.offsetHeight, 60))) + "px";
+      }
+      /* 플로팅 패널 옆에 그림 자리가 280px 이상 남으면 그 자리에 맞춰 그림을 줄임(전에는 680px 미만에서 패널이 그림을 덮음) */
+      var pad = 18, side = panel.offsetWidth + 32;
+      if (mode === "float" && !panelMoved && !root.classList.contains("tc-collapsed") && views.clientWidth - side >= 280) pad = side;
+      views.style.paddingLeft = pad + "px";
+      sizeCanvas();
+      requestRender();
+    }
+    function setPanel(m) {
+      if (["right", "left", "float"].indexOf(m) < 0) m = "right";
+      mode = m; panelMoved = false;
+      root.classList.remove("tc-pos-right", "tc-pos-left", "tc-pos-float", "tc-collapsed");
+      root.classList.add("tc-pos-" + m);
+      panel.style.left = ""; panel.style.top = "";
+      fold.textContent = "접기";
+      fold.setAttribute("aria-expanded", "true");
+      posBtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-pos") === m ? "true" : "false"); });
+      layout();
+    }
+    posBtns.forEach(function (b) { b.addEventListener("click", function () { setPanel(b.getAttribute("data-pos")); }); });
+    fold.addEventListener("click", function () {
+      var c = root.classList.toggle("tc-collapsed");
+      fold.textContent = c ? "펴기" : "접기";
+      fold.setAttribute("aria-expanded", c ? "false" : "true");
+      layout();
+    });
+    var pDrag = null;
+    phead.addEventListener("pointerdown", function (e) {
+      if (mode !== "float" || e.target.closest("button")) return;
+      var pb = panel.getBoundingClientRect(), rb = root.getBoundingClientRect();
+      pDrag = { dx: e.clientX - pb.left, dy: e.clientY - pb.top, rb: rb, w: pb.width, h: pb.height };
+      if (phead.setPointerCapture) phead.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    phead.addEventListener("pointermove", function (e) {
+      if (!pDrag) return;
+      var x = clamp(e.clientX - pDrag.rb.left - pDrag.dx, 0, Math.max(0, pDrag.rb.width - pDrag.w));
+      var y = clamp(e.clientY - pDrag.rb.top - pDrag.dy, 0, Math.max(0, pDrag.rb.height - Math.min(pDrag.h, 60)));
+      panel.style.left = x + "px"; panel.style.top = y + "px";
+      if (!panelMoved) { panelMoved = true; layout(); }
+    });
+    phead.addEventListener("pointerup", function () { pDrag = null; });
+    phead.addEventListener("pointercancel", function () { pDrag = null; });
+
+    /* ================= 확인 문제 (버튼 → 창) ================= */
+    var answered = QUIZ.map(function () { return null; });
+    var qStatus = [];
+    var qBtns = QUIZ.map(function (item, i) {
+      var b = E("button", "tc-qbtn", $(".tc-qlist"));
+      b.type = "button";
+      E("span", "tc-qno", b, String(i + 1));
+      E("span", "tc-qtt", b, item.title);
+      qStatus.push(E("span", "tc-qst", b, "풀기"));
+      b.addEventListener("click", function () { openQuiz(i, b); });
+      return b;
+    });
+    var modal = $(".tc-modal"), dialog = $(".tc-dialog");
+    var dNum = $(".tc-dnum"), dQ = $(".tc-dq"), dOpts = $(".tc-dopts"), dFb = $(".tc-dfb");
+    var dPrev = $(".tc-prev"), dNext = $(".tc-next"), dX = $(".tc-x");
+    dQ.id = uid + "-q";
+    dialog.setAttribute("aria-labelledby", uid + "-q");
+    var qCur = 0, backFocus = null;
+    function renderQuiz() {
+      var item = QUIZ[qCur], picked = answered[qCur];
+      dNum.textContent = "확인 문제 " + (qCur + 1) + " / " + QUIZ.length;
+      dQ.textContent = item.q;
+      dOpts.textContent = "";
+      item.opts.forEach(function (txt, i) {
+        var b = E("button", "tc-opt", dOpts, txt);
+        b.type = "button";
+        if (picked === i) b.classList.add(i === item.ans ? "ok" : "no");
+        b.addEventListener("click", function () { answered[qCur] = i; renderQuiz(); updateQuizList(); dOpts.children[i].focus(); });
+      });
+      if (picked === null) { dFb.className = "tc-dfb"; dFb.textContent = ""; }
+      else { var right = picked === item.ans; dFb.className = "tc-dfb " + (right ? "ok" : "no"); dFb.textContent = right ? item.ok : item.no; }
+      dPrev.disabled = qCur === 0;
+      dNext.disabled = qCur === QUIZ.length - 1;
+    }
+    function updateQuizList() {
+      QUIZ.forEach(function (item, i) {
+        var p = answered[i], st = qStatus[i];
+        if (p === null) { st.className = "tc-qst"; st.textContent = "풀기"; }
+        else if (p === item.ans) { st.className = "tc-qst ok"; st.textContent = "정답"; }
+        else { st.className = "tc-qst no"; st.textContent = "다시"; }
+      });
+    }
+    function openQuiz(i, from) {
+      qCur = i; backFocus = from || null;
+      renderQuiz();
+      modal.hidden = false;
+      var first = dOpts.querySelector(".tc-opt");
+      if (first) first.focus();
+    }
+    function closeQuiz() {
+      modal.hidden = true;
+      if (backFocus) backFocus.focus();
+    }
+    dX.addEventListener("click", closeQuiz);
+    dPrev.addEventListener("click", function () { if (qCur > 0) { qCur--; renderQuiz(); backFocus = qBtns[qCur]; } });
+    dNext.addEventListener("click", function () { if (qCur < QUIZ.length - 1) { qCur++; renderQuiz(); backFocus = qBtns[qCur]; } });
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeQuiz(); });
+    modal.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); closeQuiz(); return; }
+      if (e.key !== "Tab") return;
+      var f = Array.prototype.slice.call(dialog.querySelectorAll("button")).filter(function (b) { return !b.disabled; });
+      if (!f.length) return;
+      var i = f.indexOf(e.target);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    });
+
+    /* ================= 처음 상태: ?view=alt&h=2850 · ?view=alt&city=Cusco&lapse=0.6 · ?view=wind&from=e&play=0&s=60 · &panel=float ================= */
+    var qs = new URLSearchParams(location.search);
+    var qh = parseInt(qs.get("h"), 10), qc = qs.get("city");
+    alt.ready = true;
+    alt.setCmp(qc && C(qc) ? qc : "Quito");
+    setLapse(parseFloat(qs.get("lapse")));
+    var ca0 = CITY_ALT.filter(function (q) { return q[0] === qc; })[0];
+    alt.set(ca0 ? ca0[1] : isFinite(qh) ? qh : 100);
+    if (qs.get("play") === "0") wind.run = false;
+    var qsS = parseInt(qs.get("s"), 10);
+    wind.s = isFinite(qsS) ? clamp(qsS / 100, 0, 1) : RM ? 0.8 : 0;
+    wind.setFrom(qs.get("from") === "e" ? "e" : "w");
+    syncWPlay();
+    setPanel(qs.get("panel") || "right");
+    updateQuizList();
+    setView(qs.get("view") || "alt");
+    if (window.ResizeObserver) new ResizeObserver(layout).observe(root);
+    else window.addEventListener("resize", layout);
+  }
+  Up(document.currentScript.parentElement);
+})();
+</script>
+</div>
+</body>
+</html>

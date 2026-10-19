@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기후 그래프 읽기 (ver01)</title>
+<style>.ds-page{margin:0}</style>
+</head>
+<body class="ds-page" style="margin:0">
+<div class="ds-climgraph">
+<style>
+.ds-climgraph{
+  --bg:#f4f3ee; --panel:#f7f7f4; --card:#fff; --ink:#1d2126; --ink2:#5b636d; --line:#e2e0d9;
+  --accent:#1f6feb; --accent-soft:#e7efff;
+  --hot:#d9480f; --hot-soft:#fff1e8; --mild:#1971c2; --mild-soft:#e9f2fc;
+  --tline:#e8590c; --pbar:#74a9e8; --rng:#7048e8;
+  box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 320px;
+  height:100vh; min-height:560px; background:var(--bg); color:var(--ink);
+  font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  font-size:15px; line-height:1.5; position:relative; overflow:hidden;
+}
+.ds-climgraph.cg-pos-left{grid-template-columns:320px minmax(0,1fr)}
+.ds-climgraph.cg-pos-float{grid-template-columns:minmax(0,1fr)}
+
+/* 무대 */
+.ds-climgraph .cg-stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:linear-gradient(180deg,#f7f9fb 0%,#edf2f6 100%)}
+.ds-climgraph .cg-views{position:absolute;left:0;top:0;right:0;bottom:0;box-sizing:border-box;padding:14px 18px}
+.ds-climgraph .cg-svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;touch-action:none}
+.ds-climgraph .cg-title{font-size:19px;font-weight:700;fill:var(--ink)}
+.ds-climgraph .cg-tsub{font-size:14px;fill:var(--ink2)}
+.ds-climgraph .cg-small{font-size:12px;fill:var(--ink2)}
+.ds-climgraph .cg-off{display:none}
+.ds-climgraph .cg-focus{outline:none}
+.ds-climgraph .cg-ring{fill:none;stroke:none}
+.ds-climgraph .cg-focus:focus-visible .cg-ring{stroke:var(--accent);stroke-width:3;stroke-dasharray:5 4;fill:none}
+
+/* 기후 그래프 */
+.ds-climgraph .cg-bgr{fill:#fff;stroke:#dde3ea;stroke-width:1}
+.ds-climgraph .cg-grid{stroke:#e3e8ee;stroke-width:1}
+.ds-climgraph .cg-grid.zero{stroke:#adb5bd;stroke-width:1.4}
+.ds-climgraph .cg-base{stroke:#868e96;stroke-width:1.5}
+.ds-climgraph .cg-tk{font-size:13px;fill:var(--ink2)}
+.ds-climgraph .cg-tk.t{fill:#c2410c}
+.ds-climgraph .cg-tk.p{fill:#1864ab}
+.ds-climgraph .cg-tk.m1{font-weight:800;fill:var(--ink)}
+.ds-climgraph .cg-unit{font-size:13px;font-weight:700}
+.ds-climgraph .cg-unit.t{fill:#c2410c}
+.ds-climgraph .cg-unit.p{fill:#1864ab}
+.ds-climgraph .cg-bar{fill:var(--pbar)}
+.ds-climgraph .cg-bar.hi{fill:#1c7ed6}
+.ds-climgraph .cg-line{fill:none;stroke:var(--tline);stroke-width:3.5;stroke-linejoin:round}
+.ds-climgraph .cg-dot{fill:var(--tline);stroke:#fff;stroke-width:2}
+.ds-climgraph .cg-g{transition:opacity .45s}
+.ds-climgraph .cg-g.cg-hid{opacity:0}
+.ds-climgraph .cg-guide{stroke:#adb5bd;stroke-width:1;stroke-dasharray:5 5}
+.ds-climgraph .cg-guidet{font-size:11.5px;fill:#868e96}
+.ds-climgraph .cg-mk{fill:none;stroke-width:3}
+.ds-climgraph .cg-mk.t{stroke:#c2410c}
+.ds-climgraph .cg-mk.p{stroke:#1864ab}
+.ds-climgraph .cg-tag{stroke-width:1.5}
+.ds-climgraph .cg-tag.t{fill:#fff4e6;stroke:#e8590c}
+.ds-climgraph .cg-tag.p{fill:#e7f5ff;stroke:#1c7ed6}
+.ds-climgraph .cg-tag.r{fill:#f3f0ff;stroke:#7048e8}
+.ds-climgraph .cg-tagt{font-size:14px;font-weight:700;fill:var(--ink)}
+.ds-climgraph .cg-rl{stroke:var(--rng);stroke-width:1.5;stroke-dasharray:4 4}
+.ds-climgraph .cg-rb{stroke:var(--rng);stroke-width:3}
+.ds-climgraph .cg-ml{stroke:#7048e8;stroke-width:2;stroke-dasharray:8 5}
+.ds-climgraph .cg-hit{fill:transparent;cursor:crosshair}
+.ds-climgraph .cg-hguide{stroke:#495057;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.ds-climgraph .cg-htxt{font-size:13.5px;font-weight:700;fill:#343a40;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round;pointer-events:none}
+.ds-climgraph .cg-ed{cursor:ns-resize}
+.ds-climgraph .cg-edc{fill:#1864ab}
+.ds-climgraph .cg-edd{fill:var(--tline);stroke:#fff;stroke-width:2.5}
+.ds-climgraph .cg-edh{fill:transparent}
+.ds-climgraph .cg-ed:focus-visible .cg-edd,
+.ds-climgraph .cg-ed:focus-visible .cg-edc{stroke:#212529;stroke-width:3}
+.ds-climgraph .cg-ed{outline:none}
+.ds-climgraph .cg-code{font-size:15px;font-weight:700;fill:var(--ink2)}
+/* 도시 위치 3D 지구: SVG의 지구 자리에만 겹치는 캔버스 */
+.ds-climgraph .cg-gcv{position:absolute;display:none;touch-action:none;cursor:grab;outline:none;border-radius:50%}
+.ds-climgraph .cg-gcv:focus-visible{box-shadow:0 0 0 3px #74a7ff}
+.ds-climgraph .cg-gcap{font-size:14px;font-weight:700;fill:var(--ink)}
+/* 내가 읽은 값 적어 보기 */
+.ds-climgraph .cg-guess{display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--line);padding-top:8px}
+.ds-climgraph .cg-ggrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ds-climgraph .cg-gl{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--ink2)}
+.ds-climgraph .cg-gin{font:inherit;font-size:14px;color:var(--ink);padding:4px 6px;border:1px solid var(--line);border-radius:7px;width:100%;box-sizing:border-box;background:#fff}
+.ds-climgraph .cg-gin:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ds-climgraph .cg-gin.ok{border-color:#2b8a3e;background:#ebfbee}
+.ds-climgraph .cg-gin.no{border-color:#e03131;background:#fff5f5}
+.ds-climgraph .cg-gst{font-size:11.5px;font-weight:700;min-height:1em}
+.ds-climgraph .cg-gst.ok{color:#2b8a3e}
+.ds-climgraph .cg-gst.no{color:#c92a2a}
+.ds-climgraph .cg-gres{font-size:12.5px;margin:0;line-height:1.45}
+.ds-climgraph .cg-gres:empty{display:none}
+.ds-climgraph .cg-stat.cg-off{display:none}
+
+/* 패널 */
+.ds-climgraph .cg-panel{box-sizing:border-box;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;min-height:0}
+.ds-climgraph.cg-pos-left .cg-panel{order:-1;border-left:0;border-right:1px solid var(--line)}
+.ds-climgraph.cg-pos-float .cg-panel{position:absolute;top:16px;left:16px;width:320px;max-width:calc(100% - 32px);max-height:calc(100% - 32px);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.16);z-index:20}
+.ds-climgraph .cg-head{display:flex;flex-direction:column;gap:2px;padding:12px 16px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.ds-climgraph.cg-pos-float .cg-head{cursor:move;border-radius:14px 14px 0 0}
+.ds-climgraph.cg-pos-float.cg-collapsed .cg-head{border-bottom:0;border-radius:14px}
+.ds-climgraph .cg-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-climgraph .cg-ptitle{font-size:18px;margin:0;font-weight:700;line-height:1.35}
+.ds-climgraph .cg-src{font-size:12px;color:var(--ink2);margin:0}
+.ds-climgraph .cg-fold{display:none}
+.ds-climgraph.cg-pos-float .cg-fold{display:inline-block}
+.ds-climgraph.cg-collapsed .cg-body{display:none}
+.ds-climgraph .cg-body{display:flex;flex-direction:column;gap:8px;padding:10px}
+.ds-climgraph .cg-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.ds-climgraph .cg-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin:0}
+.ds-climgraph .cg-h::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--accent)}
+.ds-climgraph .cg-sub{font-size:12px;font-weight:600;color:var(--ink2)}
+.ds-climgraph .cg-line2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-climgraph .cg-line2 .cg-seg{flex:1}
+.ds-climgraph .cg-seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ds-climgraph .cg-seg.two{grid-template-columns:repeat(2,1fr)}
+.ds-climgraph .cg-segb{font:inherit;font-size:13px;padding:5px 0;border:0;background:#fff;color:var(--ink);cursor:pointer}
+.ds-climgraph .cg-segb + .cg-segb{border-left:1px solid var(--line)}
+.ds-climgraph .cg-segb[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:700}
+.ds-climgraph .cg-vlist{display:flex;flex-direction:column;gap:5px}
+.ds-climgraph .cg-vbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13.5px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-climgraph .cg-vbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-climgraph .cg-vno{flex:none;width:20px;height:20px;border-radius:50%;background:#f1f3f5;color:var(--ink2);font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ds-climgraph .cg-vbtn[aria-pressed="true"] .cg-vno{background:var(--accent);color:#fff}
+.ds-climgraph .cg-vctl{display:flex;flex-direction:column;gap:7px;border-top:1px dashed var(--line);padding-top:8px}
+.ds-climgraph .cg-mini{font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.ds-climgraph .cg-row{display:flex;gap:4px}
+.ds-climgraph .cg-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+.ds-climgraph .cg-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ds-climgraph .cg-btn{font:inherit;font-size:12.5px;padding:5px 4px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap}
+.ds-climgraph .cg-btn:disabled{opacity:.4;cursor:default}
+.ds-climgraph .cg-row .cg-btn{flex:1 1 auto}
+.ds-climgraph .cg-btn:hover,
+.ds-climgraph .cg-mini:hover,
+.ds-climgraph .cg-vbtn:hover,
+.ds-climgraph .cg-qbtn:hover,
+.ds-climgraph .cg-opt:hover{border-color:#b9bfc6}
+.ds-climgraph .cg-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-climgraph .cg-btn:focus-visible,
+.ds-climgraph .cg-mini:focus-visible,
+.ds-climgraph .cg-segb:focus-visible,
+.ds-climgraph .cg-vbtn:focus-visible,
+.ds-climgraph .cg-qbtn:focus-visible,
+.ds-climgraph .cg-opt:focus-visible,
+.ds-climgraph .cg-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-climgraph .cg-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ds-climgraph .cg-stat{background:#f8f8f6;border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;min-width:0}
+.ds-climgraph .cg-k{font-size:11.5px;color:var(--ink2);line-height:1.3}
+.ds-climgraph .cg-v{font-size:15px;font-weight:700;line-height:1.3}
+.ds-climgraph .cg-result{border-radius:8px;padding:8px 10px;border-left:4px solid var(--ink2);background:#f8f8f6;display:flex;flex-direction:column;gap:2px}
+.ds-climgraph .cg-result.hot{border-left-color:var(--hot);background:var(--hot-soft)}
+.ds-climgraph .cg-result.mild{border-left-color:var(--mild);background:var(--mild-soft)}
+.ds-climgraph .cg-rk{font-size:15px;font-weight:700}
+.ds-climgraph .cg-result.hot .cg-rk{color:var(--hot)}
+.ds-climgraph .cg-result.mild .cg-rk{color:var(--mild)}
+.ds-climgraph .cg-rt{font-size:12.5px;margin:0;line-height:1.45}
+.ds-climgraph .cg-note{font-size:11.5px;color:var(--ink2);margin:0}
+.ds-climgraph .cg-p{font-size:12.5px;margin:0;line-height:1.5}
+.ds-climgraph .cg-credit{font-size:11px;color:var(--ink2);margin:2px 4px 6px;line-height:1.45}
+.ds-climgraph .cg-qlist{display:flex;flex-direction:column;gap:6px}
+.ds-climgraph .cg-qbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-climgraph .cg-qno{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-climgraph .cg-qtt{flex:1;min-width:0}
+.ds-climgraph .cg-qst{flex:none;font-size:11.5px;color:var(--ink2)}
+.ds-climgraph .cg-qst.ok{color:#2b8a3e;font-weight:700}
+.ds-climgraph .cg-qst.no{color:#c92a2a;font-weight:700}
+
+/* 확인 문제 창 */
+.ds-climgraph .cg-modal{position:absolute;left:0;top:0;right:0;bottom:0;z-index:60;background:rgba(20,24,30,.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.ds-climgraph .cg-modal[hidden]{display:none}
+.ds-climgraph .cg-dialog{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:100%;overflow:auto;box-sizing:border-box;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.ds-climgraph .cg-dhead{display:flex;align-items:center;justify-content:space-between}
+.ds-climgraph .cg-dnum{font-size:13px;font-weight:700;color:var(--accent)}
+.ds-climgraph .cg-x{font:inherit;font-size:20px;line-height:1;width:34px;height:34px;border:0;border-radius:50%;background:#f1f3f5;color:var(--ink2);cursor:pointer}
+.ds-climgraph .cg-dq{font-size:18px;font-weight:700;margin:0;line-height:1.45}
+.ds-climgraph .cg-dopts{display:flex;flex-direction:column;gap:8px}
+.ds-climgraph .cg-opt{font:inherit;font-size:15px;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;line-height:1.45}
+.ds-climgraph .cg-opt.ok{border-color:#2b8a3e;background:#ebfbee;color:#2b8a3e;font-weight:700}
+.ds-climgraph .cg-opt.no{border-color:#e03131;background:#fff5f5;color:#c92a2a}
+.ds-climgraph .cg-dfb{font-size:14px;margin:0;padding:10px 12px;border-radius:10px;background:#f8f9fa;color:var(--ink2)}
+.ds-climgraph .cg-dfb:empty{display:none}
+.ds-climgraph .cg-dfb.ok{background:#ebfbee;color:#2b8a3e}
+.ds-climgraph .cg-dfb.no{background:#fff5f5;color:#c92a2a}
+.ds-climgraph .cg-dfoot{display:flex;justify-content:space-between;gap:8px}
+.ds-climgraph .cg-dfoot .cg-btn{font-size:14px;padding:7px 14px}
+.ds-climgraph .cg-dfoot .cg-btn:disabled{opacity:.4;cursor:default}
+.ds-climgraph .cg-svg.cg-off,
+.ds-climgraph .cg-vctl.cg-off,
+.ds-climgraph .cg-card.cg-off{display:none}
+
+@media (max-width:820px){
+  .ds-climgraph,
+  .ds-climgraph.cg-pos-left{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .ds-climgraph .cg-panel,
+  .ds-climgraph.cg-pos-left .cg-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
+  .ds-climgraph .cg-views{padding:8px}
+}
+</style>
+
+<div class="cg-stage">
+  <div class="cg-views"></div>
+  <canvas class="cg-gcv" tabindex="0" role="img" aria-label="고른 도시의 위치를 보여 주는 3D 지구. 끌어서 돌려 봅니다. 화살표 키로도 돌립니다."></canvas>
+</div>
+
+<aside class="cg-panel" aria-label="조작 패널">
+  <div class="cg-head">
+    <div class="cg-head-row">
+      <h2 class="cg-ptitle">기후 그래프 읽기</h2>
+      <button type="button" class="cg-mini cg-fold" aria-expanded="true">접기</button>
+    </div>
+    <p class="cg-src">중학 사회 ① · 기후</p>
+  </div>
+
+  <div class="cg-body">
+    <section class="cg-card">
+      <h3 class="cg-h">조작</h3>
+      <div class="cg-line2">
+        <span class="cg-sub">패널 위치</span>
+        <div class="cg-seg cg-posseg" role="group" aria-label="패널 위치">
+          <button type="button" class="cg-segb" data-pos="right" aria-pressed="true">오른쪽</button>
+          <button type="button" class="cg-segb" data-pos="left" aria-pressed="false">왼쪽</button>
+          <button type="button" class="cg-segb" data-pos="float" aria-pressed="false">플로팅</button>
+        </div>
+      </div>
+      <span class="cg-sub">보기</span>
+      <div class="cg-vlist" role="group" aria-label="보기">
+        <button type="button" class="cg-vbtn" data-view="read" aria-pressed="true"><span class="cg-vno">1</span>기후 그래프 읽는 법</button>
+        <button type="button" class="cg-vbtn" data-view="city" aria-pressed="false"><span class="cg-vno">2</span>다른 도시 읽어 보기 · 남반구</button>
+        <button type="button" class="cg-vbtn" data-view="make" aria-pressed="false"><span class="cg-vno">3</span>내가 만드는 기후 그래프</button>
+      </div>
+
+      <div class="cg-vctl" data-for="read">
+        <span class="cg-sub">읽을 값 (누르면 그래프에 표시합니다)</span>
+        <div class="cg-grid2 cg-keybtns"></div>
+        <div class="cg-row">
+          <button type="button" class="cg-btn cg-allon">모두 보기</button>
+          <button type="button" class="cg-btn cg-alloff">모두 끄기</button>
+        </div>
+        <div class="cg-row">
+          <button type="button" class="cg-btn cg-bplay">그리는 순서 재생</button>
+        </div>
+      </div>
+
+      <div class="cg-vctl cg-off" data-for="city">
+        <span class="cg-sub">도시</span>
+        <div class="cg-grid3 cg-citybtns"></div>
+        <div class="cg-row">
+          <button type="button" class="cg-btn cg-show">값 보기</button>
+          <button type="button" class="cg-btn cg-jul">7월부터 그려 보기</button>
+        </div>
+        <div class="cg-guess">
+          <span class="cg-sub">내가 읽은 값 (그래프에서 읽어 적어 봅니다)</span>
+          <div class="cg-ggrid">
+            <label class="cg-gl">최난월 기온(℃)<input class="cg-gin" data-k="tmax" type="text" inputmode="decimal" autocomplete="off"><span class="cg-gst"></span></label>
+            <label class="cg-gl">최한월 기온(℃)<input class="cg-gin" data-k="tmin" type="text" inputmode="decimal" autocomplete="off"><span class="cg-gst"></span></label>
+            <label class="cg-gl">기온의 연교차(℃)<input class="cg-gin" data-k="range" type="text" inputmode="decimal" autocomplete="off"><span class="cg-gst"></span></label>
+            <label class="cg-gl">연강수량(mm)<input class="cg-gin" data-k="pann" type="text" inputmode="decimal" autocomplete="off"><span class="cg-gst"></span></label>
+          </div>
+          <div class="cg-row">
+            <button type="button" class="cg-btn cg-gcheck">확인하기</button>
+            <button type="button" class="cg-btn cg-gclear">지우기</button>
+          </div>
+          <p class="cg-gres" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div class="cg-vctl cg-off" data-for="make">
+        <span class="cg-sub">시작 그래프</span>
+        <div class="cg-grid3 cg-startbtns"></div>
+        <div class="cg-line2">
+          <span class="cg-sub">반구</span>
+          <div class="cg-seg two cg-hemiseg" role="group" aria-label="반구">
+            <button type="button" class="cg-segb" data-hemi="n" aria-pressed="true">북반구</button>
+            <button type="button" class="cg-segb" data-hemi="s" aria-pressed="false">남반구</button>
+          </div>
+        </div>
+        <div class="cg-row">
+          <button type="button" class="cg-btn cg-reset">처음으로</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="cg-card">
+      <h3 class="cg-h cg-readh">읽은 값</h3>
+      <div class="cg-stats">
+        <div class="cg-stat"><span class="cg-k cg-k1"></span><span class="cg-v cg-v1"></span></div>
+        <div class="cg-stat"><span class="cg-k cg-k2"></span><span class="cg-v cg-v2"></span></div>
+        <div class="cg-stat"><span class="cg-k cg-k3"></span><span class="cg-v cg-v3"></span></div>
+        <div class="cg-stat"><span class="cg-k cg-k4"></span><span class="cg-v cg-v4"></span></div>
+        <div class="cg-stat cg-st5 cg-off"><span class="cg-k cg-k5"></span><span class="cg-v cg-v5"></span></div>
+      </div>
+      <div class="cg-result" aria-live="polite">
+        <span class="cg-rk"></span>
+        <p class="cg-rt"></p>
+      </div>
+      <p class="cg-note cg-readnote"></p>
+    </section>
+
+    <section class="cg-card cg-aux" data-for="read city make">
+      <h3 class="cg-h">기후 그래프 보는 법</h3>
+      <p class="cg-p">선은 월평균 기온이고 왼쪽 눈금(℃)으로 읽습니다. 막대는 월 강수량이고 오른쪽 눈금(mm)으로 읽습니다. 가로축은 1월부터 12월까지입니다.</p>
+      <p class="cg-p">기후 그래프는 한 도시의 30년 평균(평년값)을 한 장에 나타낸 것입니다.</p>
+    </section>
+    <section class="cg-card cg-aux cg-off" data-for="city">
+      <h3 class="cg-h">남반구의 그래프</h3>
+      <p class="cg-p">남반구는 북반구와 계절이 반대입니다. 1월이 여름, 7월이 겨울이므로 월 이름보다 그래프 모양으로 여름과 겨울을 찾습니다.</p>
+    </section>
+
+    <section class="cg-card">
+      <h3 class="cg-h">확인 문제</h3>
+      <div class="cg-qlist"></div>
+    </section>
+    <p class="cg-credit">도시 기후 WMO 기후 평년값 · 해안선 Natural Earth · 기후 기호는 교과서의 쾨펜 기준으로 판별</p>
+  </div>
+</aside>
+
+<div class="cg-modal" hidden>
+  <div class="cg-dialog" role="dialog" aria-modal="true">
+    <div class="cg-dhead">
+      <span class="cg-dnum"></span>
+      <button type="button" class="cg-x" aria-label="닫기">×</button>
+    </div>
+    <p class="cg-dq"></p>
+    <div class="cg-dopts"></div>
+    <p class="cg-dfb" aria-live="polite"></p>
+    <div class="cg-dfoot">
+      <button type="button" class="cg-btn cg-prev">이전 문제</button>
+      <button type="button" class="cg-btn cg-next">다음 문제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  function Up(root) {
+    var NS = "http://www.w3.org/2000/svg";
+    var uid = "cg" + Math.random().toString(36).slice(2, 8);
+
+    /* 도시 월평균 기온(℃)·강수(mm)·위경도: 자료발췌/로직/기후/cities.js 에서 필요한 8곳만 */
+    var CITIES = [
+      {"id":"Seoul","kr":"서울","lat":37.57,"lon":126.98,"t":[-2.4,-0.6,4.7,11.5,17.4,21.9,24.9,25.7,21.2,14.4,7.1,-0.4],"p":[20,25,45,90,105,135,395,350,170,50,55,25]},
+      {"id":"Singapore","kr":"싱가포르","lat":1.36,"lon":103.82,"t":[27.2,27.5,28,28.5,28.8,28.6,28.2,28.1,28,27.9,27.4,26.9],"p":[235,165,175,160,170,135,145,155,175,185,255,295]},
+      {"id":"Cairo","kr":"카이로","lat":30.04,"lon":31.24,"t":[13.8,15.1,17.8,21.5,25.2,28.1,29.5,29.8,27.5,24.5,20.1,15.5],"p":[5,4,3,1,1,0,0,0,0,1,3,5]},
+      {"id":"Rome","kr":"로마","lat":41.89,"lon":12.48,"t":[7.5,8.2,11.5,14.8,19.2,23.5,26.4,26.5,22.1,17.5,12.2,8.8],"p":[75,70,65,60,45,30,15,20,65,95,110,95]},
+      {"id":"Moscow","kr":"모스크바","lat":55.63,"lon":37.61,"t":[-6.5,-6.2,-1.2,6.8,13.5,17.2,19.5,18.1,12.5,6.1,-0.5,-4.2],"p":[50,45,45,40,55,75,85,80,65,60,55,50]},
+      {"id":"Mumbai","kr":"뭄바이","lat":19.06,"lon":72.87,"t":[25.1,25.8,27.9,30.1,30.8,29.2,27.4,27.1,27.6,28.9,28.2,26.5],"p":[1,0,1,2,18,540,810,545,320,95,15,2]},
+      {"id":"Barrow","kr":"배로","lat":71.29,"lon":-156.79,"t":[-25.2,-26.5,-24.5,-17.2,-7.1,1.5,4.8,4.2,-0.5,-10.2,-18.5,-22.1],"p":[5,4,4,5,7,12,25,30,20,15,10,6]},
+      {"id":"Sydney","kr":"시드니","lat":-33.87,"lon":151.21,"t":[23.5,23.6,22.3,19.5,16.6,14.1,13.3,14.5,16.8,19.4,21,22.5],"p":[100,115,130,125,120,135,95,80,70,80,90,80]}
+    ];
+    /* 읽기 도시 · 그리는 순서 · 만들기 규칙: 자료발췌/로직/기후/climgraph-read.js */
+    /* 육지 윤곽(3D 지구용): 자료발췌/로직/기후/land-50m.js (Natural Earth 1:50m, 퍼블릭 도메인) */
+    var LAND_PATH = "M-163.7 82.9l2.1 .1-1.4 .1zM-163.2 81.3l2.7 .3-3.5-.2zM-164.1 79l.8-.3 .9 .1 3.4 .9-1.3 .1-3.9-.5zM-149.9 76.9l.7 .2-1.6-.1 .4-.1zM-176.5 43.8l.2 .2-.3 .1-.2-.3 .4 0zM-172.8 13.5l.6 .1 0 .2-.3 0zM-155.8-20l0-.3 .6 .3 .4 .5-.8 .5-.3-.1-.1-.6zM-156-20.8l-.4 .2-.3-.4zM-157.6-21.3l-.5 0-.2-.3 .3-.1zM-159.3-22.1l-.2 .2-.3-.1 .4-.2zM-174.4-52.3l.4 0-.1 .2-1.2 .1 1-.3zM-169.1-52.9l.8-.6 .5 0-.7 .5zM-166.5-53.7l-1.3 .4 1.1-.4-.3-.2 .8 0zM-163.4-54.7l-1.2 .3-.3-.1 .4-.4 .9-.1 .5 .3zM-152.5-57.7l.3 .1-.7 .1 .2 .2-1 .2-.3 .3 .2-.2-.6-.1 .1 .2-.4-.5 .2-.2 .4-.1 .4 .4-.1-.6 .3 .2 .3-.3 .8 .2zM-152.1-58.2l-1.3 .1 .7-.4 .7 .2zM-165.7-60.3l.1 .4-.5 .1-1.3-.4 1.2-.2zM-147.1-60.4l-.4 .5-.4 .1zM-130-55.3l-.3 .5-.5 0-.2-.4 .3-.1-.3-.8-.8 .2-.2 .4-.2-.1 .6-.6-.6-.2-.6-.7-.7-.1-.1-.4 .5 0-.4-.2 .3-.1-.5 .1-.3-.3 .1-.4-.3 .3-.6-.3-.6-.9 .3 1.2-.8-.2-.1-.4 .2-.1-.4-.1 .1 .2-1-.1 1 .4-.5 .3-1.9-1-1.3-.3 .3-.2 0-.3 .2 .4 .3-.2-.4-.2-1 .3-1-.2 0-.2-2.7 .1-.1-.2-.7-.1 .2-.4-.5 .3-.7-.1 .2-.2-.9 0 .2-.1-.2-.3 .3 0-1.7 .2 .2-.3-.8 .4 .3 .1-.3 .2 .6 0-.4 .5-1-.1-.2 .3-1 .2-.3 .4-1-.1 .9-.5-.9 0 .6-.9 .9-.3 1.3 .1-1-.3 .7-.3-1.5 .3-.8 .3-.7 .6-.6 0 .3 .3-1.5 .8 .8 .2 0 .2-.8 .6-2.2 .8-.2 .4-1.8 .6-.2 .1 .3 .1-1.4 .6-.1-.2-1.4 .4-.3 0 .3-.1-.3-.1-.6 .5-1 0-.2 .3 0-.3 1.6-.8 .8-.1 .1 .2 .5 0-.2-.2 .2-.3 1.4-.6 .2 .1 .4-.5 .8-.2-.2-.2 .1-.4 .4-.1-.3-.2 .7-.7-1.4 .5-.3-.3 .4-.1-.7 0 0 .6-1.6-.7-1.7 .5 .5-.5-.4 0 .2-.5-.6-.7 .5-.4-.8 .4 .2 .1-.1 .2-1.3 .2-1.1-.7-.4 0 .6-.4 .5 .1-.1 .2 1-.2-1.7-.1 .2-.2-.4-.2-.3 .2-.6-.6 .4 0-.3-.1 .5-.1-.1-.2 .5-.4 .4 0 .2-.2-.2 .1 0-.3 .4-.1 0-.2 1.1 .2 1-.5 1.4-.2-.1-.6-.5-.1 .6-.2 0-.2-.9 0-.9 .4-.5-.3 .1 .3-.6-.2-2.4 0-.4-.1 .1-.2-.5-.3 .7-.1-1.9-.4 2.5-.4-.2-.2 1.3-.3 .9 0-.3 0-.1 .4 .3 .1 1.8 .1 .4-.3 .5 .1-1.6-.7 1 .4 1.4 .1-.7-.3-1 0 .3-.3-1.9-.1-.6-.5-2.7-.8 .4 0 .2-.5 1.9 0 .8-.3 .5-.6 1.1-.5 1.8-.3 0 .3 .2 0 .5-.2-.7-.1 .4-.2 1.8-.1 1.4-.5 .9 .3-.4 .3 .8-.3 1 .3 1.9 0-.2 .1 .6 .2 2.6 0 4.7 .5 1.4-.1 7.9 1.4-.6-.2 .3-.1-.3-.1 1.5-.6 .5 .2-.3 .2 3.5-.8 1.2 0-2.4 .6-1.5 .7 .2 .1 1.4-.7 .7-.1 .1 .3 .9-.5 1.2-.3-.2 .3 1.4-.6-.5-.1 .2-.2 .8 .3 .6 .6 .9 .3 .5 0-.1-.3 .7-.5 .5 .5-.4 .3 1 0 .5-.4 1.3 0 4.5 .9 1.8 0 1.4 .5-.8 .1-.6 .4 .3 .1 2.6 .1 2.4-.3 .5 .3 .6 0 .1 .3 .3-.2 .6 .3 0 .2-.5 0 1.2 .7-.4-.3 0-.3 .5 .1-.8-.9 1.6-.4 .6-.4-1.9 .4-1-.1 .4-.3 2.1-.3 1.7 .8 1 0 1.2 .4 3.9-.1-.2-.3 1 .5 .4-.1 0-.2-1 0-.5-.5 1.4-.1 .9 .2-.3 .3 .7-.2-.4 .7 1 .3 0 .2-1-.1 .6 .5-.2-.3 .6 0 .1-.4-.4-.4 .2-.3 2.1-.6-.5-.4-.7 .2 .5-.3-.2-.2 .7-.1-.1 .2 .2-.3-2.5-.3-.6-.4 .3-.3 .4 0 0-.2-.4 .1-.2-.2 .1-.4 .3-.2 .5 .1 .2-.2-.5-.1 1.3-.4 1.6 .7 0 .4 1.4 .7-.7 0-.2 .1 .5 .1-.9 .3 2.5 .2-.8 .2 .7 .4-.1 .4 .4 .2 .9-1 1.3 .5 .2 .5-.5 0 0 .3 .9 .8 .8-.3 .9-1.2 .8-.1-.2 0 .2-.3-.5-.1-.1-.6 2.9 .1 .2 .1-.4 .1 .6 .3 .9 .1-.7 .2 .6 0 .1 .2-1.3 .3 .4 .3 .2-.1-.1 .3 .8 .4-.1 .3-2.1 .8-1.3-.6-.3 .1 .9 .2 .4 .5-.7 0-1.1-.4-1.1 .1 .7 .4-1.5 .8-2.2-.6-1.7 0 1.5 .1 .9 .5 1.6 0 .4 .2-1.1 .9-.7 .2-.8 0-.2-.2-.4 .2 .2 .2-.2 .2-3.5-.5 .4 .3 1.1 .1-.3 .1 .7-.1 1.1 .4 0 .2-.7 .3-1 0 .5 .2-.9 .2 .3 .2-.7-.2 .3 .2-.7 .3 .3 .1-.6 .3-.6 .9-.3 .1 .2 .1-.4 1.3 .7 .4 0 .4 .2-.4 .9 0 .8 1.4-.4 .4 2.2-.3 1.8 .4 1.3 .8 1.8 .4 .5 .3-.2 .2 .3-.2 2.7 .2 .2 .3-.2 .6 .3 .4-.2 .8 .7 .6-.2 .2 1.2 .5 .2 .3-.5 .3 .8-.2 .8 .5-.4-.4 .1-.2 .3-.2 .4 .4 .2-.3-.3-.3 .6-.5-.7-1.4 .2-.1-.2-.4-.6-.5 1.9-.6 1.3-1.1-.4-1.4-1.6-.9 .8-1 .4 .1-.2-.1 .2-.3-.4-.4 .2-.1-.3-.1 .2-.2-.6 0 .7-.8-.5-.2-.1-.5 .7-.3 2.8 .5 .9-.4 1 .4-.1 .3 1.2 .2-.3 .2 .2 .1 1.7 .4 .5-.1 .1 .2-.4 .3 .1 .4-1 .1 1 .1 0 .6 .4 0-.3 .5-.2-.2-.4 .2 1.5-.1 .5 .4-.8 .6 1-.6-.1 .4 .3-.3 .1 .4 1.3-.8 .4 .4 0-.4 .6-.3-.3-.1 .3-.1-.1-.2 .5 .1-.4-.1 0-.3 .4 0-.2-.1 .7-.4-.3 .3 .5-.1 .5 .8 .4 .1-.6 .1 .8 0-.1 .2 .4 .2-.6 .4 .9-.2-.7 .5 .8-.2 .5 .3 0 .3-.5 .1 .7 .1-.2 .2 .7 .2-.1 .3-1.1-.1 .8 .3-.2 .1 .5 0-.3 .2 .3 0 0 .2 .7 .1 .1 .2 .3-.1-.1 .2 .2 .1-.4 .4 .8-.2 .4 .1-.4 .4 .5-.4 .5 .4 .8-.1 .6 .3-1.2 .6-1.8 .3 .3 .2-.2 .2 1.6-.7 .8-.1-.5-.1 1 0 .3 .4-.4 .2 1-.2 .6 .5 .1 .7-.5 .1 .6 0-.3 .1 .3 .3-1.3 .6-1.5 .2-1.4 1-1.8 .2-1-.2-3.8 .1-.9 .9-.9 .1-1.4 1-1.3-.3 1.2 .4-.2 .4-1.3 .9-.9 .2-1.3 .9-.8 .2 .3 .2-.7 .3 1.1-.4 .4-.6 1.1-.6 1.6-.4 1.7-1.4 3.3-.9 .9 .2 .4 .4-1.1 .7-.6-.2-.8 .2 2 .3-.6 .6 .5 0-.1 .2 .4 .7 .7 .1-.3 .1 1.3 .4 .8-.3 .5 .2 .2 .3-.2 0 .5 .1-2.3 .7-.3-.1 0 .2-.7-.1 0 .3-1.2 .8-.6-.3-.1-.3 .3-.5-.2 .1 1.7-.8 .3 .3 0-.2 .7-.2-1.5 0 .6-.4-.3-.1-.2 .3-1.1 .4-.1-.2-.4 .3-.7-.1 .1 .4-1.1 .4-.4-.1 0 .2-.3 0 0-.3-.4 .6-1 .2-.6 1 .2 .2-.4 .3 .6 .5 .4 0-.1-.3 .2 .4-1.3 .2 .1-.2-.3-.1-.1 .4-1.4 .1-1.1 .5 0-.4 .1 .3-.4 .4 .3 .1-.1 .6-.8 .9-.6-.6 .4-.5-.4 .2-.1 .3 .6 1.1-.9 1.2 .2-.8-.2 0 0-.4-.4 0 0-.2 .3 0-.3-.3 .4-.6-.2-.1-.3 .4-.2-.1 .2 .2-.2 0 .2 .7-.3-.1 .4 .4-.9-.3 .2-.5-.3 .5 1 .5-.2 .2-.6-.5 .8 .6-.2 .3-.3-.2 .5 .4-1-.2 1.3 .4 .5 1.1-.4-.9 .1 .6-.3-.2-.5 .3-.1-.2 0 .2 .6 0 0 .3 .2-.3 .1 .2-.4 .4-.8-.1 .5 .2-.3 .3-.3-.2 .1 .2 .5 0 .1 .2-1 .1-.5 .8-.1-.3 0 .3-.8 .2-1.1 1-.7 .2 0 .2-.2-.1 .1 .2-.8 1.1 1.4 4.3 0 1-.4 .6-.6 .1 .2-.2-1.1-1.2 .2-.2-.2 .1 0-.4-.3 .1-.4-.6 .3-.4-.3-.1 .1 .2-.2 0 .1-1.1-1.3-1.2-1.3 .4-.4-.4 .1-.2-.2 .1-.7-.2 .4 0-.2-.1-.9 .2 .2-.3-.3 .3-.7 .1 .2-.1-.2-.4-.1 .3-1.5 .2-.6-.2-.2 .3 .7-.1-.1 .2 .4 0-.3 .4 .7 .4-.2 .2-1-.5 0 .4-.2-.2-.4 .2-.5-.2 .1-.3-.7-.2-.4 .2-1.5-.1 0-.3-.1 .3-.9 .3 .3-.1-.3 0 .1-.3-.3 .1 .1 .3-.4 .4-.9 .5 .2-.1-.6-.1 .2 .2-.8 .4 .2 0-.4 .3 0 .5-.4-.2 .7 1.5-.6 1.6-.2 1.8 .1 .5 .5 .5-.1 .3-.4-.7 1.5 2.7 .5 .5 .6 .1 .7 .5 2.1-.5 .5 .2 .6-.1-.1-.3 .7-.5 .2-1.3 .3-.4 2.1-.5 .8 .2-.1-.2 .3 0 .3 .2-.9 1.8 .3 0-.3 .2 .2 .1-.3 .9-.2-.4-.3 .4 .2 0-.2 1.8-.6 .7 .3 .1 0-.2 .5 .3 .4-.2 2.7-.1 .7 .2 .5 .4-.3 0 .3 .2 .3 0-.1-.2 .4 .4-.2 .2 .2 .5-.3 .6 0 1.3-.1-.3-.2 .2 .1 .9-.2 .3 1.8 2.4 .2-.2 .8 .3 1.5-.8 1.1 .2 .7 .3 1 1.2-.1-.7 1.3-.9 .1-.7-.2 .1 .5-.7 .4-.3 .5 .1-.1 .2 .3-.5 .8 0 1.7-1.1 .5 .4-.9 .4 .4 .9-.5 .9 .5 .8 .5-.3-.4-1.7 1.7-.5 0-.2-.4 .1-.1-.3 .3-.3 .4 .7 1.2 .3 .3 .7 1.9-.1 .3 .3 1 .2 .7-.4 .5 0-.6-.1 2.4-.1-1 .2 .6 .7 .2-.2 .4 .4-.1-.2 .2-.1 .8 .5-.4 .8-.4 0 .3 .2 1.1-.2 1.4 .9 .3 .4-.2 .9 .3-.5 .4 .1 .8 .6 0 .7 .2-.5 1.1 .3 .1-.3 1.4 .1 .3 .1-.1 .4 .4-.4 1.6 .9 .2 .5 .2-.2 .1 .5 .2-.2 .3 .2 .5 2 .2 .3 .5 .1 .1 .5-1.4 1.3-.7 1.3-.7 .2 .8 0 1-.7 .2 .9 .3 .2 1.1-.3-.3 1 .4-.8 .5-.4 .4 0-.2-.1 .4-.7 .7 .1 .1-.2 1.8 .8 .2 .3 .2-.2 .4 .2 .2 .4-.3 .2 .4-.1-.3 1 .5-.7 0 .3 .8-.4 1.2 .4 2.2 .1 1.5 .8 1.3 1.2 1.7 .2 .3 .5 .4 1.7-.2 1.1-1.4 2.1-1 .8-.8 1.5-.3 .2-.2-.4-.2 .2-.2 .8 .2 .4-.2 .7 .2 1.2-.3 1.8-.5 .6-.1 1.3-1.2 1.6 0 .8-.7 .3-.3 .6-1 .1-.2-.3 0 .3-1.4 .1 0 .2-.9 .5-1.4 .4-1.1 .8 .1 .2-.3 .2-.5 0 .3 .2-.3 .2 .1 2.3-.2 .5-.9 .8-1.2 1.9-1.1 .8-.1-.3 .8-.3 .7-1.1-.4 0-.3-.4 0 .8-.7 .6-.1 .8-2.1 2.5-2 .2-1.6-.4-.6-.6 0-.7 .3-.2-.1-.5-.3 1.8 .2 .4 .8 .3 .3 .4-.2 .3 .3 .6 .4 0 0 .6-.8 1.2-3.6 .9-1.2-.2 .2 1-.3 .4 .2 .5-.2 .2-1.2 .3-1.3-.5-.2 .2 .1 1.2 .4 .3 .5 0-.1-.2 .4-.1 .2 .6-.4 .2-.5-.4-.5 .2 .7 .3-1 .6-.3 1.4-1.3 .3-.7 .8 .8 .9 .9 .2 .1 .4-.4 .2 .4 .1-1.7 1.1-.4 1-.4 .1-.4-.3-.3 .2 .6 .2-.5 .2-.5 .6 .2 0 .1 .5-.4 .1 .5 .1 .6 .7-.8-.2-1.6 .6-.2 1-.3 .1-1.1-.5 .5-.2 .1 .3 .6-.7-1.1 .3-.2 .4-.6-.3 .4-.4 1.2-.2-1.2-.1-.4 .6-.5-.3 .5-.3-.9 .1-.3-.5 1 .1 .5-.3 .1 .5 .2-.1 0-.6-.7-.2 .6 .3-.9 .2-.7-.3 .3-.1 0-.3-.9-.2-.3-.4 .4 0-.1-.2 .2-.1 .8 .5 .2-.2-.1-.2-.3 .3-.2-.2 .2-.1-.6-.3 .6-.2-.3-.4 .5 0-.3-.2 .2-.4-.3 .5-.2-.1 .1-.8 .3-.1-.5 0-.1-.5 1.2 .1-.3-.4-.5 .3-.5-.3 .6-.1-.4-.2 .3-.2-.1-.4-.7-.1 0-.2-.5 .2 .1 .2-.3-.3 .8-.4-.2-.3 .9-.1 .2-.4 .2 0-.2 .7-.4 .1 .4 0 .1-.4 .2 0-.1 .8 .1-1.1 .4-.2 .4 .2-.5-.5 .7-.3 0-.3-.6-.2 .5-1.7 .2 0-.2-.2 .4 .1-.1-.4-.3-.1 .5-.4-.2 .2-.5-.2-.2 .3-.4 0-.4-.7 .3-1.1 .5-.8-.5-1.9 .5-.1 1-2.1 .8-2.7-.3-2.1 .3-.2-.1-1.2 .9-2.6 .2-2.7-.2-.5 .3-.3 .2-1.4-.3-3-1.1-1.1-3.6-1.9-.8-.8-.5-.7 .2-.5-.6-1.1-.4-.2 0-.4-.4-.4-1.2-2.7-1.2-1.8-1.2-.9 .3-.3-.4-1.3 1.3-1.1 .3-.6-.1-.5-.1 .4-.4 .2-.6-.4 0-1.2 .6-.5-.2-.2 .5-.6-.1-.6 1.2-.4-.1-.4 .4-.2 0-.6 .8-.3 .7-1.2-.2-.2-.1 .2-.1-.3 .2-.5-.2-.8 .3-.3-.3-.4 .1-.4-.8-.9-.2-.6 .3-.3 .3 .3-.3-.4-.3 .1-1-.6-1.1 .8 .5 .7-.8 .3-.3-.7-.2 .3-.4-.5-1-.2-.2 .2-.4-.6-.2 0 .2 .3-.4-.2 0-.6-.9-.4-.1-.3-.5-.3 .3 .4-.2 .2-.5-.3-.3-1 .2-.2-2-1.8 .4 0-.2-.5-1 .2-2.9-.8-3-2.3 .4 .3-.9-.4 .1 .2-1.7 .5-3.2-1-2.2-1.3-1.5-.3-1.5-1-.6-.7-.2-.4 .4-.2-.2-.2 .3-.3 0-.4-.6-1.1-1.1-1.3-.9-.6 .3 0-.5-.1-.3-.5 .2 0-.9-.4 .1-.2-.5 0 .3-.6-.7-.4-.1-.4-.6-.2 0-.6-.6-.1-1.1-1-.9-1.7 .1-.5-.6-.1-.2-.3-.3 .1-.8-.4 .3 1.9 1.4 1.2 1.3 2.1 .2 .1-.1-.3 .2 .2 .9 1.8 0 .6 .3 .2 .1-.2 .9 .8-.6 .6-.4-.7-1.4-.9-.3-.3 0-.8-.3-.6-.8-.7-.4 .2-1.4-1 .7-.2 .2 .2-.2-.2 .3-.5-.9-1-.8-.4-.6-1.4-.4-.4 .1-.3-.5-.4-.4-1-.9-.4-.1-.3-2.1-.6-.1-.5-1.2-1.2 .1-.6-.6-.3-.1-.3 .1-.3 .3 .3-.3-.5 .9-.1-.9 0-.1 .3-.5-.2 .1-.2-.8-.7-.1-.9-.6-.6 .3-1.1-.4-1.3 .4-.9 .1-2.5 .8 0-.9-.1 .1-.3 .1 .2-.2-.5 .3-.1-.3 0-.6-1 0-.4 1.9 .3 .1 .2-.4 .5 .6-.5-.1 .6-.4 .2 .4 0 .4-.9-.5-.4 .2-.4-.7-.3 0-.2 .3 0-.4 0 .1-.4-.3 .3-.4-.1-.1-.2 .4 0-.3 0 0-.5-.2 .4-.6-.2-.4-.4 .2-.5-.2 .4-1 0-.3-.1 .5-.1-.6 0 0-.4-.1 .2-.5 0-.6-.3 .3-.4 .7-.1-1 .2-.2-.2 .1-.5 .4-.2 .7 .3-.5-.4 .2-.3-.8 .5-.3 .5-.3-.4 .5-.3-.4 .1 .2-.5-.3 .1-.1-.3-.7-.4 .3-.2 .9 .4-.8-.4 .3-.2-.6 .1-.5 .5-.7-.4 .3-.4 .4-.1-.8-.2 0-.3 .8-.8-.2-.1-.2 .5-.1-.6zM-170.4-63.7l1.7 .4-1 .3-1.3-.5-.5 .2-.3-.2 .2-.2 .6 .1zM-178.7-68.6l3.4 .9 .1 .3-.2 0 .6 .1-.1 .7 .5 .3 .3-.2 0 .3 .3-.2-.4-.2 .2-.2-.6-.3 1.4 0-.1 .3 .1-.2 .7 0-.5-.1 1.2 .2 1.2 .7 .9 .1-.8 .2-.2 .3-.8-.2 .4 .3-1.7-.2 .6 .2-.5 .3 .5 .2-.9 .2 .7 .4-.5-.1-.3 .2-.1-.2-.4 .1-2.2-.6-.2-.5-2.3 0-.5-.5 .4-.4-1.2 .2-.1 .3 .4 .4-.6 .4 0-3.9 1.5 .4zM-177.5-71.2l-2.5 .2 0-.5 2.5 .2zM-128.1 74.3l1 .2-1 0zM-131.6 74.3l.6 .1-.2 .2-1-.2zM-122.3 74.4l-.6-.1 .3-.3-.7-.2 .3-.1 2.4 .1 .3 .2-.7 .3zM-116.6 74.1l-.8 0 1.2-.2zM-119.8 73.8l.9 .1-.8 .1zM-125.3 73.7l1.2 .1 .3 .4-1.3 0-2.1-.5-.1-.4 1.6 .1zM-97.2 72.1l.8-.3 .3 .1-.9 .3 1.3-.1 .2 .1-.1 .2-.5 .2-2.1 0-4.1-.5 2.1-.3 .4 .2 1.6-.2 0 .3 .4-.2 .3 .2zM-125.5-50.3l.7 .8 1.4 .8 .1 .3-.6 0-1.2-.4 .3-.4-.7 .3-.3-.2 .2-.1-.4 0 .1-.2-.6 0 0-.2 .4-.1-1.4-.5-.4 .1 0-.3 .4 0 0-.2-.6 .1-.2-.2 .4-.2zM-132-52.9l.9 .7-.3 0-.9-.7 .2-.1-.4-.1 .7-.1 .2 .3zM-128.8-52.8l-.4-.2 .2-.3 .4 .2 .1 .6-.2 .2zM-130-53.5l.1 .3-.6-.4zM-132.6-53.7l.4 0 .1-.3 .4-.1-.3 .8-.3 .1-.4-.1 .3 0-.7-.5 0-.3 .8 0 .1 .3zM-132.7-54.7l-.7-.6 .8 .4zM-132.6-55.9l.4 .4-.4 0 .6 .3 0 .5-.6-.4-.2 .1-.3-.3 .1-.3-.7-.2 .4 0 0-.2-.5 0 .3-.1-.1-.2 .5 .2zM-131.5-55.4l-.3 .2 .2-.6 .4-.1 .2 .2-.2 .5zM-132.7-56.1l.3-.4 .3 .6zM-133.9-56.2l-.3 .1 .1-.4-.3-.2 .1-.2 .6 .2zM-133-56.6l-.3-.2 .1 .3-.4 0-.4-.5 1 .1zM-134.6-56.8l-.1 .6-.3-.3 .1-.2-.4-.1 .1-.2-.3-.2-.3 .2 0-.3 .7-.1zM-133.8-57.6l-.5-.4 .4 .6-.7 .3 .1-.4-.4-.9 .7 .3zM-135.2-58.1l.2 .3-.3 0 .4 .3-.7-.2-.3 .3-.7-.6 .8-.3 .2 .3zM-96.3-69.3l1 .5-1.3 .3-3-.5 1.1-.3 0-.3 .5 .1-.3-.2 .4-.2zM-95.7-69.3l-.1-.3-.2 .1 .5 .1zM-113.6-72.7l.4-.3 1.9 .3-.6 .3 .2 .1 1.5-.4-.5-.3 .7 0 1.2 .4 .6 .9 .4 .1 .5-.3-.4-.2-.5-1 .2-.2 1.5 .1 1.1 .4 1 1.2-.1 .5 .9 .5 .5 .1 .1-.2 1.4 .6 .5 0 .2 .3-2.5 .1 .4 .2-.1 .3 .9-.3 .4 .3-.1 .2-1 .2-2.2-.1 .1-.2-1.7-.3-.7 .4-5.6 .5-.6-.3-.1-.4-2.8-.2-.7-.7 5.6-.2-2.2-.4-3.8 .1-.8-.4 3.1-.5-2.6 .1-.3-.1 .5-.2-.9 .1-.4-.2 .8-.5-.2-.2 1.8-.6 2-.3 .5 .3-.4 .5zM-97.2-73.8l.2 .1-.6 .2 .3 .1-1.1 .4 .8 0 .5 .2 0 .2 .6-.1 0 .3-.3 .1 .2 .5-1 .2-.7-.3-.2 .1 .3 .4-.3 .1-4.2-1.5 .5-.3 .9 .4 1.2-.2-.4-.3 .7 0-1.7-.3 1 .1-.5-.3 1.1-.1-.3-.1 1 .2zM-119.1-74l1.6-.2 2.1 .7-3.6 .8-.5 .4-.7 .1-.4 .7-2.2 .4-1.2-.6-1.8-.3 2-1.8-.9-.5 3.2-.2 1.8 .4 .5-.1zM-106.9-73.5l1.6-.3 .7 .2-.7 .7zM-99.4-73.9l1.3-.2 .4 0-.6 .2zM-93.5-74.7l-1.2 .1-1.9-.5 .9-.4 1.3-.1 .9 .5zM-104.5-75.4l.9 .2-1.3 .1zM-97-75.5l1-.1-.9 .2zM-108-75.8l.8-.1 .3 .2 .2-.1-.1-.2 .4-.1 .8 .2 .1 .2-.6 .6-1.1 .2-1.3 0-.3-.2-4.7 .7-.9-.3 3.4-.5-2.8 .1-.1-.2 .4-.1-.5 0-.2 .2-.3-.1 0 .2-1.2 .1-1.9-.3 .3-.2 2.2-.2-2.1 .1 2.2-.3-1.6-.2 1.8-.1-1-.1 1.6-.2 .4 .3 1.1 0 1.6 .7 2 0 .2-.2-1-.2 .5-.2-.9-.3 1.5-.4 .7 .6-.3 .1 .7 .1zM-119.4-75.6l1.6-.5 .3 0-.8 .5zM-97.5-76.2l-.4 .4 .5 .1 .1 .3-.6 0 .2 .3-.4-.1 0 .2-2.1 0-.3-.2 .4 0-.6-.1 1.5-.4-3.6 .1 .7-.3 1.1 .1-.9-.3 .3-.1-.5-.1 .3-.2 1.8 .6 .3-.1-.4-.1 .6 0-.9-.1 .4-.1-.9-.2 2 0 .2-.2 .9 .2zM-103.3-75.8l.3-.1-1.4-.2 1.7-.2 .7 .4-.6 .1zM-103-76.4l-1.4 .1-.2-.3 .5-.1zM-115.8-76.9l-.5 0 .3 .2-1.2 .4-.8-.1 .2-.4-.5 .1-.5 .2 .2 .1-.4 .3-.6-.2-.1 .2 .2 .1-.9 .2-.4-.4-1.6 .3-.2-.3-.3 .1 .5-.3 3.3-.9 2.3 0-.2-.2 .6 0 .9 .2-.8 .2zM-113.5-76.8l-1.3 0 .9-.1zM-106-77.7l.5 0 1 .5-.7 0zM-110.8-77.8l.6 0 .1 .2-2.1 .3-1-.2 0-.4 3.4-.1zM-101.3-77.9l.3 .2-1.5-.1zM-114.3-78.1l.7 .3-.7 .1-.7-.3zM-95.3-78.2l.4 .1-2.1 .3-.7-.3 .8-.1-1.1-.1-.3-.2 .2-.1-.2-.2 3.4 .4zM-109.4-78.3l-3.9 0 2.9-.5 1.1 .3zM-102.6-78.9l.9-.2 .6 .3 1.5 .2-.2 .3 .8 .3-.2 .1-.8 .1-1.1-.4-1.5 0-.1-.2-1.8 .1-.5-.2 1.4 0-.4-.1 .6-.1-.8-.1 .3-.1-.3-.1-.7 .2 .2-.2-.9-.1 .2-.2 1.7-.1 1 .4zM-98.9-79.7l-1.2-.3 1.1-.1 .2 .2zM-75.9 73.3l-.2-.2 .9-.1-.5-.1 .3-.1 1.2 .2-.5 .3 .3 .2-.2 .1zM-90.8 72.6l0 .4-.4 .2-.3 0 .1-.3-.3-.3zM-75.8 70.1l0-.2 .6-.2 .8 .2-.4 .3zM-75.3 50l.5 .2-.6 .1zM-75.5 49.1l-.1-.2 .5-.1-.5 .4zM-75.4 48l.2 .6-.4 .2 0-.7zM-91.4 1l.3-.4-.3-.6-.2 0 .2-.1 .5 1zM-76.2-17.9l-.7-.1-.3 .3-1.1-.6 .4-.2 1.6 .3zM-80.7-23.1l.9 .2 .5 .5 .6 0 1.2 .5 .6 .6 1.2 .2 0 .4 .8 0 .7 .4-.9 .4-2.6 0 .6-.5-.1-.2-.9-.2-.6-.8-.7 0-1.8-.7-.1 .2-.5-.1-.3-.2 .4-.1-.1-.2-.9 0-.7 .5-.5 0-.1 .3-.9 0 .6-.2-.1-.3 1.1-.6 1.2-.2zM-83-21.6l0-.3 .3 0 .1 .3-.4 .2-.2-.2zM-77.6-23.7l-.4-.5 .4 0zM-78.1-24.5l-.3-.1 .2-.1 0-.5 .5 .5-.3 .4zM-77.2-26.6l-.7-.3 .4 0 .4 .4 .1 .2-.2 .4-.2-.1 .2-.2zM-78.7-26.5l-.3-.2 1.1 0zM-81.3-53.2l.6 .5-1.3-.3 .2-.2zM-79.1-56.2l-.7 .4 .3-.3-.5 .2 .7-.7 .4 .3-.3 .4zM-79.3-62l-.5 .4-.5-.2 .4-.6 .6 .1zM-83.1-62.2l-.6 0-.2-.3 .5-.4 1.4 0-.1 .2zM-78-63.1l-.5-.3 .6-.1 .4 .2zM-76.7-63.4l-.7-.2 .7 .1zM-84.5-65.5l2.5 .9 .3 .4-.2 .2 1.1-.1 .5 .3-.7 .3-1.4-.2-.9-.4-1.3 .8-.8 .2-.4-.6-1.4 .1 .9-.5-.1-.5 .6-1.2 .6 0 .3 .6zM-85.2-66l.3 0 .3 .4-.5-.1zM-75.1-67.5l-1.8 .3-.4-.5 .6-.6 1.6 .1zM-85-71.1l.2 .1 .1-.6-1.2-.4 .6-.2 1 .1-.5-.2 .2-.1-.8 0-.2-.4 .3-.2 1 .2-1.2-.3 1.1-.4 2.8-.2 1.3 .9-.9 .5 .6-.2-.3 .6 1.1-.5 .8 .1 0 .3 .4 .1-.3-.2 .2-.3 1.2 .2-1-.3 .7-.2 2.1 .1 .6 .4-.8 .5 .8-.4 .8 .1 0 .2-.9 .1 .5 0-.3 .5 1.1-.6 .2 .1-.5 .3 .5-.2 .5 .3-.1-.2 .4-.2 1.7 .4-1.4 .5 1.9-.3 .1 .2-1.3 .5 .6-.1-.1 .4 .4-.5 .9-.2 1.6 .2 0 .2-1.6 .4 1.3-.2-.2 .2 .3 .1 .8-.4 .7 .5-2.1 .3 .8-.1 1.8 .3-2.3 .2 .6-.1 .6 .2-.1 .2-1.4-.1 2.6 .5-.3 .1 .3 .3 .5-.3-.3 .4 .6-.2 0 .2 .4-.1 .1 .3 0-.2 .6-.1-.2 .2 1.1 .2-.2 .1 .1 .2-.6 0 1-.1 .6 .2-.7 .4 1.6-.2 .8 .4-.8 0 .5 .2-.3 .1-.7-.1 .6 .4-.6 0 .2 .2-.3 .2-.8-.3 .1 .2-.3 0 .4 .1-.3 .7-.7-.3 0-.2-.3 .3-.8-.7 1-.5-1.4 .3 .1-.2-.4 .1-1.2-.5 .1 .3-.7-.2 .7 .5-.2 .1-1.3-.3 .5 .1 .3 .5 .8 .2-.2 .1 .5 .2 .1 .3 .1-.2 .4 .1 0 .2 .3-.2 .5 .2-.1 .2 .4 .1-.5 .1 1.2 .6-.2 0 .1 .4-.2 .1-.5-.6 .1 .5 .4 .4-.5 0 .1 .3-2.8-1.1 .2 .3-1.2-.4 2.9 1.6-.3 .3-2.8-.5-.5-.4-1.3-.3-.4 .1-.7-.4 .6-.2-.9-.1 .1-.2-.3 .1-1-.6 .2-.2-.8 .2 0-.2-.8-.2 .2 .3-2.2 .3-1.3-.4 .1-.4 .7-.2-.1-.2 .2-.1 1.8 .4 0 .3 .1-.2-.4-.3 2.2-.2-.1-.3-.7-.4 1.4-.5 .8-.6-1.1-1.1-.5 0-.1-.3-.2 0 .1 .2-.4-.1-.5-.2 .2-.1-.2-.2-1.7 .4 0-.3 1-.2-.9-.3 .3-.2-.9 .1 .2-.2-.7 0-.2-.4-1.3-.4-.3 .2 .6 .2-.3 .3-2.6-.2 .8 .4-2.2-.3-2.7 0-.5-.1-.1-.4-1.5 .2-.9-.2-.7-.6 2.4 .1-2.6-.4-.3-.5 .3-.3-.2 0 .1-.3 .6-.6 1.7-.7 2.4 0 .2 .1-1.8 .9 .4 .3 .1 .6 1.2 .5-1.6 .4 1-.2zM-86.9-68.1l.5-.1-.2 .5-.3-.1zM-75.3-68.7l.5 .3-.6-.1zM-79.4-68.9l.8-.5 .4 .1-1.1 .5zM-77.3-69.4l.6 0-.3 .3-.3-.1zM-80-69.5l-.8-.2 1.4 0-.6 .1zM-90.4-73.9l-1.7 1.1-2.1 0 .7 .3-.6 .5-1.1 0-.4-.9 0-.8 .9 0-.5-.2 1.8-.3 2.3 .2zM-77.2-73.5l1.1 .6-3.4 .1-1.3-.5-.1-.4 2.8 .1zM-93.2-76.7l-.3 .3 2.2-.3 .8 .2-.9 0 2.1 .2-2.1 .1 2.1 .4-.3 .2 .7 .1 .3-.2 .4 .2 2.2 .1 2.1-.4 1.7 0 2.5 .4 .2 .1-.9 .3 1 .1-.9 0 .2 .1-.2 .2-1.6 .1-1.6-.4 .2 .1-.2 .2-.9 .1-4 0-.2-.1 .3-.2-.9 .2-1.4 0-.3-.2-.2 .2-.9-.2-.4-.5 .3-.4-1-.7-2.2 .1-.7-.2 .3-.1-1.2-.2 .5 0-.4-.2 1.2-.1 2.4 .3zM-94.9-75.9l.4-.1 .2 .2-.5 0zM-90.6-76.7l.9-.1 0 .3-.5 0zM-91.1-77.6l.9 0 .5 .3-1.4-.1zM-93.1-77.7l-.4 .2-2.5 0-.3-.1 .8-.2 1.9 0zM-66.4-82.9l-2.1 .2 3.6-.2 3.7 .6-3.2 .6-4.3 .4 3.9-.2-4.8 1.1-1.1-.1 .4 .3-1.8 .1 1.5 0-.8 .2 .3 .1-3.3-.1 .9 .1 .3 .2-.3 .1-3.4 0 2.4 .4-4.1 0 4.2 .4-2 .2 1.2 .2-.8 .3-2 .1-.1 .4-.4 .1-2.1 .1-1.1-.2 .4 .1-.8 .1 2.6 .1 .3 .3 .9-.1 .3 .1-.3 .3-2.7 .4 .2-.2-.2-.1-1.5-.2 .3 .2-1.7 0-.3-.2-.1 .3-1 .1-1.2-.3-.2 .2-.7 0-.1-.2 0 .2-.9 0-.1-.4 0 .4-1.1-.1 .1-.3 .9-.3 1.8-.1-.9-.2-.3-.4 1.2-.1 1.2 .4 2 .1 1-.6-1.2 .5-1.1 0-.6-.4 1.3-.3-.7 0 .1-.3-.8 .4-.6 0 .3-.2-1.7 .1 .8-.6 5-.2-2.6 0 .8-.1-1.7-.6-1.1-.1-.1-.5 2.8 .1 3.2 .6 .4-.1-.9 0-2-.6 6.1-.6-1.8-.1 1.8-.4-2.3 .3-.6 .3-5.3 .3-1.5-.1 1.4-.4 1.9-.1-4.4 .4-1.6-.2 2.8-.1 1.6-.3-4.7 .3-.4-.1 .8-.2-.5 0 .3-.1 1.8-.1-3 .1 .8-.2-1.9 0 3.6-.5 3.1 .1-1.6-.2 1.7-.2 5.5 .5-3-.5 .7-.1-.4-.1 1.3 0-.4-.1 .2-.1 2.3 .1-1.5-.2 2.7 0 1.5 .4 .4-.1-1.5-.4 2.7 0 1.7 .3-.7-.2 1.3-.2 1.2 .2-.5-.1 1.4-.1zM-90.6-80.6l1.4 .1 0 .2 .7 .2 .3 0-.4-.3 .9 0 .1 .2-.3 .1 .9 .2-.3 .3 1.7 0 .6 .3-2 .3-.6 .3-.4-.3-.3 .3 .3 .2-.7-.1-.1 .4-1.2-.4 .5 .4-1.9 0-1.4-.3 .9 0-1.4-.1-.3-.2 .4 0-1-.2 2.9-.4-4.4 0 1.3-.3-2.1-.1-.3-.3 2.2 .1 .3-.2-1.1 .1-1-.2 .9-.1-.6-.3 2.2 .1-1.6-.2 .2-.2 2.1-.1-1-.2 2 .1zM-63 80.7l-3.8-.4 5.6 0-.5-.3 1.1-.3 .7 .1 .2 .1-.1 .2 .5 .1-.4 .1-.1 .4-.8 .2zM-67.8 79.5l1.8 .1 .5 .4-.8 .1zM-67.1 79.3l-.3 .2-1.1-.1 .5-.2zM-71.3 79.1l4.6-.7-2.6 .8-.4 .4-1.3 .1-.8-.2 .1-.3zM-76.5 70.9l1.3-.1 .2-.2 .4 .2 .2-.2 .8 .1-.9 .3-1.9 .1zM-68.5 70.7l.3 1.1-.3 .4-.7 .3-3.2 .2-.7-.3 2.2 0 .7-.2-1.7-.1 1.1-.2-1.5-.3-.6 .3-.9-.1 .3 .2-.5 .2-1.4-.4 .1-.2 .9 0 .2-.2 .7 .2-.1-.2 1.4-.1-.9-.2 2.7-.2 .5 .2 0-.2-1.3-.2 1.6-.3-2.3-.4 .2-.6-.4-.1 0-.2 .2-.2 1.6-.1 .2 .5 .4 0zM-72 69.7l-.8-.1-.2-.1 .5 0zM-61.8 69.4l-.3 .3-.5-.5 .4 0zM-68.7 67.7l-.4-.2 .8-.7 .6-.2-.3 .4 .3 .1-.4 .4zM-65.6 65.5l-.6 .4 .2-.3zM-62.8 64.6l-1.5 .1 .8-.4 .3 0-.1 .3zM-62.5 64.3l0-.3 .4 .1-.1 .3-.6 .1zM-68.6 55.2l.6 .4-.9-.1 0-.3-.5 .1 .2 .2-.8-.4 .1-.2 1.5 .1zM-67.3 55.3l-1-.3 1.1 0 .1 .2zM-70.5 55.2l-.9-.3 1 0 .1 .2zM-63.8 54.7l-.8 .2-.2-.1 .3-.1zM-71.6 54.2l-.3 .1-.3-.3 .2-.1 1 .2-.1 .3zM-68.8 52.6l.6 .5-.3 .2 2.3 1.2 1 .2-.3 .2-3.6 0-2.8-.3 .1-.2 1-.1 .5 .2-.6-.4 .4-.5 .1 .4-.2 0 .4 .3 .5 0 .4 .3 .3-.2-1.1-.4 0-.2 .7-.4-.9 0-.1-.3 .3-.2-.3-.1 1-.3 .2 .2zM-72.2 53.8l-.7 .3 .1-.2-.2-.1-.2 .2-.1-.3-.5-.2 .7-.1 .6 .2zM-74.7 52.7l1.6 .7-1.2-.3zM-74.9 52.3l-.2-.5 .3-.2 .3 .4-.2 .3zM-75 51.4l-.3 .2 .1-.3 .6-.1 0 .2zM-74.6 50l-.3-.3 .2-.3-.3 .1-.1 .4-.5-.2 .3-.1-.2-.2 .4-.1-.1-.2 .4-.4 .3 .1 0 .9zM-75.2 48.1l.4-.2 .2 .7-.3 0zM-74.7 45.7l.4-.5 .1 .5zM-74 44.6l.2 .7-.3 0-.5-.7 .5-.2 .1-.3 .3 .2zM-73.3 44.4l.5 .1-.2 .3-.4-.2zM-74.2 42.9l.1-1.1 .6 .1 0 .6-.3 .1 .3 .4-.6 .4-.3-.2zM-65.6-18.2l-.5 .3-1-.1-.2-.4 1.7 0zM-71.6-19.9l1.6 .2 .3 .4 .5 0-.4 .2 .9 .2 .3 .4-.3 .3-.2-.2-2.1 .1-.4 .7-.7-.6-1.4 0-.4 .2-.6-.4 .3-.3 1.4 .3 .5-.3-.5-.4 .1-.3-.7-.4 1.6 .1zM-73.7-21.1l.7-.2-.2 .3-.5 .1zM-71.9-41.1l-2.1 .5 .4-.3 1.3-.3-.3 .3zM-63.9-46.5l1.9 .1-.8 .4-.2-.3-.6 .1-.5-.2-.3-.3 .4-.4-.1 .3zM-64.4-49.8l1.3 0 1.1 .4 .3 .3-1.3-.1zM-67.8-60.4l-.6 .1 .3-.3zM-65.4-61.6l.7 0-.2 .2zM-71.2-62.9l.8 .2-.4 .1zM-74.7-68l1.2 0 .1 .2-1.1 0zM-30.4 80l-1.4-.2-.2-.1 .3-.1 2.1 .3zM-43.7 78.8l.7 .7 0 .3-.3 .2-.5 0 .3 .2-6.3 .6-4.4 .1-.2-.3 1-.5 1.1 0 2-.7-.4-.1 .2-.4 1.4-.9 3.1-.2 1.9 .4 .3 .1-.1 .3-1.5 .2zM-34 79.3l-2.6 0 1.1-.2zM-20.8 74.5l-.4-.4-.8 0 1.4-.5-.1 .5 .3 .3zM-57.2 64.2l-.1 .2-.6 0-.4-.1 .2-.2-.3 0 .6-.3 0 .3 .6 0zM-55.1 63.3l-1.3 .1 .8-.3 .4 .1zM-60.4 62.6l-.7 .1 .3-.2 1 .1-.4 .1zM-58.1 62.1l-.9 .1 .6-.3 .8 .1zM-36.6 54.3l.7 .3 .1 .2-.3 .1-.8-.6-1.1-.3 1.3 .1zM-58.2 51.6l-.1-.2 .5 .2-.9 .3 0 .2-.5-.1 .1 .2-.3 .1-.2-.4 .5-.2 .2-.4 .5 0-.1 .2zM-59.3 51.4l-.6 .6-.6 .2-.5-.1 .8-.3-.4-.1 .4-.1-.4-.2 .5 .1zM-51.5 1.2l-.4 .3 .4-.9 .2-.1 .1 .2zM-48.4 .4l-.5 1.1-.3-.1 0 .2-.3-.1-.3 .3-.6 0-.4-.6 .2-.1-.2-.1 .2-.7 1.5-.1zM-49.9-.3l.2 .1-.1 .2-.5 0 0-.2zM-50.4-.6l0 .6-.2-.2zM-61.5-10.6l-.2-.1 .8-.1-.1 .7-.9 0 .4-.2zM-16.9-28.3l.8-.3-.6 .6zM-61.1-45.7l.4-.1 .4-.5 .5 .3-.9 .4-.7-.1 0-.5 .5-.6 .5-.2 .1 .3-.6 .7zM-56-51.2l.2 .1-1 1.5 .6-.5 0 .2 .7-.1-.6 .5 .9 0-.2 .4 .9-.4 .1 .2 .8 0 0 .2-.6 .3 .5 .1-.4 .3 1.1-.2-.9 .8 .2 .2 .8-.5-.3 .6 .4-.3 .1 .3-.4 .8-.5 .1 0-.5-.4 .3-.2-.1 .4-.5-.4-.5-.3 .5-.4 0-.4 .5-.6-.1 1.1-.7-.8 .2-.5 0 .2-.3-3.4 .2 0-.3 1-.6-.9-.1 .5 0 .3-.5 .4 .1-.2-.4 .4-.1-.1-.2 .6-1 .8-.7 1-.2-.5 .3zM-14.6-66.4l-.5 .3 .4 .1-.1 .2 .4 0-.1 .2 .9 .1-.2 .1 .2 .4-.3 0-.1 .3-.4 0-.2 .3-3.2 .7-.1 .2-.8 .1-2.4-.5-1.6 .1 0-.3 .5 .1 .7-.4-.6 .1 .1-.2 .4-.1-.5 .1-.4-.3-1.3 .1-.2-.2 2.1-.1 .1-.2-.7 0 .7-.2-1.1-.2-1.6 .1 .6 0-.2-.3 .8 0-.5 0 .3-.1-.3-.1 .4 0-.1-.2 1.1 .3 0-.2-.5-.1 .4-.1-.6 0 .2-.1 1.5 .4 0 .3-.3 0 .6 .4 .6-.3 .3-.5 .7 .3 .1-.3 .6-.1 .7 .5-.2-.5 .7 .2 1.1-.2 .3-.3 .7 .3zM-50.7-69.8l-.5 .3-.2-.4 .3 0zM-51.9-69.6l-1.9 .3-.4-.1 .5-.1-1.2-.2 .1-.2 .5 0-.5-.2 .4-.2 2.4 .5zM-25.3-70.7l-2.7 .2 .4-.4 1.8-.1 .3 .2zM-25.8-83.3l-6.2 .3 6.9-.2 .6 .3 3 .3-1.6 .3-6.8 .2 .4 .2 4.4-.1 .8 .3 3-.4 .2 .4-.4 .3-1.7 .6 3.6-.8 2.1 .2 1.4-.4 1.9 0 2.8 .3-3.1 .5 .3 .1-.3 .1-2.3 .2 .9 .2-3.5 .1-.8 .3 .1 .2 .7 .1 0 .4 .4 .1-2.1 .5-.6 1 .8-.2 1.4 .2-1.2 .1 1.4 .4 .9-.1 .1 .4-4.3 .2 1.1 .4 1.6 .2 .4 .3 0 .6-2.7 .1 1.2 0 .1 .5 .5-.4 .4 0 .7 .7-1.8 .2-.9-.1 .2-.3-.2-.1-.3 .5 1.9 .3-.1 .3-1.8 .2-3.2-.6 .7 .4-2.5 .1 .8 .2-1.1 .1 3.5-.3 2.1 .5-.3 .8-1.8-.4-.5-.5-2.1 .3 1.9-.2 .1 .4-.5 .1 3.2 .7-.5 .3 .1 .2 .6-.3 .3 1-.9 0 0-.4-.3 .5-1.3-.2-.6-.6-1.3-.4-1.2 0 1.3 .1 .1 .2-1 .3-1.7 0 .3 .3-1 .3 2.6 0-1.1 .4 2.1-.4 3.3 .3-2.1 .5 0 .2-.9 .1-1.3 .6-4.2 .4 .1 .2-1.7-.3 .1 .4-.9 .3-1.5 1.3-1.3 0 .3 .3-2.2 .5-.2-.1 .7-.6-.9-.1 .4 .1-.3 .4-.4-.1 .3 .3-2 .1 .6 .3-.7 .3-.8 0 .9 .5-.6 .3-.8-.1 1 .2 0 .4-.8 .6-.8-.1 .6 .2-.3 .3-1 0 .7 .1-.1 .4 .2 .3-.5 .2 .3 0-.7 1.2-.9-.1 .7 .2 .1 .3-.2 .2-.7-.1 .3 .1-.2 .1-.5-.1 .2-.4-.4 .3-.8-.2 0-.2 .6-.3-.6 .3-.6-.2 .1-.6-1 .4-1.3 0 .4-.2-.6 0 0-.2-.9-.4-.1-.3 .6-.2-.8 .1 0-.2-.7-.3 .5-.5-.6 .2-1.1-.8 0-.4 1.2-.2-1.2 .1-.2-.1 .5-.4 .8-.1 .4 .3-.1-.3-.9-.5 .3 .4-.5 .2 .1-.2-.2 0-.6 .6-.6-1.1 1.4-.5-1.5 .3-.6-.1 .1-.4-.3 0 2.2-.9-1.8 .7-.6 0 .2-.4 1-.3-1.3-.1-.2-.1 .1-.3 1.3-.4 1.9 .3-.6-.2 .3-.1-2.8 .3 .5-.7 1.6 .1 .4-.3-1 .2-1.2-.1 .4-.3 1.9 0 .3-.2-.4 .1 .1-.4 .8-.1-.8 0 .8-.8-2-.1-1.7-.3-.5-.3 1.7-.1 2.1 .4-.6-.2 0-.3-.5-.1 .8 0-2.1-.3 1.3-.4-1.6 .1 .3-.2-.6-.6-.2 .1 .4 .4-.5 .2 0 .2-1.6-.1 .8-.8-.8 .2 .3-.2-.3-.1 .7-.1 .2-.3-1-.1 .4-.3-.1-.2-.7-.1 .3-.2-.4-.3-1 0 .9-.4-2.3-.9 .4-.1-.3-.2-4.8-.7-2.1 .3-1.7-.1 .4 .2-1.6-.1-1.2-.3 1.4-.3-1.8-.1 .2-.2-.9 .2-.6-.3 3.1-.3 1.7 .1 .1-.2-.5-.2-2.6 .2-1.2-.2 .5-.1-1.2 0-1.5-.4 .1-.2 6.9-.8 .5-.2 .5-.6 .6-.1-2.6 0-.4-.2 2.7-.7 .8-.1 .6 .2-.1-.2 .2-.1 1.6 .1 .3-.3-.1-.3 .8-.2 3.8 .5-2.7-.6 4.8-.4 .8 .2 .1 .5 .7-.3-.2-.1 .1-.2 2.1 .4 1.4 0-1.2-.3-.3-.3 1 0 5.5 .7-.1-.3 .3-.4-1.3-.2 4.2-.1-4.8-.3 3.2-.2 1.7 .2 .9-.2 2.2 .3 .3-.2-.8-.2 1-.1 7.7-.1zM-55.5-72.6l-.7-.1 1.2-.1zM-18.9-75.3l.9-.1 .6 .4-1.5-.1zM-19.1-76.4l0-.3 .4 .1 0 .6zM-18.9-78.1l-.2 .2-.2-.4 .4-.1zM-17.4-79.9l-1.3 .2-.4-.2 1.6-.1zM-18.7-81.8l-.7-.1-.2-.2 .5 .1zM-46.4-82.7l1.7 .3-.2 .3-1.9-.2-.6-.3zM-57.2 63.5l-1.8 .7 .2 .3-.7-.2-.1 .3-.4-.2-1.1 .6-.6 0 .1 .2-.5 .1 .3 .3-.5 .2 .3 .3 1.4-.1-.4 .1 0 .2-.4-.2-.4 .3-.9-.2 .1 .5-.7-.4-.5 0-.3 .4 .3 .2-.9-.1-.3 .4 .2 .1-.7 .1-.1 .7 .8 0-.7 .2 .5 .1-.2 .2 1.1 .2-.1-.2 1.3-.2-.9 .2 .5 .2-.2 .2 1.5 1.1 0 .2-.4 .1 .9 .1-.5 .2 0 .2 .7 0 .3 .3-1 .5 .8-.1 .2 .2-1.3 .2 1.6 .1 0 .3-.6 .2 .8 .1 .1 .3 .4-.1-.1 .4-1.9-.2 .4 .4 .8 .2-.4 .3-.5-.1 .7 .2-.8 .2 1.1 0-.7 .2-.8-.1 .3 .4-.2 .1-1.1-.2 0 .2-.7 .1 .6 0 .1 .2-1.1 .1 .9 .2-6.8 1.2-7.1 0 1.9 .8 2.5 .1-1.1 .5-1.4 .1-6.2-.4 4.2 .6-.5 .3-2.4 .1-3.5-.8 .6 .4-.6 .1 .5 .3 1.6 .3 .8 .4 .4 0 0-.2 4.3 .1 .2 .2-.6 .3-3.1 .1 1.5 .2 1.8-.1 1.3 .8 4.4-.3 .9 .4 4.2 .5 3.4 .1-3.4 .1 1.5 .2-2 .1 .3 0-.1 .2 1 .2 4.4-.2-2.2 .3 .8 .5 .7 0-.4 .3 .2 .1 1.9 .1 5.5-1.3 7.7-.3 .3 .3-.5 .3 .7 0 2.1-.2 2.3-1 2.6-.4 1.6 .2 1.9-.4 4-.2 .3-.2 7.4-.3-6.3-.4-.4-.4-2.7 0-3.2-.4-.1-.2 .8-.6 1.4-.6 2-.2 3.2-.8 4.6-.6 6-.4-.4-.2 1.3-.8 1.7 0 1.1-.5-1.6 0 .3-.1-.6-.2 .1-.2 .8-.3 1.6-.1-.3-.3 1.1 .1 1.7-.4 .5-.6-1.4-.4 .5-.1 1.1 .3 .8-.5-.3-.2 1.1 .3 .6 .5 .9-.2-.1-.7 1.9-.1 .3 .2-.5 .4 5 0 .6 .4 2.4-.7 5.8-.6 .8 .1 .6-.3 2.6 .6 1.2-.6-.3-.1 1.2 .2 2 0 .6-.2 .3 .3 1.4 .1 .9-.3 .2 .1-.2 .4 .4 .2 1.7-.1 .6-.5 .7 .2-.1 .2 .7 .1 1-.4 .8 .5 1.7 .1 6.1-1 .4-.4-.4-.7 .9-.2 .7 0-.4 .4 .8 0 .8 .6 2.4 0 1.1 .5 1.3-1.4 2.8-.7 3.4-.5-.1-.2 .3-.1 .8 .1-.3 .2 .4 .1 .7 0 .2 .3 .2-.5 .6-.3-.7-.2 .7-.1 1.4 .3-.4-.6 .1-.2 1.6-.4 1.8-.1 1.6 .1 1.9 .6-1.1 0 .4 .3-.7 .3 .4 .1 1.4-.3 1.7 .5 10.3 .3 .4 .7-.5 .2 .1 .5-.7 .2 .3 .3-.1 .2-.9-.1-.9 .5 2 .1-.4 .6-.9 .4-1.1 1.5-.4 .2 .8 .2 .7-.2 0-.3 .4-.3 1.2-.1 1.7-.8 .5-.8 1-.4 0-.3 .5-.3 2.3 0 2.2-.7 1.2-.9 4.3-.6 1.2-.5 1.2 .1 6.4-.7 2 .2 .7-.2 3.5 0 .6 .2 2-.3 .5-.4 1.3-.1 6.8 1 1.1-.4 .3-.4 2.2-.3 2.5 1-1.6 .4-.1 .2 2.8-.4 2 .2 1.7-.2-1.5 .3 .2 .1 4.9-.8 .8 .1 .6-.3 1.3 .1 .8 .6 .9 0 .8-.1 .5-.5 .9-.3 2.8-.1 1 .4 1-.4 2.9 .5 6 .4 .3 .1-.6 .8 2-.3 1.1 .8 4 0 0 .4 2 .1 .6-.2 .2-.4 1.6 .7 4.3 .5 1.6 1.3 .8 .2-.2-.6 .7-.1 .6 .3 1.1-.1 3.2 .3 .6 .4 2 .4 .2-.2 .5 .5-.7 0-.2 .2 0 .3 .3 0-.1 .2-1.8-.2 1.4 .3-.3 .4-2.3 0-.7-.2 .3 .3 .9 .2-1.8 .2 .2 .1-.8 .2-.2-.5-.3 0-.1 .2 .3 .3-.2 .1 .6 .6-1.7 0-.3-.2-.8 .4-.1 .4-1.6 .1 1.9 .5-.4 .4 .3 0 .1 .3-.3 .5 .6 0 .7 .7 .7 .3-.5 .2 .6 .1 .8-.3 .3 .3 1.4 .2-.1 .2-2.4-.1-2 .3-.9-.4-.2 .2 .5 .3-1.1 0-.4 .2 .1 .2-.6 .2 .3 .1-.4 .1 .7 .2-2 .4 2 0-.1 .2 .3 .1-.5 .1 .4 .1-.2 .4 3.2 .9-2.4 .3 3.4-.1 3.9 .7-.9 .2 .4 .1 2.9 0 9 1 0 5.6-360 0 0-5.6 8.3 .1 15.2 .7-1-.3 .9-.1-8.6-.4 1.4-.1-.9-.1 .7-.2-1-.2-2.8 0-1.4-.4-5-.6 8.6 .4 1.2 .3 1.3-.2 .9 .2 2.8 0 2-.2 .4-.1-.7-.1 2.2-.1 2.5-.6-1.7-.5 .7-.2-3-.4 9-.5-2.6-.4 2.3-.3-.1-.2 .2-.1-2.8-.3-1.1-.4-4-.4-.4-.1 2.2-.3-4-.3-.2-.2 .5-.7 3.2 0 5.1 .7 1.5-.3-.6-.2 0-.2 3.2 .4-.2-.2 .3-.1-.5-.1 .4-.1-.2-.3-3.9-.3 1.4-.3 2.9 .3-1-.3 .4-.2 3.7-.4 1.4 .2-.3-.2 2.1-.3 2.5 0 .4-.4 .8-.1 5.6 .2 2.8-.2 5.5 .1 3.2-.4 3.1 .1 .6-.6 1.1 .2-.3 .3 .5 .1-.6 .1-.2 .4 2.5-.2-.2-.2 .2-.4 1.3 .2 0 .3-1.1 .5 9.7-.1 .7 .3 2.2-.1-1.7-.4 .5-.2-.2-.2-1.1 0-.4-.5-1.2-.2 .1-.2 2.1 .2 1.8-.2-4-.3-.5-.5 .3-.1 .8 .1-.2 .2 4.3 0 1.8 .3 5.5 0 2.1-.6 .6 .1-.4 .3 .2 .1 1.6 .2 1-.2 3.6 .7 .9-.2 .1-.5 .9 .2-.3-.3 .2-.2 1.6 .6 1.9 0-.2 .3 7.8-.6 1.6-.4 .9-.7-.7-.6-.2-.8-1-1.3 1.3 0 .4-.2 0-.2-.4-.1 .3-.1 .3-.6-.3-.2 .4-.4-.8-.1 0-.4 .5-.2 .1 .4 .4 0 0-.6 .7-.1 .2-.5 1.1-.1-.1-.3 .8-.2-.3-.1 .3-.4 .7 .1 0-.2 1.5-.3 .7-.5 3-.8 .7-.1 .4 .4-.3 0zM-2.8 71.2l-.8-.5 1.5 .1-.5 .3zM-2.7 70.5l-.8 0 .8-.2zM1.5 70.1l-.3 .3-.3-.3 .5-.1zM11.8 4.6l-2.1-2.1 .4 0-.4-.1-.4-.5 .2 0-.5-.6 .5 .3-.8-1 .2 .1 .4-.3 .1-.7 .4 .3 .2-.2-.5-.1-.2-.3 .3 0 0-.5-.2 0 .4-.8 .1-1.2-.1-.5-.2 0 .1-.5-.3 .2-.4-.2-.1-.5-.2-.1-.1 .2 0-.3-.3-.1 0 .3-.7 .1-.5-.2 .1 .2-.3 .1-.1-.3 .1 .3-.8 .1-.6-.5 0-.7-.3 0 .3-.1-.4 0-.7-.7-.9-.1 .2-.2-3.4 .8-2.3 1-1.2-.3 .2 0-.2-.2-.1 .2-1.1-.2 .4 .1-1.4 0 .3 .1-2.4 .7-1.6-.7-2.6-2-.8-.3 0-.4-.4 0-.4-.6 .4-.2-.3 0 .1-.3-.6-.6 0-.4-.7-.3-.2-.6-.3-.2-.1 .2-.4-.4 0-.3 .3-.1-.4-.2 .4-.2-.8 .2-.9-.7 .4-.1-.4 0 0-.8 1.4-.1-1 .1-.4-.5 .2-.1-.9-.8 .4-.1 .5-.8 .6-2.2-.2-1.1-.3-.4 .2-.1 .1-.7-.7-.9-.2 .2 .2-1 .9-1.8 1.1-1 .5-1.6 .8-.4 .7-1.2 1.3-.4 1.1-.8 .8-1-.2-.6 .1-.7 .6-1.2 .7-.7 1.6-.7 1-1.8 .6-.1 .7 .7 1.6-.2 .2 .3 .9 0 3.2-1.4 2.5-.4 1 0 .5 .3 1.2-.5 1.4 .2 1.8-.4 .1 .2 .1-.2 .3 .1 .2 .5 .7-.4-.6 .8 .6 1.1-1.1 1.1 .3 .4 .7 .1 .2 .4 1.1 .3 1 0 1.9 .5 .5 1 2.1 .5 1.1 .6 .7-.1 .4-.4-.1-1 .2-.4 .5-.4 1-.3 1.5 .3 .2 .4 1.6 .2 .3 .5 1.6 0 2.3 .7 1.8-.8-.3 .2 .5-.2 .8 .1 .2 .2-.2-.2-.1 .2 .3 .2 .2-.2 .3 .2 1.3-.1 .6-.4 1.1-2.6 .4-.3-.2-1.1 .2-.4-.2-.3 .4-.5-.8 .2-.7-.2-1 .6-.9 .2-.8-.5-1.4-.4-.2 .6-.7 .1-.5-.1-.2-.4-1.5 0 .7-.3-.9 0 .2-.2-.4-.5 .1-.3-.9-.3 .1-.3 .3 .3 .4-.2-.3-.2 .2-.2-.3-.4 .2-.2-.8 0 .1-.5 .5-.4 .6-.1 .4 .2 0-.2 1.3 .1-.2-.1 1-.3-.7-.1 0-.3 2.2 .1 1-.6 1.1-.3 1.6-.1 .3 .4 .8 0 .3 .4 .4-.1 1.6 .5 1.9-.1 1.1-.4 .4-.6-.4-.7-2.7-1.6-2.1-.9 .3-.1-.2-.1 .9 0 .3-.6 .6-.1-.7-.5 1.5-.4-.1-.3-1.7 .2-.7 .4-1 .1-.8 .5 .2-.3-.4 .2 .7 .9 1.1-.1-.2 .3-.9 0-1.6 .7-.4-.2 .1-.5-1.1-.3 1.2-.5-.1-.2-1.8-.2 .2-.1-.4-.2 1 0-.6 0-.2-.6 .1 .6-.3-.2-.8 .2-.6 .7-.6 .2 0 .9-.6 0 .1-.2-.2 0 0 .4-.3 .3 0 .8-.5 .1-.2 .7-.4 .2 .7 .9 .9 .4-.1 .2-1.5 0-1.3 .9 .6-.5-.7 0-1-.4-1.3 .3 .5 .6-.4-.3-.2 .1 .2 .3-.5-.3 .2 .4-.7-.7-.3 .1 0 .5 .7 .8-.4-.1 .2 .3-.5 .1 .7 .2 .7 .6 0 .4-.5-.3-.5 .1 .5 .5-.8-.1 .5 1.1-.5-.4-.3 .3-.3-.5-.2 .3-.3-.4 .1-.3-.6-.5 .7-.4 1.1 .3 .2-.2-.7-.2-.9 .1-.2-.2-.1 .2-.4-.6 .3-.1-.8-.3-.4-.7-.5-.3-.1-.4 .3-1.1-2.6-1.2 .7 .1-.8-.5-.9-.1-.9-.8 .4 0-.5-.3-.1-.5-.3-.2-.3 0-.4 .5-.4-.7 .3-.1-.2-.2-1.3 .4-.1 .2 .3 .2-.3 .3 .2 .5 1.2 .6 .4 .9 .5 .5 .7 .3 1 0-.3 .4 2.1 .8 .5 .5-.2 .4-.4-.5-1-.2-.4 .8 .6 .3 .1 .4-.6 .2-.5 .9-.5-.1 .6-.8-.5-1.2-.7-.2-.2-.5-.5 .1 .2-.1-.5-.1-.3-.4-.6 0-1.5-1.1-.5-.1-.6-.6-.3-.9-1.4-.5-2.2 1.2-1.2 0-1.3-.4-.8 .4-.3 .4 .3 .5-.1 .4-1.1 .6-1.1 .2-.3 .3 .2 .1-1.2 1.2 .1 .4 .4 .3-.7 .5-.3 .5 .1 .2-.6 0-.8 .8-2.3 .1-1.2 .7-.8-.6 .2-.3-.2 .1-.5-.5-.9 .3-1.2 0 .2-.4-.1-1 .2 0-.5 0-.1-.3 .3 0 .2-.4-.3 .4-.4-.1 .7-1.3-.1-2 .2-.3-.5-.8 1.5-.6 5.7 .5 .5-.3 .4-1.1 0-.8 .6 .5-.7-.7 .2 0-.1-.6-.7-.2-.3-.4 0-.3 .4 0-2.6-.6-.4-.2 .4-.2-.3-.1 .4 0-.5-.2 1.5-.3 .5 .3 1.3-.2-.5-1 .6 0 .2 .3 1.5 0-.3-.1 .1-.2 1.2-.4 .4-.8 1.6-.5 .8 0-.8-.1 .9 0-.4-.3 .9-1.1 .7-.4 1.7 0 0-.4 .8 0 .2 .3 .1-.2 .2 .2 .1-.5 1.2 .3-.8-.3-.1-.4-.3 0 .4-.2-.3-.3-.1-.6-.5-.2 .1-1 .5 .1 .5-.2 .1-.3-.5 .3-.5-.1 .3-.3 2-.6-.2 .1-.1 1 .6 .2-.1 .2-.5 0-.7 .7-.1 .5 .5 .3-.1 .2 1.1 .1-.1 .4 .5 .1 1.2-.6 .8 .4 .3-.1 .3 .4 .6 .2 0-.2-.7-.1-.1-.2 .6 .2 1.8-.4 .4-.3 1.5-.2 .7 .1-.4 0 .4 .3 .6 0 .5-.2 .1-.3 .7-.2 .4-.5-.5 .6 .6 .1-.2-1.7 .7-1 .9-.1 1 .7 .8-.3 .1-1.1-.7 0-.3-.3 .2-.1-.3-.1 .1-.3 2-.4 2.4 .2 .2-.4 .8 0 .2-.2 1.1 .1-1.6-.5 .1-.2-.2-.1-2 .3 .1-.2-.2 .2-.4-.1 0 .2-3 .5 .2-.2-.3-.2-.4 .2 .1-.4-1.2-.2 .2-1-.5-1 .6-.4-.2-.2 .8-.1 2.3-1.5 .8-.2-.1-.5-.7-.4-1.5 .2-.7-.2-.1 .3-.9 .3 .2 .2-.5 .3 .4 .3-.7 .6-2.2 .7-.3 .2 .2 .1-.6 0 .1 .3-.6 .1 .2 .3-.1 .5-.4 .1 .2 .9 .7 .1 1 .8-1 .4 .6 .1-.3 .2-2.1 .5 .7 .1-.2 .1 0 .9-.4 .8-.5 .6-1-.1 0 .2-.4 0-.2 .6-1.3 0 .1-.3-.5-.6 .3 0 .1-.3-1.5-1.5-.3-.9 .3-.1-.6-.1-.2-.6-.4 .8-.6-.1-1.4 1-1.2 .1-.1-.2-.3 .1 .1-.2-1.1-.3 0-.4 .8 0-.5-.1 .5-.4-1.2 .3 0-.4 1-.2-.5-.1 .6-.5 .3 0-.1 .2 .5-.3-.8 .2-1.1 .7 .1-.5 .5 0-.6-.3 .5-.3-.5 .1-.1-.4 2 0 .6-.2-.2-.2-1 .3-1.3-.1-.1-.2 .3-.1-.4-.4 1.8 0-1.4 0-.2-.3 1.6-.3-.6 .1 .3-.2 1.2 .1-.1-.2 .6 0-1.4 0 .9-.4 1 .3-.4-.4 .4-.1-.2-.2 .2-.1 1.1 0 .3 .2 1.4-.4-.2-.1 .3-.1-.4 0-1 .5-.5-.2 2-1.1-.3 0 .2-.2 1.4-.3-.8 0 .9-.7-.2-.1 1.2-.2-.9 .1 .1-.4 .8-.2-.3-.1 1.7-.3-1-.1 .6-.3 .6 .3 .1-.2-.5-.1 .1-.2-.5 .1 .3-.3 .5 .1-.3-.1 .7-.2 .3 .3-.1-.4 1.4-.1-1.1-.1 .9-.3 .9-.7 .6 .2-.3-.2 1.1-.3-.1 .4 .7-.5-.2 .6 .6-.2-.1-.4 .8-.1 .6 .2-.6-.4 1.3-.2 .7 .4 0-.2 1.3-.8 1.1 .1-.8 .7 .2 .1 1.3-.8 .2 0-.1 .5 .4-.1 .5-.3-.3-.1 .5-.2 .7 .1-.5 .3 .4 0-.1 .5 .6-.7 2.2 .6-2.2 .2 .8 .1 .1 .3 .5-.2 .2 .2 1.1 0 .5-.1 0-.2 1 .3-.9 .1 1.4 .2-.4 .3 .6-.2 2.2 .1 2.5 .8 1.4 .2 1.2 .5 .1 .4 .3 .1-.2 .4-1.1 .5-1.4 .2-3.2-.3-3.6-.8 1.8 .8-.3 .1 1.3 .3 .1 .2-.4 .4 .6 .6 0 .4 2.4 .6 .7-.3-1.5-.7 .3-.4 2.9 .6 .6-.2-.6-.5 0-.3 2.4-.9 1.5 .2-.2 .2 .6 .1 .4-.7-.2-.4-.5-.2 .4-1-.9-.4 2.6 .2 .8 .5 0 .2-1.2 0-.6 .4 1.6 .6 1.2-.2 .2-.6 .9-.1 0-.2 3.2-.6 .4 .1 .3-.1-.4-.1 1.5-.4 .7 0-.7 .1 .2 .1-.1 .4-.6 .1 1.6 .1 0-.2 .5-.2 1.7 0 2-.4 .3 .3-.3 .3 .6 0 .2-.3 .6 0 .4-.3-.7-.6 .7-.2 3.3 .3 2.8 .6 1.5 .6 .6-.7-.6 0-.5-.5-1.1-.1 .4-1.1-.6-.1 .1-.3-.2 0 1.7-.6 1.1-1.3 2.1 .1 1.3 .2-.2 .7-.7 .5 .8 .5-.2 .7 .1 1.3 1 .5-.5 .3 0 .4-1.3 .8-.4 0 .1 .3-.8 .2-.3-.1 .3-.1-1.7-.1 1 .4 2.3 .1 .1-.3 1.4-.4 1-.8-.4-.6 .2-.4 .5-.1 1.4-.1 .7 .5 0 .7 1.7 .2-1.3-.2-.1-.2 .5-.3-.3-.6-1.7-.3-2.2 0 .1-.2-.3-.4 .7-.8-1.2-.8 .6-.4 1.3-.3 .1-.4-.3-.3 .8 .2 .1 .3-.5 .5 .3 .1-.2 .3 2.3 .2 .7 .3 .8-.1-2.7-.6-.4-.3 2.2 0-.8-.2 1.1-.3 2.3 .3 .9 .4 1.5 0-.9 .4-.1 .3 0 .6 .4-.5 .4 0-.3 .7 .4 .1 0-.2 .6-.2-.5-.6 .4-.4-.1-.2-.9-.2-.5-.4-1.3-.2 0-.4-.4-.3 .2-.4 6.3-.3-1.1 .5 .9 .3-.8-.3 1.7-.4-1.6-.5 .4-.2 .8 .1-1.4-.2 .4-.2 .7 .1 .6-.3-.5-.2 .7 .1 2.5-.5 4-.4-.9-.1 2.8 0-.4 .2 .8 0 2.2-.3 1.1 .2-.3 .2 .4-.1-.1-.2-1-.4 2.8 .1-.7-.2 .2-.1-.2-.2 1.7-.6 1.6-.2 1.9 .3-1.9 .3 3.2 .2-1 .4 4.7-.2 1.5 .3 .1 .3 .6-.2 .3 .4 .3 0-.4 .3-1-.2 1.2 .3-.8 .5-6.7 1.7-1.1 .5 5.8-.9-1.2-.1 .6-.2 .8 .1 0-.2 .5 .1-.4 0 .2 .2 .7 .1 .7 0 0-.3 .2 .1 .5 .6 0 .3-.4 .2 .6 .2-.5-.2 .7-.5-.4-.2 .6-.1 4.4 0 .4 .1-.4 0-.1 .3 4.4 .3-.3-.1 1.1-.2-.3-.2 .1-.2 1.1-.2 1.1 .4 2.1-.1 1.4 .4-.5 .2 .7 .2-.9 .2 .9 .1 0 .3-1.6-.3 1.2 .6 .3-.1 .3 .2-.7 0 1 .6 1 .1 .2 .3 .6-.2 1.1-1 1 .5 2.4-.2 1.8 .5 .4-.2-.4-.1 .3-.2 1.8 .1-.6-.5 .8-.2-1.1-.1 2-.3-.3-.3 5.5 .5-1.4 0-.7 .1 .3 .1 2.3-.1-.7 .4 .1-.2-.4-.1 0 .3-.7 0 .1 .2 .9-.1 1.2-.5 2.2 .1 .5 .3-1.1 .2 1.8 .2-.6 .3 1.5-.1 .5 .3-.3 0 .7 .2 3.4-.3 3.5 .3 .6 .5-.2 .5 1.1 .2 .1 .5 .3 .2-.4 .4 .7-.4-.1-.5 1.7-.3 3.6 .2 1.1-.2 .4 .4 1 .2 .3 .3 .9 0 .5-.3-.4-.5-.4 0 .3-.5 2.8 .3 2.6-.1 4.1 .9 0 3.9-1.5 .5-1.6-.5-.6 .1 .7 0 .1 .2-1-.2-1.6 .3 1.6-.2 .3 .2-.3 .1 1.3-.2 0 .4 .6 .2 .2-.2 .5 .6-.2 .2 1.1 .8-.5 .5-2.1-.5 .2 .2-4.3 1.1 0 .2-2.3 .9-.2 .4-1.2-.6-2 .2-.9 .5-.2-.1 .3-.5-1.3 .4-.1 .3-.5-.3-.8 .1-.3 .2-.1 .5-1.2 .9-.1 .3 .4 .4 .3-.2 .5 .1-.4 1 .5 .1 0 .5-.3 .2-.4-.2 .4-.3-.3 0-.6 .4-.4 .6 .4 .7-2 .6-.3 .4 .2 .7-1.5 .1 0 .6-.4 .6-1.4 .8-1.1-4.2 .4-1.5 1-.8-.2-.3 1.5-.2 3.8-2.5 1.6-.4 .5-1.4 1.2-.2-1-.2-1.1 .1-.3 .7 .3 .2-.9 0-2.2 1.1 .2-.4-.6 0 .5-.9-.7 .2-.4-.2-2.1 .2-2.8 1.9-.2 .3 1.1 .1 0 .2-3.9 .3-.2-.2 1.2-.1-1-.4-.8 .1 .2-.1-1.1-.2-.9 .5-2.2-.2-.5 .3-.4-.2-3 .2-3.9 2.2-1 .9-2.4 1.2 0 .2 1.5 .1-.1 .8 .5 0-.1-.4 .6-.1-.4 .2 .5 .2-.5 .4 .7-.1 .5-.4 .1 .2-.4 .3 .3 0 .2-.8 1.1 0 1.6 1-.2 .3-.4-.1 .5 .3-.2 .4 .4 .2-1 1.4 .1 .7-.5 1.7-1.5 1.3-.9 1.3-2.6 2.3-1.9 .8-.9-.2 0-.4-.4 .2 .1-.2-.2 0-.6 .7-.5-.1 0 .4-.5 .1-.4 .5-.1 .8-1.2 .8-.9 .3-.2 .6 .9 .5 1.1 1.6 0 1 .2 .2-.4 .7-.7 .1-.1 .2-.7-.1 0 .3-.3-.1 .1 .2-.3 .1 0-.3-.3 .4-.4 .1-.2-.4 .3-.1-.2 0-.1-.4 .5-.7-.3-.3 0-.5-.3-.1 .3-.2 .5 .1-.3-.3-.1-.6-.5 .1-.3-.3-.4 .3-.4-.2 .2-.2-.5 0 .4-.5 .5-.1-.4-.1 .2-.7-.6-.3-.2 .2-.3-.4-1.5 .4-1.6 .9-.1-.2 .6-.2 .1-.3-.5-.1 1-1-.5-.5-.1 .2-.5-.1-.7 .7-1.1 .4-.4 .6-1.2 .1-.1 .7 1.2 .4 .2 .3-.1 .4 .3 .2 1.5-.7 1.9 .4-.4 .6-.4-.2-1.1 .4 .1 .2-.3 .3-.4-.1 .1 .2-.9 .7-.2 .5 1.1 .5 .6 1.6 1 .9-1.4-.3-.5 .2 .7-.1 1 .7 .2 .4-1.7 .7 1.1-.1 .8 .4-.6 .4 .4-.1 0 .5-.2-.2-.3 .2 .3 .1-.2 .1 .2 0-.1 .6-.5 0-.1 .3-.3 0-.1 .6-.5 .7-.5-.1 .3 .5-.8 .2 .2 .2 .3-.1 0 .6-.4 0 .1 .2-.7 .4 .1 .2-.9 .1 .3 .3-.7 .6-.8 .2-.1 .5-.9 0-.7 .3-.2-.2-.4 .5-.4-.1-.4-.7-.2 .2 .3 .3-.1 .4-.4 0-.1 .3-.4 .1-.2-.2-.1 .3-.4-.1-1.3 .6-.2-.1-.2 .4 .3 .4-.2 .2-.4 0-.2-.6 .2-.6-.4-.2 0 .2-.4 .1-.5-.5-.1 .3-1.1 .3-.2 .4-.5-.1 .1 .3-.8 .8-.4 .9 .9 1.1-.1 .2 2.4 2.3 .5 1.5 .1 1.3-.1-.2-.1 .2 .1 .6-.3 .7-1.7 .9-.3-.3-.1 .3-.3-.1 .2 .2-.3 0 .3 .2-.2 .2-.5-.3 .5 .6-.8-.4 .4 .6-1.4 .8 .2-1.5-1.1-.6-.3 .1 .1-.3-.2-.2-.3 .2-.1-.6-.5-.7-.9-.5-.8 0 .1-.7-.4-.2-.6 .2 0 1.2-.8 1.9 .1 1 .5 0 .5 1 .2 1.1-.2-.6-.1 .2 .2 .4 1.1 .3 1.7 1.6 .3 .6-.1 1.8 .6 .6 .2 .9-.2-.2-.5 .3-2.2-1.6 0-.4-.6-.7-.4-2-.7-1.4-.9-.9-.4 .1-.1-.6 .5-1.4-.1 .2-.1-.7 .4-1-.3 0 0-1.5-.4-.8-.1 .3-.3-1.2-.1-1.7-.3 .1-.5-.9-.1 .7-.4 .2-.2-.3 .1 .4-.9 .7-.1-.4-.1 .3-.3 0 0-.4-.2 .3 0-.6-.5 .5 .4-1.6-.6-1.7-.1 .4-.4-.5 .3 .2 .2-.2-.3-.5-.5-.2-.1 .2 0-.5-.3 .2-.1-.4 0 .3-.6-.9-.2-1.2-.4-.5-.6 .3-.3-1 0 .2-.3-.1 .3 .2-.2 .5 .2 .4-.4 .6 0-.4-.3 .1 .1-.4-.4 .7-.1-.5-.1 .6-.3-.4-.2 .2 .2 .2-.4 .1-.1-.5 0 .4-.2 .1-.1-.2-.2 .2 .1-.5-.3-.3 .3 .3-1.1 .6-.3 1.2-1.2 .6-.1-.2-.3 .1 .2 .2-1.3 1.3-1.7 1.2-.1 .5-1 .3-.3 .5-.4-.1-.3 .2-.2 .6 .2 1.6-.2-.1 .2 .2-.6 2.1 .1 1-.5 0-.4 .7 .1 .3 .4 .1-1 .1-.3 .7-.6 .3-.9-.8-.9-2.5-.8-1.2-.5-1.9-1.1-2-.4-2.1 .1-.6-.2 .2 0-.3 .2 0-.3-.5 .2-.9-.3-.7 .5-.4-.6 .1 .1-.5 .2 0-.6-.1 .1 .2-.3 .3 .3 .3-.3 .3-1 .5-.5-.1-1.5-1.5 1.2-.3 .3-.5-.8 .3-.9-.3-.4-.5 .4-.3-.6 .3 0-.3-.6 0-.3-.3-.1-.6-.5-.1-.3-.7-.3 .1 .4 .1-1.8 .2-1.1-.2-.1 .2-2.1 .1-4.1-.7-.6-1.3-.6 0-1.5 .6-.9-.2-1.2-.9-.9-.3-1.5-2.3-.5 .2-.6-.5-.2 .5-.8 0 .1 .4-.4 .2 .4 0 .7 1.7 1.3 1 .1 .6-.2 0 .8 1.3 .2-1.2 .3-.2 .2 .3 .1 .8-.3 .8 .5 0 0 .3 2.6-.3 2-2.1-.1 .7 .3 1.2 .6 .6 1.6 .4 1 1.2-1.3 1.9-.3 0 0-.2-.3 .4-.2 .5 .1 .7-1 .2-.4 .8-1.1 .4-.2 .6-1 0-1.5 .5-.4 .3 0 .5-.9 .5-2 .6-.6 .5-4.8 1.5-.4-.1-.3-.6 .1-.4-.6-1.5 .1-1.3-.5-.9-.6-.6-.9-1.8-1.1-.6-.4-.6-.3-.9 .1-.7-.6-1.1-1-.6-.3-.5 .1-.2-2.1-3-.6-.1 .4-1.5-.3 .3-.5 1.5-1-.8-.6-1.4-.2 .4 .3 .7 .8 1 1.7 3.4 .6 .6-.3 0 .2 1 1.2 .9 0 .4 .4 .5-.2 .1 .4 2.2 1.1 .7 .9 2.6 .3 .4 .1-.4 .3 .5 1 .4 2.2 2.2-.1 .4-.8 .5 .7-.1 1.1 1.1 .6 .1 .9-.4 .8 .1 .8-.5 2.7-.3 .7-.5 .5 .2-.3 1.4 .2-.2 .2 .2-.5 .1-.1 .9-2.8 4.9-1.9 2-2.4 1.6-2.3 2.8-.5 .1-.1 .4-.6 .3-.1 .6-.9 1.4-.4 1.4 .7 .9-.2 1.4 .4 1.6 .9 .7-.2 .6 .2 1.3-.2 .4 .2 0 0 1.5 .2-.1-.1 .9-1.6 1.7-1 .2-1.2 .8-.5 .8-1.5 1-.3-.1 .2 .1-.1 .7 .6 1.2 0 .7 .2-.3-.1 2.1-.4 .5-2.2 .9-.2 .4 .2 .3 .2-.2-.6 2.4-1.1 .9-1.3 1.9-2.9 2.2-.7 .3-.6-.1-.2 .3-.8 .2-2.2-.2-2.6 .8-1.2-.4 0-.3-.4 .2 0-.6-.5-.9 .4-.3-.1-.8-.9-1.3-.6-1.4-1.4-1.6-.8-3.2 0-1.8-2.7-4.4 0-2.2 .8-2.4 1.1-1.3 .1-1-.8-2.1 .4-.3 0-.3-1.1-2.3 .8-.2-.8 0-.1-.6zM48.8-41.6l.7 .8 .9 .5-.8 .1-.3 .6 .1 .3-.2 .3-.2-.1 .1 1.4 1 .3 .8 .6 .9 .2 2.2-.2-.1-2.1-.2-.3-.5-.1 0-.3 .4 .1-.1-.4-.5-.1 0 .2-.3-.6 .2-.6 1 .4 .5-.1 .3-.4-.6-.4-.3-.6-.8 .1-.2 .3 .1 .5-.4-.7 .1-.9-1.3-.4-.5-1-.5-.2 .1-.2 1.1 .1-.5-.4 .4-.5 1.8 .1-.4-.3 .4-1.1-.7-.3-.4 .2-.9-.3-1.9 .6-.6 .6-1.2 .2-.1 .5-.7 .7 .6 .4 .2 .5 .1-.3-.1 .9 .9 1zM8.4-3.3l.5-.5-.2 .6zM-15.7-28.2l.3 .3-.2 .2-.2-.2zM-13.9-28.7l0 .4-.4 .2-.2 0 .3-.1 .2-.5zM3.1-39.3l-.7-.3 .8-.4-.1 .2 .4 .1zM9.6-40.3l0 1.1-1 .2-.2-.2 .1-1.1-.3-.6 1-.4 .6 .8zM9.6-42.2l-.4 .8-.6-.5 0-.5 .7-.3 .1-.3zM-6.3-54l.3 1.1-.5 .6 .2 .1-2.1 .3 0 .2-.9 .2-.5 0 .2-.2-.5 .1 .5-.3-.8 0 .5-.2-.5-.1 1.6-.5-1.1 .1 1-.6-1.2-.2 .5-.4-.5-.5 1.6 .1 .4-.4-.7-.1 .5-.4 .6-.2 0 .3 .2 0 .2-.4 .3 .2-.2 .1 1.1-.1 .4 .4-.2 .2 .4 0 0 .2-.2-.1 .1 .2zM-3.3-51.4l-.8-.3-.8 .1-.4-.3 1.2-.4 0-.6-.6 .1 .4-.3 1.1-.3 .5 .1-.4-.2 .2-.7-.3 .1-.4-.5 .6-.4-1.9 .3-.3-.3 .5-.5-.2-.2 0-.2 .3 0-.2-.3-.4 .3 .2-.3-.4 .2-.3 .7 .1-.8 .4-.7-.5 .3-.4-.2 .4-.2-.2 0 .3-.3-.2-.2 .2-.1-.1-.2 .5-.2-.2-.2 .4-.2 0-.3 1.9 0-.1 .3-.8 .3-.1 .4 2-.1 .3 .2-.8 .9-.7 .2 .6 .1-.7 .3-.4-.1 1.7 .2 .4 .3 .5 .9 1.1 .6 .2 .5-.8-.1 .4 0 .7 .5-.4 .3 1.7 .1-.1 .7-.4 .1 .1 .2-.9 .3 1 .1-.4 .5-2.4 0-.6 .3-1.4 0-.3 .4-.5-.2-.9 .4-.6-.1 .8-.4 .7-.7 1.1 0 .7-.5zM11.1-54.9l.7 .2-.8-.1zM10-55.2l-.1-.3 .7-.1 .2 .3-.2 .2zM-6.2-56.6l.4 .1 0 .2-.5 0 .2-.2-.2-.1zM-5.7-57.2l-.3 .2 0-.2-.8-.2 .5-.3 .2 .4zM-6.4-58l-.7 .2 .2-.1-.2-.3 .9-.3-.4 .4zM-1.1-60.4l-.2 .5 0-.3-.4-.1 .3 0-.2-.2 .2-.1zM-6.7-62l-.5-.3 .6 .1-.2 .1zM12.1-78.2l-1-.3-.5-.4 1.2 .5zM16.6 69.7l-.4 .4-.6-.2 .3-.2zM24.2-35.6l.2 .2 1.3 .1 .1 .2 .5-.2-.1 .3-1.4 .1-.1-.2-1.1-.2 .1-.4 .2 .2zM15.1-37.3l.2 .3-.2 .3-.3 0-2.4-1.1 .3-.4 .2 .2 .4-.2 .5 .2 1.8-.3-.4 .5zM24.1-38.7l.4 .7-1.6-.9 .4-.1 .2 .2zM13.2-54.5l.2-.2 .3 .1 0 .3-.3 .1-.2-.2zM12.3-55.2l-.4 .4-.9-.9 .6-.3 .2 .3 .1-.3 .6-.1 .1 .4-.4 .2 .2 .1zM16.4-56.6l.7-.7-.7 1.1zM18.9-57.4l-.8 .5 .2-.2-.2-.5 .8-.3 .2 .1-.3 .3zM23.3-58.5l-1.3 .6 .2-.3-.3-.3 .9-.1zM22.4-58.9l-.3 0 .5-.2 .4 .3-.5 .1zM20.3-60.3l-.5 .2 .1-.3zM14.1-68.2l-.9 .2 .3-.2zM16.4-68.8l.1 .2-.5 .2-1.7 .2 .8-.2 .9-.9-.2 .7 .4-.2zM15.2-68.6l-.8-.1 .6-.3 .4 .2zM18.1-69.4l-.1 .2-1.2 .1 .2 0 0-.3 .4 0-.2-.1 .8 0zM19.6-70l-.8 .4-.7 0 1-.4 0-.2 .2 .2zM23.3-70.3l-.3-.2 .6 0zM22.6-70.5l-.6-.2 1.4-.1-.3 .2zM23.5-78.1l-.4 .1 1.8 .2-2.1 .5-.4 0 .3-.3-1.8 .1 .8-.4-1.5-.6 1.8-.1 .3 .4 .7-.1zM18-79.7l-.3 .3 .7-.2 .3 .3 2.1 .2-.3 .1 .9 .3-2.2 .3-.2 .3-.6 .1-.2 .5-.6 .1-.5 .7-.4 .1-2.3-.6-.4-.3 3-.3-2.9 0-.4-.2 3.5-.4-.8-.1 .4-.2-1.4 .2 0-.3-.4 .2-.5-.1-.1 .2 .2 .1-1.4 .2-1.8-.8 1 0-.4 0-.1-.2 .2-.1-.9 .2-.5-.4 0-.3 1.6 .1 1.4-.2-1.1 .3 1.4 .3 0-.3 .8-.2 1.5 .8-.5-.7 .3-.3 1.5 .1zM22.3-80l.2-.4 .5-.1 .3 .1-.2 .2 1.2-.2 2.6 .2 .3 .3-1.6 .5-1.7 .2-3.8-.3-.4-.1 1.1-.1-2.5-.2 .6-.1-1-.1 1.9-.1-.1-.3zM26.4 70.1l.3 0 .2 .3-.9 0 0-.2zM55.7 21l0 .4-.3-.1-.2-.2 .3-.2zM49.9 13.1l.6 2.3-.3 .6-.5-.5 .1 1.3-.4 .4 0 1.1-2.2 6.5-1.7 .8-1.5-.6-.7-2.7 .2-.9 .3-.2 .6-1.3-.5-2.3 .5-.9 0-.5 1.8-.5 .2 .2-.1-.2 .6-.5 .2 .2 .4-.7 0 .3 .3-.4 .2 .1-.2-.3 .1-.7 .4 0 .5-.4 0-.8 .4-.4zM39.2 6.3l.1-.6 .3 .7zM53.7-12.3l-.4-.2 .2-.2 1 .1-.4 .2zM55.3-26.6l1-.4-.3 .3zM33.7-35l-.7 .4-.6-.1-.1-.4 2.3-.6-.7 .4 .2 .3zM28.2-36.4l-.5 .5 0-.3zM26.2-38.5l-.2 .3-.2-.4zM26.4-39l-.3-.1 .2-.1-.5 0 .5-.2 .3 .4zM48.7-68.7l-.4-.3 0-.3 .3-.1 .6-.1 1.1 .3-.7 .3zM53.1-71l-.9-.3 .7-.1 .3 .2-.2 .2zM56.1-72.8l-.4 0-.3 .3-.1 .6 1.2 .8 1.1 .4-3.9-.1-.3-.1 .3-.2 .5 0-.8-.2 0-.2-1.5 0-.5-.3 .2-.3 1-.2 .3-.4-.3-.1 .8-.1-.2-.2 .2-.1 1.4-.2 1.6 .2-.2 .2zM50.9-80.1l.5 .2-1.3-.1zM56-80.3l1.1 0-.1 .2-1-.1zM52.2-80.3l1.1-.1 .6 .1-1 .1zM51.7-80.7l-2.9 .3 .2 .2-.6 .1-1.4-.1-.4-.1 1.3-.2 1.2 0 .1-.3 1.6-.1zM47.7-80.8l-1.3 .3-1.5-.1 2.5-.3 1.3 .3zM55.7-80.6l-1.7-.3 .7-.2 3 .3zM58-81.3l-2.5 0 2.2-.3 .9 .2-.7 0zM69.6 49.3l1-.1-.8 .2 .5 .2-1.1-.1-.4 .2 .2-1 .1 .4 .5-.1-.2 .2zM57.3 20.4l.4-.4 0 .5-.3 0zM98.9 1l.4 .6-.1 .2-.4-.2-.1-.6zM97.8-.6l-.7-.8 .3-.1 .5 .5zM95.8-2.9l.7 .5-.7-.3zM81-8.9l.9 2-.5 .7-.9 .3-.4-.3-.4-2.1 .1 .3 .3-1.6 .3 .1-.4-.1 0-.2 .3 0zM92.5-11.9l.3-.3 .1-1.2 .2-.1-.4 2zM90.6-22.9l.3 .4-.1 .3-.3 .1 .2-.3-.2-.4zM70.1-66.6l-.6-.1 .6 0zM59.6-69.7l-1.1-.6 .5-.2 1.5 .6-.3 .2zM77.6-72.6l.8 .1-1.5 .2zM79.5-72.7l-.9-.2 .6-.2 .3 .2zM75-73.1l-.4 .2-.5-.1 .3-.1zM70.3-73.5l.8 0 .5 .3-1.7 .1 .1-.3zM68.2-76.3l-6.8 1-1.7 .7-1.2 .1 .1 .3-2.2 .9-2.1-.1-.5-.4 2.3-.7-.5-.1 .9-.4-.7-.1 .8 0 .3-.1-.1-.2 .8 .1 .5-.4 3.1-.6 1.8 .1 4.5-.8 1 .1 .4 .3zM81.5-75.3l.7-.2-.2 .3zM95.3-76.3l1.3 0-.3 .2zM97.6-79.8l1.3-.2 1.2 .2-.4 .5-.7 0 .9 .3-.5 .2-1.8 0-4.5-.7 1.9-.6 2.6-.1 .4 .2zM76.1-79.6l1.5 .1-1 0zM91.1-80l2.7 .1-1.4 .2zM59.9-80l-.6 .1-.4-.1 .6-.1zM57-80.5l2.3 .2-2 .1zM97.9-80.8l-.9 .3 .4 .2-.2 .1-3.3 .2-2.4-.4 1.1-.1 .7-.3-.7 0 .5-.2 2.1-.3 1.6 .3zM62.1-80.6l-2.5 .2-.3-.2 .4-.2 2.5 0zM80.4-80.9l-1.4 .1 .2-.2zM57.2-81l1.4 0 .3 .2-1 0zM64.1-81l.7-.2 .6 .3-2.9 .1zM101.1 65.4l.2 .1-.3 .2-.7-.1 .2-.2zM119.9 9.3l.9 .7-.4 .3-1.3-.6-.1-.2 .2-.1zM118.8 8.3l.2 0 .1 .4-2 .4-.3-.1 0-.5 .8-.1 .2 .3 .4 0-.4-.4 .1-.2 .8 .3zM115.9 8.8l.4-.6 .4 .1-.1 .6-.6 0zM122.8 8.6l-2.9 .3 0-.5 .7-.2 .8 .4 .9 0 .6-.3-.1-.2 .2 .2zM115.7 8.4l-.6 .4-.6-.7 1 .1zM108.3 6.3l.5 .5 1.6 .1 .4-.5 .4 .3 1.3 .2 .5 .8 1.1-.1 .3 .2 .2 1-1.3-.5-1.8 0-2.2-.6-1.4 0-1.4-.3 0-.3-.3-.2-1-.1 .3 0 .6-.9 .7 .2 .2-.2 .7 .3zM112.7 7.1l.2-.2 1.1 0-.5 .3zM116.3 3.3l0 .6-.2 .2 0-.6zM107.9 3.1l-.3 .1 .2-.7 .5 .3-.2 .4zM106.6 2.9l.1 .2-.7-.3-.2-.6-.7-.2 .3-.4 .6-.1 .4 1 .4 .1zM97.5-5.2l.8 1.1 1.4 .9 .8 1 .4 .3-.1-.3 .2-.1 1.4 1.5 .6 .2 0 .2-.5 .2 .8-.3 .4 .2 .1 .3-.4 .2 0 .4 .3 .3 .7 .1 .1 .8 .3 .3-.1 .5 .7-.2 .6 .7-.3 2.7-.4-.3-.2 .2-.5-.2 .1 .4-2.2-1.7-.9-1-1.3-2.4-1.1-1.2-.6-1.5-.9-.5-.7-1.2-.6-.2-.8-.9-.4-.9 1.3 .4zM117.5-4.1l.3 .4-.7 .1 1 1.3-.3 .3 1.2 1-.5 .2-.6-.3 .1 .2-.5 .7 .1 1-.7 .4-.2-.2 .1 .3-.5 .5 .2 .6-.5 1.2-1.3 .6-.4-1-.6 .3-.1-.3-.6-.3 0 .3-1.1 .4-.2-.7-1.4 .1-.3-1.7-.9-.9 .2-.4-.4-.4 .1-.8 .6-.8 1.6 .6-.2-.2 .5-1.1 1.5-.5 .9-1 .1-.4 1.4-.4 .2-.2-.2-.2 .5-.2 .9-1.4 0 .4 .3-.4 .5 .5-.1 .6 .5-.2 0 .4 .4-.1 .9 .4-.2 .3-.8 .1-.1 .2 .4 .4-.9 .1zM102.5-1.1l.5 .2 0 .2-.5-.2zM108.2-4.2l.2 .3-.3 .2-.1-.3zM117.3-8.7l1.9-1.8 .4-.8 .1 .8-2.5 2.1zM121.5-13.1l-.1 .8-.2 .1-.8-1.3 .8 .1zM110.8-19.6l-.3 .9-.8 .5-1-.3 0-.8 .6-.6 1.4-.2 .3 .4zM120.8-21.9l-.5-.6-.2-1.2 .9-1.3 .6-.3 .3 .3-.5 1.8-.5 .7zM112.8-74.1l-1.3-.3 1.9 0zM107.7-78.1l-1.3 0 1.1-.1zM102.4-78.8l1.4-.3 1.5 .5-.6 .3-5.4 .3 .7-.3 .4-.5 .6 0 .6-.6 1.3 .1zM130.1 11.8l.2-.5 .3 .5zM123.4 10.5l-.2 .3-.4 0zM124.3 10.2l-.7 .1 .1-.7 1.2-.6 .3-.4 2.1-.2-1.9 .9zM123.4 8.6l-.2-.1 .2-.2 .5 0zM124.4 8.4l.1-.3 .6 .1 0 .2zM126 7.9l-.2 .1 .2-.3 .6-.1 .2 .1-.3 .3zM123.1 4.7l-.1 .5 .2 .1-.6 .4 .3-1.1 .2-.2 .1 .4zM122.3 5.4l.1-.6 .3-.2-.1 .8zM127.2 3.6l-.5 .2-.7-.6 .9-.1 .3 .3zM130.8 3.5l0 .4-1-.6-.3 0 0 .2-.6-.3-.4 .2-.4-.2-.2 .3 .3-.6 1.3-.1 .9 .2zM124.4-.5l-1.1 .2-.3-.2-2.4 0-.4 .2-.1 .9 .6 .8 .9-.6 1.3 0 .3-.2 .2 .4-.5-.1-.6 .7-.9 .3 .9 1 0 .7 .6 .8-1.3 .4 0-.7-.7-.6 .2-.7-.4-.1-.4 .2 .1 2.7-.7 .1-.3-.4 .1-1.8-.6-.1-.1-.7 .3-.2 .4-1.6 .2-.2 .1 .2-.1-.8 .6-1.1 .3 .1 .4-.4 1.8 .5 1.1-.1 1.1-.8 .2 .2zM130.1 2.1l-.4-.2 .7-.2 0 .3zM125.3 1.9l-1 0 .4-.3 .4 .1zM127.6 1.3l.6 .4-.7 0 0-.2zM123.4 1.5l-.2 .1 0-.3-.3 .3-.1-.3 .7 0zM127.8 .9l-.3-.1-.2-.5 .3 0 0 .3 .3 .2zM128.2-1.4l.5-.2 0 .5-.4 .4 .6 .5-1-.2 .5 1.3-.7-.7-.3-1.3 .2-.7 .4-.4 0 .9-.4 .4 .3 .1zM128.5-2.1l-.2 .1-.1-.3 .5-.2zM122.3-6.6l-.3 .2-.2-.2 .3-.1zM126.2-8.6l.3 .4 .1 1-.4 .3 0 .6-.5-1-.3 .6 .3 .7-.4 .4-.1-.5-.3 .2-.8-.5-.1-.6 .2-.4-.5-.4-.2 0-.1 .4-.3-.3-.3 .2-.2-.3-.5 .9-.2-.2 .3-.8 1.2-.8 .4 .3 0 .4 .4-.2 .7-.8 .6 0 0-.8 .7 .5 .1 .5zM123.8-9.8l.4-.3 .4 .1-.2 .4-.5 0zM122.4-9.9l.5-.2 .1-.8 .6 .1-.5 1.2 .1 .5-.8-.6zM123.4-10l.6-1.3 0 .9-.7 1zM124.9-11.4l.4 1.1-.2 .1-.1-.2 0 .4-.3-1-.3 .1-.1-.6 .3 .2zM123.2-11.5l-.4 .7-.8 .4 0-1.5 .9 .5zM125.5-11.8l.2 .8-.5-.1-.3-.5 .1-.2-.6-.4-.1-.4 .9 .1 .3 .3zM124-11.8l-.5-.4-.3 .3 0-.7 .7 .4zM124.2-14.1l.2 .4-.2 .2-.2-.2zM122.3-18.4l-.1 .7 .3 .6-1.1 1.8 .5 1.3 .3 .1 .4-.4 .5 .5 .2 0 0-.3 .6 .3-.4 .2 .6 .6 0 .4-.2-.3-.6-.1-.1-.4-.6-.5 0 .7-.8-.7-.5 .3-.5-.3-.2 .1 .3-.8-.3-.3 0 .4-.2 0-.3-.4-.3-1.4 .4 .3 .2-.2 .2-2.3 .5-.1 .8 .3 .2-.2zM127.9-26.4l-.2 .3 .2-.6 .4-.2 0 .2zM126.9-33.5l-.6 .3 0-.3zM144.7 40.7l1.6 .5 1.2-.2 .1-.2 .6 .1 .1 1.3-.1-.2-.2 .3 0 .9-.4-.2 .2-.1-.2-.1-.1 .2-.2-.2-.4 .8-.9-.1 .2-.2-.7-.4-.3-.7 .3 .2-.9-1.4zM148.1 40.2l-.3-.3 .1-.2 .4 .5zM144.1 39.6l-.2 .5 0-.5zM137.4 36.1l-.9-.2 .1-.2 .7-.1 .8 .3-.4 0zM143.4 12.6l.1 1.1 .3 .6 .2 .2 .5-.3 .1 .3 .7 .4 .1 1.5 .5 .5 .1 1.4 .4 .7 2.4 1.3 .1 .2-.2 .1 .8 1 .2 .8 .3 .2 0-.4 .8 .4 0 .9 1 .6 1.4 1.9-.1 1.2 .5 1 0 .5-.7 2.7-.4 1-1.2 1.2-.5 1.4-.6 .8-.3 1.7-.4 .3-1.6 .1-1 .8-.7 0 .1 .2 .2-.1-.1 .3-1-.6 .1-.3-.5 .3-.3-.2 .4-.2-.2-.2-1.4 .9-1-.4-1.1 0-1-.5-.6-.7 .1-.5-.9-1.1 .3 0 0-.2-1.1 .2 .3-.8-.4-.6-.4 .9-.8 .1 .1-.3 .4 0 .1-.7 .4-.6-.1-1-.6 1-.8 .4-.5 .7 .1 .3-.9-.4 .3 0-.2-.6-.5-.7-.4-.1-.1-.7-3.1-1-2.2 .2-1.6 .6-1.4 0-1.7 .7-.7 .9-1.3 .1-.8-.2-1.5 .2-.4 .4-1.6 .7-1.4-.1-.9-.6-.6-.1 0-.8 .4 .1 .3-.4 0-1.5-.6-1.1-.2-1.5-1.7-2.9 .2-.1 .2 .5 .3-.3-.4-.7 .2 .5 .2-.1 .3 .3 0-.4-.8-1.5 .4-1-.1-.8 .4-.8 0 .7 .6-.7 2-1.1 .7 0 1.4-.4 .3-.3 1.9-.4 1.3-1.5-.2-.6 .2-.4 .7-.7 .6 1.1 0-.5 .2 .1 .1-.2-.4-.4 .1-.3 1.2 .2-.4-.1 .2-.4-.2-.4 .3-.2 .4 .1-.3-.2 .2-.2 .4 .1-.2-.4 .4-.4 .3 .3 .2-.6 .5 .2 .3-.5 .6 .3 .7 .8-.1 .5 .5-.5 .5 .1 .1 .3 .1-.3 .3 .2 .2-.3-.4-.4 .4-.8 .5-.3-.2-.2 .5-.7 .3 .2 .4-.5 .1 .2 1 0 .3-.2 0-.5-.9-.3 .2-.1 .7 .3 .3-.1 .2 .3 1.2 .4 .8 .1 .7-.4-.2 .4 .4 .2 .2 0 .1-.4 .5 .2-.4 1-.6 .1 .1 .6-.6 .9 .9 .8 1.4 .6 .5 .5 .8 .2 .2 .4 .8 .4 .8-.3 .5-.9 .3-1.4 0-2.2 .3-.2-.2-.3 .3-.3 .2-1.2 .4-.2 .3 1.1 .3 .2-.1 .3zM136.7 14.1l.2 .2-.6-.1 .1-.3 .5-.1zM131.5 11.4l-.5 .5-.5-.3-.1-.4 .4 .2 .5-.2zM150.9 9.6l-.5 0 0-.2 .4 0zM138.2 7.5l.6-.1 .2 .3-.2 .4-.5 .3-.6 0 .1-.5zM131.3 7.4l.4-.3-.1 .5-.5 .4zM141.2 2.6l3.3 1.2 1.3 1-.1 .6 1.9 .7 .2 .6-.8 .1 .2 .6 .9 .7 .5 1 .6-.1 .1 .5 .7 .2-.2 .1 .1 .2 .9 .2-.4 .1 .2 .3-.3 .1-.5-.3-2-.3-.8-.7 0-.3-.4-.1-.5-.9-1.2-.5-.8 .2-.4-.3 .2 .4-.4 .1 .1 .2-1.4 0 .9 .3 .3 .5-.8 .3-1.5-.1-1.1-1 .1-.3-.7 .3-.2-.2-.3 .3 .2-.7-.4-.3 .5-.1-.6-.3 .3 0-.5-.6 0-.5-1.1-.9-2.1-.4-.5-.4 .2-.2-.9-.1-.3-.3 .1-.4-.4 .8-.4 .2-.2-.8-.8-.5 .7 0 .5-.4 .5 .2 .2-.5-1.6 .1-.4-.6-.9-.2 .3-.5 1.1-.5 1.7 .4 .2 .6-.2 .3 .1 .6 .3 .5 .1-.3 .5 .8 .4 0 .9-1 .7-.2 0-.3 .7-.3 2.8 .9 .1 .2zM134.1 6.8l.1-.6 .3 .2-.3 .5zM134.7 6.3l-.5-.2 0-.4 .4-.3 .1 .3zM152.3 5l-.3 .1 .1 .4-.6 .1-1.1 .7-.7 0-1.4-.6 .1-.2 1.4 0 .3-.5 .1 .5 .8-.1 .3-.4 .4-.1-.1-.7 .8 .1 0 .4zM152.4 3.7l-1.7-1 1.3 .6 1 .8-.1 .7-.2-.7zM150.5 2.5l-.3 .2-.2-.2 .2-.1zM147.1 2.2l-.6-.1 .4-.2 .5 .1zM136.3 1.9l-.8-.3 1.4 .2zM130.7 1l.4 0-.3 .3zM136.2 1.2l-.3 0-.5-.5 .5 0 .5 .4zM131 .4l-.3-.3 .2 .3-.7-.2 .6-.2 .5 .2 0 .2zM131.5-33.3l.4 0 .1 .4-.7 1.5-.6 .4 .1-.7-.2 .5-.5-.2 .2-.1-.1-.6 .4-.5-.4-.6 .1 .5-.5 .1-.1-.5 .3 .2-.4-.4 1.1-.6 1 .3zM134.2-33.4l0 .2-.5-.3-.4 .1-.4 .6-.3 0-.2-.6-.4 .1 .9-.8 .2 .2 1-.5 .5 .2 .1 .4zM141.8-40.3l.2 .5-.1 .7-.4 .7-.6 .3 .1 1-.4 .9 .3 .5-1 .8 .1-.8-.2 0-.1 .6-.2-.2-.3 .1-.3 .6-.2-.5-.5 .5-1.1 0 .2-.2-.4 .1-.1-.4-.3 .4 .4 .4-.6 .1-.6 .7-.6-.5 .3-.6-.7-.2-1.6 .5-.8 0-.2 .5-.4-.3-.8 .1 .1-.4 .4 0 1.5-1.1 3-.1 .8-1.1 .1-.7 .5-.1-.4 .4 .3 .3 2.2-1.3 .7-1.5-.1-.3-.3 0 .3-.4-.1-.3 .4-.2 .1-.4 .2 0 .1 .4 .4-.1 .1-.3-.4 .1 .1-.4 .6 .1 0 .8zM145.3-44.3l-.2 .6 .2 .4 .5-.1-.3 .2-1.5 .3-.8 .9-1.3-.6-.9 .3-.5-.3-.2 .3 .9 .5-.5 0-.6 .4-.3-1 .6-.6 0-.3 1 0 .4-1.2-.1-.9 .3-.1 1.8 1.4 .9 .2zM146.6-44.4l-1.2 .7 .7-.8zM147.7-45l-.8 .6 1-1 .9-.1 0 .2zM150.6-46.2l-.9 .6-.3 0 .6-.4zM143.3-53.1l-.1 1.2 1.5 3.3-.7-.6-.9 0-.5 1.5 .6 .9 .3 0 .1 .4-.2 .4-.1-.6-.7-.1-.5 .8-.3-.6 .4-1.5-.3-.8 .3-2.4-.5-.5 0-.6 .2-1.1 .5 0 .3-.3 0-.3-.4-.3 .4-.1 .3 .3-.1 .3zM137.7-54.7l-.2-.2-.3 .1 .4-.4 .6 .2zM143.5-73.2l-2.8-.3-1 .1 1.4-.5 2.2 .3zM141-74.2l0 .2-.5 .1-.4-.3zM148.6-75.2l2.2 0-.2 .3-1.5 .1-3-.4 .4-.4 .3 .2 1.6 0zM140.9-75.7l.1-.3 .5-.1 2.2 .2 1.7 .4-.7 .1 .2 .1-.9 .3-.8-.1-.5-.3 .2-.3-.8 0 .1 .3 .9 .4-.6 .2-.5-.2-1.7 .2-.6-.2-.6 .3-1-.1-1.2-.5 .4 0 0-.4 .4-.1-.1-.2 1.2-.2 1.8 .6zM135.6-75.8l.6 .2-.7 .2zM166 78.1l.9 .1 .6-.2-1.2 .3zM167.3 77.7l-.6 .2-.5-.4 .5-.3 2.7 .3-.9 .2zM168.2 47l-.7 .3 .3-.6 .2 .2zM174 40.9l-.2 .4 .2-.3 .3 0-.3 .2 .4-.1-.3 .3 .1 .4-1.7 1.7 .6 .3-.6-.1-.2 .2-.3-.2 .2 .2-1 .4-.4 1.6-.5 .1-.6 .6-1.3 0-.9-.5-.7 .1 .1-.2-.2 .1-.2-.3 .5-.1-.2-.1 .2-.1-.3 0 .2-.2 .3 .1-.2-.3 .3 0 .1-.3 .1 .2 .9-.9 .8-.2 1.8-1.2 0 .2 .5-1.1 1-1.2 .4-.1-.2 .2 .3 .1 .1 .5zM173.5 34.9l.6 .2 0 .2 .2-.1 .3 .6-.2 0 .4 .5-.1 .5 .8 .4 0-.7 .3 .2 .3 .9 1.2 .4 .7-.4 .5 .1-.6 1.5-.8 0-.2 .4 .2 .1-1.1 1.5-.7 .4-.4-.4-.3 .1 .7-1-1.4-.8-.1-.4 .8-.3 .3-1-.3-.7 .3 0-.7-.6 .2 .1 0-.4-.5-.3 .2 .5-.7-.9 .2-.2-.3 .1-.2-.2 .1-.2-.5-.5 .3-.1 .3 .6 .1-.2zM153.2 24.9l.1-.2 .1 .4-.3 .7-.1-.6zM165.4 21l1.6 1.3-.5 0-1.6-1-.8-1.2 1.1 .7zM167.2 20.7l.2 .5-.4-.3 .1-.2zM178.7 18.1l-.9 .2-.5-.4 .3-.4 .6-.2 .4 .4zM179.9 16.6l-1.2 .4-.1-.4 1.4-.4-.4 .5zM167.8 16.5l-.4 .1-.2-.5 0-.2 .6 .4zM167 14.9l.2 .6-.4 .1-.2-.2 0-.8 .2 .6zM162.4 10.8l-.9-.2-.2-.4 .8 .3zM160.8 9.9l-.9-.1-.3-.3 0-.2 .8 .1zM161.2 9l.2 .6-.5-.4-.3-.9 .4 .3-.1 .2zM157.5 8.3l-.3 0 .3-.3 .4 .6-.3-.2zM158.8 7.9l-.3-.4 .9 .5 .4 .3 .1 .3-.3-.2zM156.5 6.7l1 .7-.4-.1zM155.3 6.7l-.6-1.3 .4 .2 .9 1.1-.3 .2zM155.2-50.3l.5-.1 .4-.4-.3 .6-.5 .1zM166.6-54.7l-.8-.6 .5 0 .4 .5zM164.5-59.2l.1 .3-1.2 .4 .4-.5zM161.1-69.4l.5-.2-.2 .2 .1 .5-.4-.2zM168.4-70l1 .1-.2 .3-1.4-.2zM180-71.5l0 .5-1.2 .2-.2-.2 .3-.2z";
+    var READ = ["Singapore", "Cairo", "Rome", "Moscow", "Mumbai", "Barrow", "Sydney"];
+    var CITY_NOTE = {
+      Singapore: "1년 내내 기온이 약 27~29℃로 거의 같고 비가 많습니다. 연교차가 매우 작습니다.",
+      Cairo: "1년 강수량이 아주 적어 막대가 거의 보이지 않습니다. 매우 건조합니다.",
+      Rome: "여름(7~8월)에는 비가 적고, 가을과 겨울에 비가 많습니다.",
+      Moscow: "겨울에는 영하로 내려가고 연교차가 큽니다. 비는 1년 내내 고르게 내립니다.",
+      Mumbai: "6~9월에 비가 몰려 내리고 겨울에는 거의 오지 않습니다.",
+      Barrow: "가장 따뜻한 달도 5℃가 안 됩니다. 1년 내내 춥고 비가 적습니다.",
+      Sydney: "남반구라 1~2월이 여름이고 7월이 겨울입니다. 기온 선이 가운데가 오목합니다."
+    };
+    var BUILD = [
+      ["빈 그래프", "재생하면 기후 그래프를 한 단계씩 그립니다."],
+      ["가로축과 눈금", "가로축은 1월부터 12월까지입니다. 왼쪽 눈금은 기온(℃), 오른쪽 눈금은 강수량(mm)입니다."],
+      ["강수 막대", "각 달의 강수량만큼 막대를 세웁니다. 오른쪽 눈금을 읽습니다."],
+      ["기온 점", "각 달의 평균 기온 위치에 점을 찍습니다. 왼쪽 눈금을 읽습니다."],
+      ["기온 선", "점을 선으로 이어 기온 변화가 한눈에 보이게 합니다."],
+      ["완성", "한 도시의 30년 평균 기후가 그래프 한 장에 담겼습니다."]
+    ];
+    var KEYS = [
+      ["tmax", "최난월", "가장 따뜻한 달입니다. 기온 선에서 가장 높은 점을 찾습니다."],
+      ["tmin", "최한월", "가장 추운 달입니다. 기온 선에서 가장 낮은 점을 찾습니다."],
+      ["range", "기온의 연교차", ""],
+      ["tmean", "연평균 기온", "12개월 기온을 모두 더해 12로 나눈 값입니다."],
+      ["pann", "연강수량", "12개월 강수량을 모두 더한 값입니다."],
+      ["pmax", "최다우월", "강수량이 가장 많은 달입니다. 막대가 가장 높은 달을 찾습니다."],
+      ["pmin", "최소우월(최건월)", "가장 건조한 달입니다. 막대가 가장 낮은 달을 찾습니다."]
+    ];
+    /* 만들기 눈금: 강수 0~400mm(한 칸 100mm. 원본 500mm는 한 칸이 125mm라 읽기 어려웠음) */
+    var ED = { lo: -40, hi: 40, pTop: 400, tStep: 0.5, pStep: 5, tKey: 1, pKey: 10, guides: [22, 18, 10, -3], start: ["Seoul", "Rome", "Singapore", "Cairo", "Moscow", "Barrow"] };
+
+    /* 쾨펜 판별(교과서 기준): 자료발췌/로직/기후/koppen-ui.js 의 judge 를 줄여 씀(기호만) */
+    var NAMES = { Af: "열대 우림 기후", Am: "열대 몬순 기후", Aw: "사바나 기후", BW: "사막 기후", BS: "스텝 기후",
+      Cfa: "온난 습윤 기후", Cfb: "서안 해양성 기후", Cs: "지중해성 기후", Cw: "온대 겨울 건조 기후",
+      Df: "냉대 습윤 기후", Dw: "냉대 겨울 건조 기후", Ds: "냉대 여름 건조 기후", ET: "툰드라 기후", EF: "빙설 기후" };
+    function judge(c) {
+      var t = c.t, p = c.p, tmax = Math.max.apply(null, t), tmin = Math.min.apply(null, t), pAnn = sum(p), pmin = Math.min.apply(null, p);
+      var su = c.lat >= 0 ? [3, 4, 5, 6, 7, 8] : [9, 10, 11, 0, 1, 2], wi = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].filter(function (m) { return su.indexOf(m) < 0; });
+      function pick(idx, fn) { var b = idx[0]; idx.forEach(function (m) { if (fn(p[m], p[b])) b = m; }); return b; }
+      var sMin = pick(su, function (a, b) { return a < b; }), sMax = pick(su, function (a, b) { return a > b; });
+      var wMin = pick(wi, function (a, b) { return a < b; }), wMax = pick(wi, function (a, b) { return a > b; });
+      if (tmax < 10) return tmax < 0 ? "EF" : "ET";
+      if (pAnn < 500) return pAnn < 250 ? "BW" : "BS";
+      if (tmin >= 18) return pmin >= 60 ? "Af" : pmin >= 100 - pAnn / 25 ? "Am" : "Aw";
+      var Z = tmin > -3 ? "C" : "D";
+      var sDry = p[sMin] < 40 && p[wMax] >= 3 * p[sMin], wDry = p[sMax] >= 10 * p[wMin], sec = "f";
+      if (sDry && wDry) sec = p[wMax] / Math.max(1, p[sMin]) >= p[sMax] / Math.max(1, p[wMin]) ? "s" : "w";
+      else if (sDry) sec = "s";
+      else if (wDry) sec = "w";
+      if (Z === "C" && sec === "f") return tmax >= 22 ? "Cfa" : "Cfb";
+      return Z + sec;
+    }
+
+    var QUIZ = [
+      {
+        title: "서울의 연교차",
+        q: "서울의 최난월은 8월 25.7℃, 최한월은 1월 −2.4℃입니다. 기온의 연교차는 몇 ℃일까요?",
+        opts: ["23.3℃", "28.1℃", "25.7℃"],
+        ans: 1,
+        ok: "맞습니다. 연교차 = 최난월 − 최한월 = 25.7 − (−2.4) = 28.1℃입니다.",
+        no: "다시 생각해 보세요. 영하의 값을 빼면 더하는 것과 같습니다. 보기 1에서 「기온의 연교차」를 눌러 봅니다."
+      },
+      {
+        title: "최소우월 찾기",
+        q: "기후 그래프에서 최소우월(가장 건조한 달)은 어떻게 찾을까요?",
+        opts: ["기온 선이 가장 낮은 달을 찾습니다.", "강수 막대가 가장 낮은 달을 찾습니다.", "가로축의 맨 처음 달을 찾습니다."],
+        ans: 1,
+        ok: "맞습니다. 강수량은 막대로 나타내므로, 막대가 가장 낮은 달이 최소우월입니다. 서울은 1월(20mm)입니다.",
+        no: "다시 생각해 보세요. 선은 기온, 막대는 강수량입니다. 보기 1에서 「최소우월」을 눌러 봅니다."
+      },
+      {
+        title: "남반구의 여름",
+        q: "남반구에 있는 시드니의 기후 그래프에서 기온이 가장 높은 때는 언제일까요?",
+        opts: ["1~2월", "7~8월", "4~5월"],
+        ans: 0,
+        ok: "맞습니다. 남반구는 북반구와 계절이 반대라 1~2월이 여름입니다. 시드니의 최난월은 2월(23.6℃)입니다.",
+        no: "다시 생각해 보세요. 보기 2에서 시드니를 고르고 「값 보기」를 눌러 봅니다."
+      },
+      {
+        title: "카이로의 연강수량",
+        q: "카이로의 기후 그래프는 강수 막대가 거의 보이지 않습니다. 카이로의 연강수량으로 알맞은 것은 무엇일까요?",
+        opts: ["약 23mm", "약 230mm", "약 2,300mm"],
+        ans: 0,
+        ok: "맞습니다. 카이로는 12개월 강수량을 모두 더해도 23mm뿐입니다. 비가 거의 내리지 않는 사막 기후입니다.",
+        no: "다시 생각해 보세요. 보기 2에서 카이로를 고르고 막대 높이를 오른쪽 눈금으로 읽어 봅니다."
+      },
+      {
+        title: "싱가포르의 기온 선",
+        q: "싱가포르의 기온 선이 1년 내내 거의 평평한(연교차 1.9℃) 까닭으로 알맞은 것은 무엇일까요?",
+        opts: [
+          "적도 가까이에 있어 1년 내내 태양 에너지를 많이 받기 때문입니다.",
+          "바다에서 멀리 떨어진 대륙 안쪽에 있기 때문입니다.",
+          "1년 내내 비가 거의 내리지 않기 때문입니다."
+        ],
+        ans: 0,
+        ok: "맞습니다. 싱가포르는 북위 1.4°로 적도에 가깝습니다. 계절에 따른 태양 에너지 차이가 작아 연교차가 매우 작습니다.",
+        no: "다시 생각해 보세요. 보기 2에서 싱가포르를 고르고, 지구에서 싱가포르의 위치를 확인해 봅니다."
+      }
+    ];
+
+    function $(sel) { return root.querySelector(sel); }
+    function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
+    function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
+    function S(tag, at, parent, text) {
+      var e = document.createElementNS(NS, tag);
+      attrs(e, at);
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function E(tag, cls, parent, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function setText(e, s) { if (e.textContent !== s) e.textContent = s; }
+    function f1(v) { return v.toFixed(1); }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function signed(v, digits) {
+      var s = Math.abs(v).toFixed(digits || 0);
+      return (v < 0 && Number(s) !== 0 ? "−" : "") + s;
+    }
+    function deg(v) { return signed(v, 1) + "℃"; }
+    function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+    function mm(v) { return Math.round(v).toLocaleString("ko-KR") + "mm"; }
+    function C(id) { for (var i = 0; i < CITIES.length; i++) if (CITIES[i].id === id) return CITIES[i]; return null; }
+    function svgPoint(svg, e) {
+      var m = svg.getScreenCTM();
+      if (!m) return null;
+      var p = svg.createSVGPoint();
+      p.x = e.clientX; p.y = e.clientY;
+      return p.matrixTransform(m.inverse());
+    }
+    function onKeys(el, map) {
+      el.addEventListener("keydown", function (e) {
+        var fn = map[e.key];
+        if (fn) { e.preventDefault(); fn(e); }
+      });
+    }
+    function stats(c) {
+      var t = c.t, p = c.p, tmax = Math.max.apply(null, t), tmin = Math.min.apply(null, t), pmax = Math.max.apply(null, p), pmin = Math.min.apply(null, p);
+      return { tmax: tmax, tmin: tmin, iMax: t.indexOf(tmax), iMin: t.indexOf(tmin), range: tmax - tmin, tmean: sum(t) / 12,
+        pann: sum(p), pmax: pmax, pmin: pmin, iPmax: p.indexOf(pmax), iPmin: p.indexOf(pmin) };
+    }
+
+    var RM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var views = $(".cg-views");
+    var view = "read";
+
+    /* ================= 도시 위치 3D 지구 (업그레이드 B) =================
+       「계절풍」 · 「기단과 장마 전선」 완성본과 같은 광선 추적 지구를 작게 씀. 그래프는 읽기 정확도를 위해 2D 그대로 둠.
+       캔버스는 SVG의 지구 자리에만 겹쳐 놓아, 그래프 짚기 · 끌기는 그대로 SVG가 받음 */
+    var RAD = Math.PI / 180;
+    var gcv = $(".cg-gcv"), ctx = gcv.getContext("2d"), stage = $(".cg-stage");
+    var DPR = 1, TS = 0.9, FONT = "Pretendard,'Malgun Gothic',system-ui,sans-serif";
+    function hexRGB(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+    function mix(a, b, u) { u = clamp(u, 0, 1); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]; }
+    function rgb(c, k, al) {
+      var v = [0, 1, 2].map(function (i) { return Math.round(clamp(c[i] * (k == null ? 1 : k), 0, 255)); });
+      return al == null ? "rgb(" + v.join(",") + ")" : "rgba(" + v.join(",") + "," + al + ")";
+    }
+    function ctext(text, x, y, o) {
+      o = o || {};
+      ctx.font = (o.bold ? "700 " : "") + ((o.size || 13) * TS).toFixed(1) + "px " + FONT;
+      ctx.textAlign = o.align || "left"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+      if (o.pill) {
+        var w = ctx.measureText(text).width, x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
+        ctx.fillStyle = o.pillColor || "rgba(255,255,255,.88)";
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x0 - 8, y - 12 * TS, w + 16, 24 * TS, 9); else ctx.rect(x0 - 8, y - 12 * TS, w + 16, 24 * TS);
+        ctx.fill();
+      } else if (o.halo !== 0) {
+        ctx.lineWidth = o.halo || 4; ctx.strokeStyle = o.haloColor || "rgba(255,255,255,.92)"; ctx.strokeText(text, x, y);
+      }
+      ctx.fillStyle = o.color || "#1d2126"; ctx.fillText(text, x, y);
+    }
+    function roundPath(rect) {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 12); else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    }
+    function backdrop(rect, c0, c1) {
+      var g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+      g.addColorStop(0, c0 || "#f4f9fe"); g.addColorStop(1, c1 || "#e2edf7");
+      ctx.fillStyle = g; roundPath(rect); ctx.fill();
+    }
+    function clipRect(rect) { ctx.save(); roundPath(rect); ctx.clip(); }
+    function arrowHead(a, b, len, wid, color) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L, tip = [b[0] + ux * len * 0.5, b[1] + uy * len * 0.5];
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.moveTo(tip[0], tip[1]);
+      ctx.lineTo(tip[0] - ux * len - uy * wid, tip[1] - uy * len + ux * wid);
+      ctx.lineTo(tip[0] - ux * len + uy * wid, tip[1] - uy * len - ux * wid);
+      ctx.closePath(); ctx.fill();
+    }
+    /* 경도·위도 꺾은선을 촘촘하게(선을 구 위에 매끈하게 그리기 위해) */
+    function dense(list, step) {
+      var out = [];
+      for (var i = 0; i < list.length - 1; i++) {
+        var a = list[i], b = list[i + 1], n = Math.max(1, Math.ceil(Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])) / (step || 2)));
+        for (var k = 0; k < n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+      }
+      out.push(list[list.length - 1]);
+      return out;
+    }
+    function ease(u) { return u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; }
+    /* 지구 바탕 그림(정거 원통): 바다는 위도에 따라 옅은 파랑, 육지는 베이지.
+       당겨 보는 지구라 필요한 범위만 촘촘하게 그림 [경도 처음, 끝, 위도 아래, 위, 1°당 화소] (전 세계 1024 그림은 해안선이 계단처럼 보였음) */
+    var TEXS = {};
+    function texOf(tb) {
+      var key = tb.join(",");
+      if (TEXS[key]) return TEXS[key];
+      var k = tb[4], W = Math.round((tb[1] - tb[0]) * k), H = Math.round((tb[3] - tb[2]) * k);
+      var c0 = document.createElement("canvas"); c0.width = W; c0.height = H;
+      var x0 = c0.getContext("2d"), g = x0.createLinearGradient(0, (tb[3] - 90) * k, 0, (tb[3] + 90) * k);
+      [[0, "#eef4fa"], [0.12, "#cfe2f3"], [0.3, "#b6d4ee"], [0.5, "#a9cbea"], [0.7, "#b6d4ee"], [0.88, "#cfe2f3"], [1, "#eef4fa"]].forEach(function (s) { g.addColorStop(s[0], s[1]); });
+      x0.fillStyle = g; x0.fillRect(0, 0, W, H);
+      var land = new Path2D(LAND_PATH);
+      [0, 360].forEach(function (off) {
+        if (off && tb[1] <= 180) return;
+        x0.setTransform(k, 0, 0, k, (off - tb[0]) * k, tb[3] * k);
+        x0.fillStyle = "#efe3c4"; x0.fill(land);
+        x0.lineWidth = 0.6 / k * 2; x0.strokeStyle = "#b8a782"; x0.stroke(land);
+      });
+      TEXS[key] = { d: x0.getImageData(0, 0, W, H).data, W: W, H: H, tb: tb };
+      return TEXS[key];
+    }
+    var GL = (function () { var v = [-0.45, 0.55, 0.7], l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+    function makeGlobe(o) {
+      var G = { lon: o.lon, lat: o.lat, zoom: o.zoom, cyf: o.cyf || 0.5, lim: o.lim, tb: o.tb, lats: o.lats || [0, 20, 40, 60], lab: o.lab || -56, D: 5, R: 1, rs: 1, cx: 0, cy: 0, rect: null, lod: false, tw: null };
+      var img = document.createElement("canvas"), ictx = img.getContext("2d"), key = "", cT = 1, sT = 0;
+      G.fit = function (rect) {
+        G.rect = rect; G.rs = rect.h / 2 * G.zoom; G.R = G.rs * Math.sqrt(G.D * G.D - 1) / G.D;
+        G.cx = rect.x + rect.w / 2; G.cy = rect.y + rect.h * G.cyf;
+        cT = Math.cos(G.lat * RAD); sT = Math.sin(G.lat * RAD);
+      };
+      function view(lo, la, r) {
+        var a = la * RAD, b = (lo - G.lon) * RAD, ca = Math.cos(a), x = ca * Math.sin(b) * r, y = Math.sin(a) * r, z = ca * Math.cos(b) * r;
+        return [x, y * cT - z * sT, y * sT + z * cT];
+      }
+      G.P = function (lo, la, r) {
+        var v = view(lo, la, r || 1), l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]), s = G.D / (G.D - v[2]);
+        return [G.cx + v[0] * s * G.R, G.cy - v[1] * s * G.R, v[2] / l > 1 / G.D, s];
+      };
+      G.render = function () {
+        var T = texOf(G.tb), TEX = T.d, TW = T.W, TH = T.H, L0 = T.tb[0], A1 = T.tb[3], KP = T.tb[4];
+        var rect = G.rect, q = G.lod ? 0.55 : 1, W = Math.max(1, Math.round(rect.w * DPR * q)), H = Math.max(1, Math.round(rect.h * DPR * q));
+        var k2 = [G.lon.toFixed(2), G.lat.toFixed(2), G.zoom.toFixed(3), G.cyf.toFixed(3), W, H, G.R.toFixed(2), G.cx.toFixed(1), G.cy.toFixed(1)].join("|");
+        if (k2 !== key) {
+          key = k2;
+          img.width = W; img.height = H;
+          var im = ictx.createImageData(W, H), px = im.data, D = G.D, D2 = D * D, D4 = D2 * D2, sc = DPR * q;
+          var rs2 = (G.rs + 1) * (G.rs + 1), x0 = rect.x, y0 = rect.y;
+          for (var j = 0; j < H; j++) {
+            var Y = y0 + (j + 0.5) / sc, oy = Y - G.cy, dy = -oy / G.R;
+            for (var i = 0; i < W; i++) {
+              var X = x0 + (i + 0.5) / sc, ox = X - G.cx, rr2 = ox * ox + oy * oy;
+              if (rr2 > rs2) continue;
+              var dx = ox / G.R, dd = dx * dx + dy * dy + D2, disc = D4 - dd * (D2 - 1);
+              if (disc < 0) disc = 0;
+              var t = (D2 - Math.sqrt(disc)) / dd, vx = t * dx, vy = t * dy, vz = D - t * D;
+              var wy = vy * cT + vz * sT, wz = -vy * sT + vz * cT;
+              var la = Math.asin(wy > 1 ? 1 : wy < -1 ? -1 : wy), lo = G.lon * RAD + Math.atan2(vx, wz);
+              var ld = lo / RAD - L0; ld -= Math.floor(ld / 360) * 360;
+              var ad = la / RAD, col = (ld * KP) | 0, row = ((A1 - ad) * KP) | 0;
+              var lam = vx * GL[0] + vy * GL[1] + vz * GL[2], k = (0.7 + 0.36 * (lam > 0 ? lam : 0)) * (0.88 + 0.12 * vz);
+              var o2 = (j * W + i) * 4, a = G.rs + 0.5 - Math.sqrt(rr2);
+              if (col >= 0 && col < TW && row >= 0 && row < TH) { var ti = (row * TW + col) * 4; px[o2] = TEX[ti] * k; px[o2 + 1] = TEX[ti + 1] * k; px[o2 + 2] = TEX[ti + 2] * k; }
+              else { px[o2] = 182 * k; px[o2 + 1] = 212 * k; px[o2 + 2] = 238 * k; }
+              px[o2 + 3] = a >= 1 ? 255 : a <= 0 ? 0 : a * 255;
+            }
+          }
+          ictx.putImageData(im, 0, 0);
+        }
+        var halo = ctx.createRadialGradient(G.cx, G.cy, G.rs * 0.96, G.cx, G.cy, G.rs * 1.12);
+        halo.addColorStop(0, "rgba(120,170,230,.35)"); halo.addColorStop(1, "rgba(120,170,230,0)");
+        ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(G.cx, G.cy, G.rs * 1.12, 0, 2 * Math.PI); ctx.fill();
+        ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
+        G.lats.forEach(function (la) {
+          var ptsL = [];
+          for (var lo = -180; lo <= 180; lo += 4) ptsL.push([lo, la]);
+          G.line(ptsL, 1.001, la === 0 ? "rgba(255,255,255,.75)" : "rgba(255,255,255,.5)", la === 0 ? 1.5 : 1, la === 0 ? [6, 6] : null);
+          var lp = G.P(G.lon + G.lab, la, 1.001);
+          if (lp[2]) ctext(la === 0 ? "적도" : (la > 0 ? "북위 " : "남위 ") + Math.abs(la) + "°", lp[0], lp[1] - 7 * TS, { size: 11, color: "#6b7f94", halo: 3 });
+        });
+      };
+      G.line = function (geo, r, color, w, dash, dashOff) {
+        var prev = null, last = null, before = null;
+        ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.setLineDash(dash || []); ctx.lineDashOffset = dashOff || 0;
+        ctx.beginPath();
+        geo.forEach(function (g) {
+          var p = G.P(g[0], g[1], r);
+          if (p[2]) { if (prev) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); before = last; last = p; prev = p; }
+          else { prev = null; last = null; before = null; }
+        });
+        ctx.stroke();
+        ctx.setLineDash([]); ctx.lineCap = "butt";
+        return last && before ? [before, last] : null;
+      };
+      G.turn = function (dlon, dlat) {
+        G.tw = null;
+        G.lon = clamp(G.lon + dlon, G.lim[0], G.lim[1]); G.lat = clamp(G.lat + dlat, G.lim[2], G.lim[3]);
+      };
+      G.go = function (lon, lat, zoom, cyf) {
+        if (cyf == null) cyf = G.cyf;
+        if (RM) { G.lon = lon; G.lat = lat; G.zoom = zoom; G.cyf = cyf; return; }
+        G.tw = { l0: G.lon, t0: G.lat, z0: G.zoom, c0: G.cyf, l1: lon, t1: lat, z1: zoom, c1: cyf, t: 0 };
+      };
+      G.step = function (dt) {
+        if (!G.tw) return;
+        var w = G.tw; w.t = Math.min(1, w.t + dt / 900);
+        var e = ease(w.t);
+        G.lon = w.l0 + (w.l1 - w.l0) * e; G.lat = w.t0 + (w.t1 - w.t0) * e; G.zoom = w.z0 + (w.z1 - w.z0) * e; G.cyf = w.c0 + (w.c1 - w.c0) * e;
+        if (w.t >= 1) G.tw = null;
+      };
+      return G;
+    }
+    var globe = (function () {
+      var G = makeGlobe({ lon: 127, lat: 26, zoom: 0.86, cyf: 0.5, lim: [-1e9, 1e9, -60, 60], lats: [-30, 0, 30], lab: -62, tb: [-180, 180, -90, 90, 3] });
+      var W = { G: G, view: null, city: null, rect: null, raf: 0, rq: 0 };
+      /* 지구 자리(SVG 좌표)에 캔버스를 맞춤 */
+      W.place = function () {
+        var V = W.view;
+        if (!V || V.svg.classList.contains("cg-off")) { gcv.style.display = "none"; return; }
+        var m = V.svg.getScreenCTM(), sr = stage.getBoundingClientRect();
+        if (!m) return;
+        var b = V.gbox, x = m.a * b[0] + m.e - sr.left, y = m.d * b[1] + m.f - sr.top, w = m.a * b[2], h = m.d * b[3];
+        DPR = Math.min(2, window.devicePixelRatio || 1);
+        gcv.style.display = "block";
+        gcv.style.left = x + "px"; gcv.style.top = y + "px"; gcv.style.width = w + "px"; gcv.style.height = h + "px";
+        gcv.width = Math.max(1, Math.round(w * DPR)); gcv.height = Math.max(1, Math.round(h * DPR));
+        W.rect = { x: 0, y: 0, w: w, h: h };
+        TS = clamp(w / 240, 0.75, 1.05);
+        W.draw();
+      };
+      /* 보기(read · city)가 가진 지구 자리 gbox · 이름 줄 gcap을 씀. null이면 지구를 감춤 */
+      W.use = function (V, c) {
+        W.view = V;
+        if (V) W.aim(c);
+        W.place();
+      };
+      /* 고른 도시 쪽으로 지구를 돌림(가까운 쪽으로 돌도록 경도를 맞춤) */
+      W.aim = function (c) {
+        W.city = c;
+        var lon = c.lon; while (lon - G.lon > 180) lon -= 360; while (lon - G.lon < -180) lon += 360;
+        G.go(lon, clamp(c.lat * 0.7, -45, 45), 0.86, 0.5);
+        if (W.view) W.view.gcap.textContent = c.kr + " · " + (c.lat < 0 ? "남반구 " : "북반구 ") + Math.abs(c.lat).toFixed(1) + "°";
+        W.kick();
+      };
+      W.kick = function () {
+        if (W.raf) return;
+        var last = 0;
+        function step(t) {
+          var dt = last ? Math.min(100, t - last) : 16; last = t;
+          G.step(dt); W.draw();
+          W.raf = G.tw ? requestAnimationFrame(step) : 0;
+        }
+        W.raf = requestAnimationFrame(step);
+      };
+      W.request = function () { if (!W.rq) W.rq = requestAnimationFrame(function () { W.rq = 0; W.draw(); }); };
+      W.draw = function () {
+        if (!W.rect || W.rect.w < 20) return;
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.clearRect(0, 0, W.rect.w, W.rect.h);
+        G.fit(W.rect);
+        G.render();
+        /* 북반구 · 남반구 */
+        [[45, "북반구"], [-45, "남반구"]].forEach(function (q) {
+          var p = G.P(G.lon + 34, q[0], 1.001);
+          if (p[2]) ctext(q[1], p[0], p[1], { align: "center", bold: true, size: 12, color: q[0] > 0 ? "#495057" : "#1864ab", halo: 3 });
+        });
+        var c = W.city;
+        if (c) {
+          var p = G.P(c.lon, c.lat, 1.004);
+          if (p[2]) {
+            ctx.beginPath(); ctx.arc(p[0], p[1], 6.5 * TS, 0, 2 * Math.PI); ctx.fillStyle = "#e03131"; ctx.fill();
+            ctx.lineWidth = 2.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+            ctext(c.kr, p[0], p[1] - 17 * TS, { align: "center", bold: true, size: 13.5, pill: true });
+          }
+        }
+      };
+      /* 끌어서 돌리기 · 화살표 키 */
+      var drag = null;
+      gcv.addEventListener("pointerdown", function (e) { drag = { x: e.clientX, y: e.clientY }; if (gcv.setPointerCapture) gcv.setPointerCapture(e.pointerId); e.preventDefault(); });
+      gcv.addEventListener("pointermove", function (e) {
+        if (!drag) return;
+        G.lod = true; G.turn(-(e.clientX - drag.x) * 0.5, (e.clientY - drag.y) * 0.5);
+        drag = { x: e.clientX, y: e.clientY }; gcv.style.cursor = "grabbing"; W.request();
+      });
+      function end() { drag = null; G.lod = false; gcv.style.cursor = "grab"; W.request(); }
+      gcv.addEventListener("pointerup", end);
+      gcv.addEventListener("pointercancel", end);
+      onKeys(gcv, {
+        ArrowLeft: function () { G.turn(-15, 0); W.request(); },
+        ArrowRight: function () { G.turn(15, 0); W.request(); },
+        ArrowUp: function () { G.turn(0, -10); W.request(); },
+        ArrowDown: function () { G.turn(0, 10); W.request(); },
+        Home: function () { if (W.city) W.aim(W.city); }
+      });
+      return W;
+    })();
+
+    /* ================= 기후 그래프 부품: 자료발췌/로직/기후/climgraph.js 를 createElement 방식으로 다시 씀 ================= */
+    function makeGraph(svg, L, R, T, B, o) {
+      o = o || {};
+      var G = { L: L, R: R, T: T, B: B, on: {}, start: 0 };
+      var cw = (R - L) / 12;
+      G.xM = function (m) { return L + m * cw + cw / 2; };
+      var frame = S("g", {}, svg), hitR = null, ringR = null;
+      var frameR = S("rect", { x: L - 4, y: T - 8, width: R - L + 8, height: B - T + 8, rx: 6, "class": "cg-bgr" }, frame);
+      var axisG = S("g", { "class": "cg-g" }, svg), guideG = S("g", {}, svg), barG = S("g", { "class": "cg-g" }, svg);
+      var meanG = S("g", {}, svg), lineP = S("polyline", { "class": "cg-line cg-g" }, svg), dotG = S("g", { "class": "cg-g" }, svg);
+      var annG = S("g", {}, svg), hovG = S("g", {}, svg);
+      var bars = [], dots = [];
+      for (var m = 0; m < 12; m++) {
+        bars.push(S("rect", { x: f1(L + m * cw + cw * 0.17), width: f1(cw * 0.66), rx: 3, "class": "cg-bar" }, barG));
+        dots.push(S("circle", { cx: f1(G.xM(m)), r: 5, "class": "cg-dot" }, dotG));
+      }
+      G.groups = { axis: axisG, bars: barG, dots: dotG, line: lineP };
+      G.bars = bars; G.dots = dots;
+      /* 이름표가 강수 막대나 다른 이름표를 가리면 그래프 위 빈 곳으로 옮김(1차본은 최난월 이름표가 7월 막대 윗부분을 덮었음) */
+      var placed = [];
+      function overBars(bx, by, w, h) {
+        for (var m = 0; m < 12; m++) {
+          var x0 = L + m * cw + cw * 0.17, x1 = x0 + cw * 0.66;
+          if (bx < x1 && bx + w > x0 && by + h > G.yP(G.p[m])) return true;
+        }
+        return false;
+      }
+      function overTags(bx, by, w, h) { return placed.some(function (q) { return bx < q[0] + q[2] + 4 && bx + w + 4 > q[0] && by < q[1] + q[3] + 4 && by + h + 4 > q[1]; }); }
+      function tag(x, y, text, cls, anchor, avoid) {
+        var w = text.length * 13 + 22, h = 30;
+        var bx = anchor === "end" ? x - w : anchor === "middle" ? x - w / 2 : x;
+        bx = clamp(bx, L, R - w);
+        var by = clamp(y - h / 2, T, B - h);
+        if (avoid && (overBars(bx, by, w, h) || overTags(bx, by, w, h))) {
+          /* 그래프 위 빈 줄에 놓되, 먼저 놓인 이름표가 있으면 그 옆으로 */
+          var up = T - h - 6, cand = [bx];
+          placed.forEach(function (q) { cand.push(clamp(q[0] + q[2] + 8, L, R - w), clamp(q[0] - w - 8, L, R - w)); });
+          for (var ci = 0; ci < cand.length; ci++) if (!overTags(cand[ci], up, w, h)) { bx = cand[ci]; by = up; break; }
+        }
+        /* 그래도 다른 이름표와 겹치면 위아래로 한 칸씩 비킴 */
+        if (overTags(bx, by, w, h)) [by - h - 6, by + h + 6, by - 2 * (h + 6)].some(function (nb) { if (nb >= T && nb <= B - h && !overTags(bx, nb, w, h)) { by = nb; return true; } return false; });
+        placed.push([bx, by, w, h]);
+        S("rect", { x: f1(bx), y: f1(by), width: w, height: h, rx: 8, "class": "cg-tag " + cls }, annG);
+        S("text", { x: f1(bx + w / 2), y: f1(by + 20.5), "text-anchor": "middle", "class": "cg-tagt" }, annG, text);
+      }
+      G.set = function (city, opt) {
+        opt = opt || {};
+        G.city = city; G.start = opt.start || 0;
+        var st0 = G.start;
+        var rot = function (a) { return a.slice(st0).concat(a.slice(0, st0)); };
+        var t = rot(city.t), p = rot(city.p);
+        G.t = t; G.p = p;
+        var tmaxV = Math.max.apply(null, t), tminV = Math.min.apply(null, t);
+        var lo = o.lo != null ? o.lo : Math.min(-10, Math.floor(tminV / 10) * 10);
+        var hi = o.hi != null ? o.hi : Math.max(30, Math.ceil(tmaxV / 10) * 10);
+        /* 강수 눈금: 기온 눈금과 같은 4칸이므로 한 칸이 50 · 100 · 150 · 200 … mm가 되게 고름(1차본은 300mm 기준이라 75 · 150 · 225가 나왔음) */
+        var pm = Math.max.apply(null, p);
+        var pTop = o.pTop != null ? o.pTop : [200, 400, 600, 800, 1000, 1200, 1600, 2000].filter(function (v) { return v >= pm; })[0] || 2000;
+        G.lo = lo; G.hi = hi; G.pTop = pTop;
+        G.yT = function (v) { return T + (hi - v) / (hi - lo) * (B - T); };
+        G.yP = function (v) { return B - v / pTop * (B - T); };
+        axisG.textContent = "";
+        for (var v = lo; v <= hi; v += 10) {
+          S("line", { x1: L, x2: R, y1: f1(G.yT(v)), y2: f1(G.yT(v)), "class": "cg-grid" + (v === 0 ? " zero" : "") }, axisG);
+          S("text", { x: L - 10, y: f1(G.yT(v) + 4.5), "text-anchor": "end", "class": "cg-tk t" }, axisG, signed(v));
+        }
+        for (var k = 0; k <= 4; k++) S("text", { x: R + 10, y: f1(G.yP(pTop / 4 * k) + 4.5), "class": "cg-tk p" }, axisG, String(pTop / 4 * k));
+        S("text", { x: L - 10, y: T - 18, "text-anchor": "end", "class": "cg-unit t" }, axisG, "기온(℃)");
+        S("text", { x: R + 46, y: T - 18, "text-anchor": "end", "class": "cg-unit p" }, axisG, "강수량(mm)");
+        S("line", { x1: L, x2: R, y1: B, y2: B, "class": "cg-base" }, axisG);
+        for (var mm2 = 0; mm2 < 12; mm2++) {
+          var mon = (mm2 + st0) % 12 + 1;
+          S("text", { x: f1(G.xM(mm2)), y: B + 22, "text-anchor": "middle", "class": "cg-tk" + (st0 && mon === 1 ? " m1" : "") }, axisG, String(mon));
+        }
+        S("text", { x: R, y: B + 40, "text-anchor": "end", "class": "cg-small" }, axisG, "(월)");
+        guideG.textContent = "";
+        (o.guides || []).forEach(function (g) {
+          S("line", { x1: L, x2: R, y1: f1(G.yT(g)), y2: f1(G.yT(g)), "class": "cg-guide" }, guideG);
+          S("text", { x: R - 6, y: f1(G.yT(g) - 5), "text-anchor": "end", "class": "cg-guidet" }, guideG, signed(g) + "℃");
+        });
+        G.paint();
+      };
+      G.paint = function () {
+        var t = G.t, p = G.p;
+        p.forEach(function (v, m) { attrs(bars[m], { y: f1(G.yP(v)), height: f1(Math.max(0, B - G.yP(v))) }); });
+        t.forEach(function (v, m) { dots[m].setAttribute("cy", f1(G.yT(v))); });
+        lineP.setAttribute("points", t.map(function (v, m) { return f1(G.xM(m)) + "," + f1(G.yT(v)); }).join(" "));
+        G.annotate();
+      };
+      G.annotate = function () {
+        annG.textContent = ""; meanG.textContent = ""; placed = [];
+        var t = G.t, p = G.p, st0 = G.start;
+        var tmaxV = Math.max.apply(null, t), tminV = Math.min.apply(null, t), iMax = t.indexOf(tmaxV), iMin = t.indexOf(tminV);
+        var pMaxV = Math.max.apply(null, p), pMinV = Math.min.apply(null, p), iPmax = p.indexOf(pMaxV), iPmin = p.indexOf(pMinV);
+        var mon = function (i) { return (i + st0) % 12 + 1; };
+        bars.forEach(function (b, m) { b.setAttribute("class", "cg-bar" + ((G.on.pmax && m === iPmax) || (G.on.pmin && m === iPmin) ? " hi" : "")); });
+        if (G.on.tmean) {
+          var tm = sum(t) / 12;
+          S("line", { x1: L, x2: R, y1: f1(G.yT(tm)), y2: f1(G.yT(tm)), "class": "cg-ml" }, meanG);
+          tag(R - 8, G.yT(tm) - 22, "연평균 " + deg(tm), "r", "end");
+        }
+        if (G.on.range) {
+          var rx = R - 6;
+          S("line", { x1: f1(G.xM(iMax)), x2: rx, y1: f1(G.yT(tmaxV)), y2: f1(G.yT(tmaxV)), "class": "cg-rl" }, annG);
+          S("line", { x1: f1(G.xM(iMin)), x2: rx, y1: f1(G.yT(tminV)), y2: f1(G.yT(tminV)), "class": "cg-rl" }, annG);
+          S("line", { x1: rx, x2: rx, y1: f1(G.yT(tmaxV)), y2: f1(G.yT(tminV)), "class": "cg-rb" }, annG);
+          tag(rx - 8, (G.yT(tmaxV) + G.yT(tminV)) / 2, "연교차 " + deg(tmaxV - tminV), "r", "end");
+        }
+        if (G.on.tmax || G.on.range) S("circle", { cx: f1(G.xM(iMax)), cy: f1(G.yT(tmaxV)), r: 11, "class": "cg-mk t" }, annG);
+        if (G.on.tmin || G.on.range) S("circle", { cx: f1(G.xM(iMin)), cy: f1(G.yT(tminV)), r: 11, "class": "cg-mk t" }, annG);
+        if (G.on.tmax) tag(G.xM(iMax), G.yT(tmaxV) - 30, "최난월 " + mon(iMax) + "월 " + deg(tmaxV), "t", "middle", true);
+        if (G.on.tmin) tag(G.xM(iMin), G.yT(tminV) + 32, "최한월 " + mon(iMin) + "월 " + deg(tminV), "t", "middle");
+        if (G.on.pann) tag(L + 8, T + 20, "연강수량 " + mm(sum(p)), "p", "start");
+        if (G.on.pmax) tag(G.xM(iPmax), G.yP(pMaxV) - 22, "최다우월 " + mon(iPmax) + "월 " + mm(pMaxV), "p", "middle", true);
+        if (G.on.pmin) tag(G.xM(iPmin), Math.min(G.yP(pMinV) - 22, B - 22), "최소우월 " + mon(iPmin) + "월 " + mm(pMinV), "p", "middle");
+      };
+      /* 짚어 보기: 마우스를 올리거나 초점을 두고 ←→ */
+      G.hoverOn = true;
+      var guide = S("line", { y1: T, y2: B, "class": "cg-hguide", visibility: "hidden" }, hovG);
+      var htxt = S("text", { "class": "cg-htxt", visibility: "hidden" }, hovG, "");
+      G.month = -1;
+      G.showMonth = function (m) {
+        if (m < 0 || !G.hoverOn) { guide.setAttribute("visibility", "hidden"); htxt.setAttribute("visibility", "hidden"); G.month = -1; return; }
+        G.month = m;
+        var x = G.xM(m), right = x < (L + R) / 2;
+        attrs(guide, { x1: f1(x), x2: f1(x), visibility: "visible" });
+        attrs(htxt, { x: f1(x + (right ? 10 : -10)), y: T + 20, "text-anchor": right ? "start" : "end", visibility: "visible" });
+        htxt.textContent = ((m + G.start) % 12 + 1) + "월 · 기온 " + deg(G.t[m]) + " · 강수량 " + mm(G.p[m]);
+      };
+      if (o.hover) {
+        var hit = hitR = S("rect", { x: L, y: T, width: R - L, height: B - T, "class": "cg-hit" }, svg);
+        var mOf = function (e) { var pt = svgPoint(svg, e); return pt ? clamp(Math.floor((pt.x - L) / cw), 0, 11) : -1; };
+        hit.addEventListener("pointermove", function (e) { G.showMonth(mOf(e)); });
+        hit.addEventListener("pointerdown", function (e) { G.showMonth(mOf(e)); });
+        hit.addEventListener("pointerleave", function () { G.showMonth(-1); });
+        var foc = S("g", { "class": "cg-focus", tabindex: "0", role: "slider", "aria-label": "기후 그래프. 왼쪽·오른쪽 화살표로 달을 짚습니다", "aria-valuemin": "1", "aria-valuemax": "12" }, svg);
+        ringR = S("rect", { x: L - 8, y: T - 12, width: R - L + 16, height: B - T + 16, rx: 8, "class": "cg-ring" }, foc);
+        onKeys(foc, {
+          ArrowLeft: function () { G.showMonth(G.month < 0 ? 0 : (G.month + 11) % 12); foc.setAttribute("aria-valuetext", htxt.textContent); },
+          ArrowRight: function () { G.showMonth(G.month < 0 ? 0 : (G.month + 1) % 12); foc.setAttribute("aria-valuetext", htxt.textContent); },
+          Home: function () { G.showMonth(0); foc.setAttribute("aria-valuetext", htxt.textContent); },
+          End: function () { G.showMonth(11); foc.setAttribute("aria-valuetext", htxt.textContent); },
+          Escape: function () { G.showMonth(-1); }
+        });
+        foc.addEventListener("blur", function () { G.showMonth(-1); });
+      }
+      /* 그래프 가로 범위를 바꿈(좁은 무대 · 지구 자리) */
+      G.resize = function (l, r) {
+        L = l; R = r; G.L = l; G.R = r; cw = (R - L) / 12;
+        attrs(frameR, { x: L - 4, width: R - L + 8 });
+        for (var m = 0; m < 12; m++) { attrs(bars[m], { x: f1(L + m * cw + cw * 0.17), width: f1(cw * 0.66) }); dots[m].setAttribute("cx", f1(G.xM(m))); }
+        if (hitR) attrs(hitR, { x: L, width: R - L });
+        if (ringR) attrs(ringR, { x: L - 8, width: R - L + 16 });
+        if (G.city) G.set(G.city, { start: G.start });
+      };
+      return G;
+    }
+
+    /* 그래프 아래 안내 글: 좁은 무대에서는 문장 사이에서 두 줄로 나눔 */
+    function footer(svg) {
+      var a = S("text", { "class": "cg-small" }, svg, ""), b = S("text", { "class": "cg-small" }, svg, "");
+      var F = { txt: "", x: 100, narrow: false };
+      F.set = function (t) { F.txt = t; F.draw(); };
+      F.at = function (x, narrow) { F.x = x; F.narrow = narrow; F.draw(); };
+      F.draw = function () {
+        var parts = [F.txt, ""], best = -1;
+        if (F.narrow && F.txt.length > 42) {
+          for (var i = F.txt.indexOf(". "); i >= 0; i = F.txt.indexOf(". ", i + 1)) if (best < 0 || Math.abs(i - F.txt.length / 2) < Math.abs(best - F.txt.length / 2)) best = i;
+          if (best > 0) parts = [F.txt.slice(0, best + 1), F.txt.slice(best + 2)];
+        }
+        attrs(a, { x: F.x, y: 624 }); attrs(b, { x: F.x, y: 642 });
+        a.textContent = parts[0]; b.textContent = parts[1];
+      };
+      return F;
+    }
+
+    /* ================= 보기 ① 기후 그래프 읽는 법 (서울) ================= */
+    var read = (function () {
+      var svg = S("svg", { "class": "cg-svg", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "서울의 기후 그래프와 읽을 값" }, views);
+      S("text", { x: 20, y: 30, "class": "cg-title" }, svg, "기후 그래프 읽는 법");
+      var sub = S("text", { x: 196, y: 30, "class": "cg-tsub" }, svg, "");
+      var G = makeGraph(svg, 100, 880, 96, 560, { hover: true });
+      var steps = footer(svg);
+      var gcap = S("text", { "text-anchor": "middle", "class": "cg-gcap" }, svg, ""), gnote = S("text", { "text-anchor": "middle", "class": "cg-small" }, svg, "끌어서 돌려 봅니다");
+      var Rd = { svg: svg, G: G, stage: 5, play: false, acc: 0, last: null, gcap: gcap, gbox: null, narrow: null };
+      /* 넓은 무대: 그래프 왼쪽 · 지구 오른쪽(1000×640). 좁은 무대: 그래프 위 · 지구 아래(680×975) */
+      Rd.layout = function (narrow) {
+        Rd.narrow = !!narrow;
+        svg.setAttribute("viewBox", Rd.narrow ? "0 0 680 975" : "0 0 1000 640");
+        G.resize(Rd.narrow ? 70 : 90, Rd.narrow ? 590 : 690);
+        Rd.gbox = Rd.narrow ? [205, 668, 270, 250] : [760, 96, 220, 220];
+        attrs(gcap, Rd.narrow ? { x: 340, y: 940 } : { x: 870, y: 342 }); attrs(gnote, Rd.narrow ? { x: 340, y: 960 } : { x: 870, y: 362 });
+        steps.at(G.L, Rd.narrow);
+      };
+      G.set(C("Seoul"));
+      Rd.setStage = function (k) {
+        Rd.stage = clamp(k, 0, 5);
+        G.groups.axis.setAttribute("class", "cg-g" + (Rd.stage >= 1 ? "" : " cg-hid"));
+        G.groups.bars.setAttribute("class", "cg-g" + (Rd.stage >= 2 ? "" : " cg-hid"));
+        G.groups.dots.setAttribute("class", "cg-g" + (Rd.stage >= 3 ? "" : " cg-hid"));
+        G.groups.line.setAttribute("class", "cg-line cg-g" + (Rd.stage >= 4 ? "" : " cg-hid"));
+        G.hoverOn = Rd.stage >= 5;
+        if (Rd.stage < 5) { G.on = {}; G.showMonth(-1); }
+        G.annotate();
+        sub.textContent = Rd.stage < 5 ? "그리는 순서 " + (Rd.stage + 1) + " / 6 · " + BUILD[Rd.stage][0] : "서울의 기후 그래프 · 읽을 값을 골라 봅니다";
+        syncKeys();
+        if (view === "read") readRead();
+      };
+      Rd.toggle = function (key) {
+        if (Rd.stage < 5) { Rd.halt(); Rd.setStage(5); }
+        G.on[key] = !G.on[key];
+        Rd.last = G.on[key] ? key : null;
+        G.annotate(); syncKeys();
+        if (view === "read") readRead();
+      };
+      Rd.all = function (on) {
+        if (Rd.stage < 5) { Rd.halt(); Rd.setStage(5); }
+        KEYS.forEach(function (k) { G.on[k[0]] = on; });
+        Rd.last = null;
+        G.annotate(); syncKeys();
+        if (view === "read") readRead();
+      };
+      Rd.halt = function () { Rd.play = false; syncBPlay(); };
+      Rd.update = function (dt) {
+        if (!Rd.play) return;
+        Rd.acc += dt;
+        if (Rd.acc >= 2200) {
+          Rd.acc = 0;
+          if (Rd.stage >= 5) { Rd.halt(); return; }
+          Rd.setStage(Rd.stage + 1);
+        }
+      };
+      function syncKeys() { $$(".cg-keybtns .cg-btn").forEach(function (b) { b.setAttribute("aria-pressed", G.on[b.getAttribute("data-key")] ? "true" : "false"); }); }
+      steps.set("그래프에 초점을 두고 ←→를 누르거나 마우스를 올리면 그 달의 값이 보입니다.");
+      Rd.layout(false);
+      return Rd;
+    })();
+
+    /* ================= 보기 ② 다른 도시 읽어 보기 · 남반구 ================= */
+    var city = (function () {
+      var svg = S("svg", { "class": "cg-svg cg-off", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "고른 도시의 기후 그래프" }, views);
+      S("text", { x: 20, y: 30, "class": "cg-title" }, svg, "다른 도시 읽어 보기");
+      var sub = S("text", { x: 196, y: 30, "class": "cg-tsub" }, svg, "");
+      var G = makeGraph(svg, 100, 880, 96, 560, { hover: true });
+      var foot = footer(svg);
+      var gcap = S("text", { "text-anchor": "middle", "class": "cg-gcap" }, svg, ""), gnote = S("text", { "text-anchor": "middle", "class": "cg-small" }, svg, "끌어서 돌려 봅니다");
+      var Ct = { svg: svg, G: G, id: "Singapore", shown: false, jul: false, gcap: gcap, gbox: null, narrow: null };
+      Ct.layout = function (narrow) {
+        Ct.narrow = !!narrow;
+        svg.setAttribute("viewBox", Ct.narrow ? "0 0 680 975" : "0 0 1000 640");
+        G.resize(Ct.narrow ? 70 : 90, Ct.narrow ? 590 : 690);
+        Ct.gbox = Ct.narrow ? [205, 668, 270, 250] : [760, 96, 220, 220];
+        attrs(gcap, Ct.narrow ? { x: 340, y: 940 } : { x: 870, y: 342 }); attrs(gnote, Ct.narrow ? { x: 340, y: 960 } : { x: 870, y: 362 });
+        foot.at(G.L, Ct.narrow);
+      };
+      Ct.set = function (id) {
+        if (READ.indexOf(id) < 0) id = "Singapore";
+        Ct.id = id;
+        if (id !== "Sydney") Ct.jul = false;
+        var c = C(id);
+        G.set(c, { start: Ct.jul ? 6 : 0 });
+        guessClear();
+        if (view === "city") globe.aim(c);
+        Ct.apply();
+      };
+      Ct.apply = function () {
+        var c = C(Ct.id);
+        G.on = Ct.shown ? { tmax: true, tmin: true, range: true, pann: true } : {};
+        G.hoverOn = Ct.shown;
+        if (!Ct.shown) G.showMonth(-1);
+        G.annotate();
+        sub.textContent = c.kr + " · " + (c.lat < 0 ? "남반구 " : "북반구 ") + Math.abs(c.lat).toFixed(1) + "°" + (Ct.jul ? " · 7월부터 그림" : "");
+        foot.set(Ct.shown ? "그래프에 초점을 두고 ←→를 누르거나 마우스를 올리면 그 달의 값이 보입니다." : "먼저 그래프에서 최난월 · 최한월 · 연교차 · 연강수량을 읽어 패널에 적어 봅니다. 그다음 「값 보기」로 확인합니다.");
+        $$(".cg-citybtns .cg-btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-city") === Ct.id ? "true" : "false"); });
+        var sb = $(".cg-show"), jb = $(".cg-jul");
+        sb.textContent = Ct.shown ? "값 숨기기" : "값 보기";
+        sb.setAttribute("aria-pressed", Ct.shown ? "true" : "false");
+        jb.disabled = Ct.id !== "Sydney";
+        jb.textContent = Ct.jul ? "1월부터 다시 그리기" : "7월부터 그려 보기";
+        if (view === "city") readCity();
+      };
+      Ct.layout(false);
+      return Ct;
+    })();
+
+    /* ================= 보기 ③ 내가 만드는 기후 그래프 ================= */
+    var make = (function () {
+      var svg = S("svg", { "class": "cg-svg cg-off", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "끌어서 만드는 기후 그래프" }, views);
+      S("text", { x: 20, y: 30, "class": "cg-title" }, svg, "내가 만드는 기후 그래프");
+      var sub = S("text", { x: 238, y: 30, "class": "cg-tsub" }, svg, "");
+      var G = makeGraph(svg, 100, 880, 96, 560, { lo: ED.lo, hi: ED.hi, pTop: ED.pTop, guides: ED.guides });
+      var code = S("text", { x: 880, y: 30, "text-anchor": "end", "class": "cg-code" }, svg, "");
+      var foot = footer(svg);
+      foot.set("점(기온)과 막대 끝(강수량)을 위아래로 끕니다. Tab으로 점과 막대를 고른 뒤 ↑↓로도 바꿉니다. 점선은 쾨펜 기준선입니다.");
+      var M = { svg: svg, G: G, from: "Seoul", c: null, narrow: null };
+      var handles = S("g", {}, svg);
+      var cw = (G.R - G.L) / 12;
+      var bH = [], tH = [];
+      for (var m = 0; m < 12; m++) {
+        (function (mi) {
+          var gb = S("g", { "class": "cg-ed", tabindex: "0", role: "slider", "aria-label": (mi + 1) + "월 강수량", "aria-valuemin": "0", "aria-valuemax": String(ED.pTop) }, handles);
+          var hit = S("rect", { x: f1(G.L + mi * cw), width: f1(cw), "class": "cg-edh" }, gb);
+          var cap = S("rect", { x: f1(G.L + mi * cw + cw * 0.1), width: f1(cw * 0.8), height: 10, rx: 5, "class": "cg-edc" }, gb);
+          bH.push({ g: gb, hit: hit, cap: cap });
+          var gt = S("g", { "class": "cg-ed", tabindex: "0", role: "slider", "aria-label": (mi + 1) + "월 기온", "aria-valuemin": String(ED.lo), "aria-valuemax": String(ED.hi) }, handles);
+          S("circle", { r: 18, "class": "cg-edh" }, gt);
+          S("circle", { r: 8, "class": "cg-edd" }, gt);
+          tH.push({ g: gt });
+          drag(gb, "p", mi); drag(gt, "t", mi);
+          onKeys(gb, { ArrowUp: function () { M.val("p", mi, M.c.p[mi] + ED.pKey); }, ArrowDown: function () { M.val("p", mi, M.c.p[mi] - ED.pKey); } });
+          onKeys(gt, { ArrowUp: function () { M.val("t", mi, M.c.t[mi] + ED.tKey); }, ArrowDown: function () { M.val("t", mi, M.c.t[mi] - ED.tKey); } });
+        })(m);
+      }
+      function drag(g, k, mi) {
+        var on = false;
+        function set(e) {
+          var pt = svgPoint(svg, e);
+          if (!pt) return;
+          if (k === "t") M.val("t", mi, Math.round((ED.hi - (pt.y - G.T) / (G.B - G.T) * (ED.hi - ED.lo)) / ED.tStep) * ED.tStep);
+          else M.val("p", mi, Math.round(((G.B - pt.y) / (G.B - G.T) * ED.pTop) / ED.pStep) * ED.pStep);
+        }
+        g.addEventListener("pointerdown", function (e) { on = true; if (g.setPointerCapture) g.setPointerCapture(e.pointerId); e.preventDefault(); g.focus(); set(e); });
+        g.addEventListener("pointermove", function (e) { if (on) set(e); });
+        g.addEventListener("pointerup", function () { on = false; });
+        g.addEventListener("pointercancel", function () { on = false; });
+      }
+      /* 넓은 무대 1000×640, 좁은 무대 680×660(그래프 폭을 줄여 글씨를 키움) */
+      M.layout = function (narrow) {
+        M.narrow = !!narrow;
+        svg.setAttribute("viewBox", M.narrow ? "0 0 680 660" : "0 0 1000 640");
+        G.resize(M.narrow ? 70 : 100, M.narrow ? 590 : 880);
+        cw = (G.R - G.L) / 12;
+        for (var i = 0; i < 12; i++) { attrs(bH[i].hit, { x: f1(G.L + i * cw), width: f1(cw) }); attrs(bH[i].cap, { x: f1(G.L + i * cw + cw * 0.1), width: f1(cw * 0.8) }); }
+        attrs(code, M.narrow ? { x: 90, y: 60, "text-anchor": "start" } : { x: 880, y: 30, "text-anchor": "end" });
+        foot.at(G.L, M.narrow);
+        if (M.c) M.paint();
+      };
+      M.val = function (k, mi, v) {
+        if (k === "t") M.c.t[mi] = clamp(v, ED.lo, ED.hi);
+        else M.c.p[mi] = clamp(v, 0, ED.pTop);
+        M.paint();
+      };
+      M.load = function (id) {
+        if (ED.start.indexOf(id) < 0) id = "Seoul";
+        M.from = id;
+        var c = C(id);
+        M.c = { kr: c.kr, lat: c.lat, t: c.t.slice(), p: c.p.slice() };
+        G.set(M.c);
+        M.paint();
+      };
+      M.hemi = function (s) { M.c.lat = s ? -Math.abs(M.c.lat || 30) : Math.abs(M.c.lat || 30); M.paint(); };
+      M.paint = function () {
+        G.t = M.c.t; G.p = M.c.p;
+        G.on = { tmax: true, tmin: true };
+        G.paint();
+        for (var i = 0; i < 12; i++) {
+          var y = G.yP(M.c.p[i]);
+          attrs(bH[i].hit, { y: f1(y - 16), height: f1(Math.max(32, G.B - y + 16)) });
+          bH[i].cap.setAttribute("y", f1(y - 5));
+          bH[i].g.setAttribute("aria-valuenow", String(Math.round(M.c.p[i])));
+          tH[i].g.setAttribute("transform", "translate(" + f1(G.xM(i)) + " " + f1(G.yT(M.c.t[i])) + ")");
+          tH[i].g.setAttribute("aria-valuenow", f1(M.c.t[i]));
+        }
+        var cd = judge(M.c);
+        code.textContent = "기후 기호 " + cd + " · " + (NAMES[cd] || "");
+        M.code = cd;
+        sub.textContent = M.c.kr + "에서 시작 · " + (M.c.lat < 0 ? "남반구" : "북반구");
+        $$(".cg-startbtns .cg-btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-city") === M.from ? "true" : "false"); });
+        $$(".cg-hemiseg .cg-segb").forEach(function (b) { b.setAttribute("aria-pressed", (b.getAttribute("data-hemi") === "s") === (M.c.lat < 0) ? "true" : "false"); });
+        if (view === "make") readMake();
+      };
+      M.layout(false);
+      return M;
+    })();
+
+    /* ================= 패널: 읽은 값 ================= */
+    var elReadH = $(".cg-readh"), elRes = $(".cg-result"), elRk = $(".cg-rk"), elRt = $(".cg-rt"), elNote = $(".cg-readnote");
+    var K_ = [1, 2, 3, 4].map(function (i) { return { k: $(".cg-k" + i), v: $(".cg-v" + i) }; });
+    function stat(i, k, v) { setText(K_[i].k, k); setText(K_[i].v, v); }
+    var st5 = $(".cg-st5");
+    function stat5(k, v) { st5.classList.toggle("cg-off", !k); if (k) { setText($(".cg-k5"), k); setText($(".cg-v5"), v); } }
+    function fourStats(c, hide, st0) {
+      var s = stats(c), mon = function (i) { return i + 1; };
+      stat(0, "최난월", hide ? "?" : mon(s.iMax) + "월 " + deg(s.tmax));
+      stat(1, "최한월", hide ? "?" : mon(s.iMin) + "월 " + deg(s.tmin));
+      stat(2, "기온의 연교차", hide ? "?" : deg(s.range));
+      stat(3, "연강수량", hide ? "?" : mm(s.pann));
+      return s;
+    }
+    function readRead() {
+      var c = C("Seoul"), s = fourStats(c, false);
+      stat5(null);
+      setText(elReadH, "읽은 값 · 서울");
+      if (read.stage < 5) {
+        elRes.className = "cg-result";
+        elRk.textContent = (read.stage + 1) + ". " + BUILD[read.stage][0];
+        elRt.textContent = BUILD[read.stage][1];
+      } else if (read.last) {
+        var k = KEYS.filter(function (x) { return x[0] === read.last; })[0];
+        var val = { tmax: (s.iMax + 1) + "월 " + deg(s.tmax), tmin: (s.iMin + 1) + "월 " + deg(s.tmin), range: deg(s.range), tmean: deg(s.tmean), pann: mm(s.pann), pmax: (s.iPmax + 1) + "월 " + mm(s.pmax), pmin: (s.iPmin + 1) + "월 " + mm(s.pmin) }[k[0]];
+        elRes.className = "cg-result " + (k[0].charAt(0) === "p" ? "mild" : "hot");
+        elRk.textContent = k[1] + " · " + val;
+        elRt.textContent = k[0] === "range" ? "최난월 기온에서 최한월 기온을 뺀 값입니다. " + signed(s.tmax, 1) + " − (" + signed(s.tmin, 1) + ") = " + deg(s.range) + "입니다." : k[2];
+      } else {
+        elRes.className = "cg-result";
+        elRk.textContent = "읽을 값을 골라 봅니다";
+        elRt.textContent = "선은 월평균 기온(왼쪽 눈금), 막대는 월 강수량(오른쪽 눈금)입니다. 패널의 버튼을 누르면 그 값이 그래프에 표시됩니다.";
+      }
+      setText(elNote, "연평균 " + deg(s.tmean) + " · 최다우월 " + (s.iPmax + 1) + "월 " + mm(s.pmax) + " · 최소우월 " + (s.iPmin + 1) + "월 " + mm(s.pmin) + ". 도시 기후는 WMO 기후 평년값입니다.");
+    }
+    function readCity() {
+      var c = C(city.id);
+      setText(elReadH, "읽은 값 · " + c.kr);
+      fourStats(c, !city.shown);
+      stat5(null);
+      if (!city.shown) {
+        elRes.className = "cg-result";
+        elRk.textContent = "그래프에서 먼저 읽어 봅니다";
+        elRt.textContent = "최난월 · 최한월 · 기온의 연교차 · 연강수량을 그래프에서 읽은 뒤 「값 보기」로 확인합니다.";
+      } else {
+        elRes.className = "cg-result " + (c.lat < 0 ? "mild" : "hot");
+        elRk.textContent = c.kr + "의 기후 그래프";
+        elRt.textContent = CITY_NOTE[c.id];
+      }
+      setText(elNote, c.id === "Sydney" ? "「7월부터 그려 보기」를 누르면 서울과 같은 모양이 되는지 살펴봅니다." : "도시 기후는 WMO 기후 평년값입니다.");
+    }
+    function readMake() {
+      var c = make.c, s = fourStats(c, false);
+      /* 카드 3장: 보기 ③ 읽은 값은 다섯 개(1차본은 최소우월이 빠져 있었음) */
+      stat5("최소우월(최건월)", (s.iPmin + 1) + "월 " + mm(s.pmin));
+      setText(elReadH, "읽은 값 · 내가 만든 그래프");
+      elRes.className = "cg-result";
+      elRk.textContent = "기후 기호 " + make.code + " · " + (NAMES[make.code] || "");
+      elRt.textContent = "연평균 기온 " + deg(s.tmean) + ". 기호를 정하는 순서는 「쾨펜 기후 구분」에서 다룹니다.";
+      setText(elNote, "기준선 22 · 18 · 10 · −3℃는 쾨펜 기후 구분에 쓰는 기온입니다.");
+    }
+
+    /* ================= 애니메이션 ================= */
+    var raf = 0, lastT = 0;
+    function needAnim() { return view === "read" && read.play; }
+    function tick(t) {
+      raf = 0;
+      var dt = lastT ? Math.min(100, t - lastT) : 16;
+      lastT = t;
+      read.update(dt);
+      if (needAnim()) raf = requestAnimationFrame(tick); else lastT = 0;
+    }
+    function kick() { if (!raf && needAnim()) { lastT = 0; raf = requestAnimationFrame(tick); } }
+
+    /* ================= 패널: 조작 ================= */
+    var vbtns = $$(".cg-vbtn"), vctls = $$(".cg-vctl"), auxs = $$(".cg-aux");
+    var svgs = { read: read.svg, city: city.svg, make: make.svg };
+    function setView(v) {
+      if (!svgs[v]) v = "read";
+      if (v !== "read") read.halt();
+      view = v;
+      Object.keys(svgs).forEach(function (k) { svgs[k].classList.toggle("cg-off", k !== v); });
+      vbtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-view") === v ? "true" : "false"); });
+      vctls.forEach(function (c) { c.classList.toggle("cg-off", c.getAttribute("data-for") !== v); });
+      auxs.forEach(function (c) { c.classList.toggle("cg-off", c.getAttribute("data-for").split(" ").indexOf(v) < 0); });
+      if (v === "read") readRead(); else if (v === "city") readCity(); else readMake();
+      globe.use(v === "read" ? read : v === "city" ? city : null, v === "read" ? C("Seoul") : C(city.id));
+      kick();
+    }
+    vbtns.forEach(function (b) { b.addEventListener("click", function () { setView(b.getAttribute("data-view")); }); });
+
+    KEYS.forEach(function (k) {
+      var b = E("button", "cg-btn", $(".cg-keybtns"), k[1]);
+      b.type = "button"; b.setAttribute("data-key", k[0]); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { read.toggle(k[0]); });
+    });
+    $(".cg-allon").addEventListener("click", function () { read.all(true); });
+    $(".cg-alloff").addEventListener("click", function () { read.all(false); });
+    var bPlay = $(".cg-bplay");
+    function syncBPlay() { bPlay.textContent = read.play ? "멈춤" : "그리는 순서 재생"; }
+    bPlay.addEventListener("click", function () {
+      if (read.play) { read.halt(); return; }
+      read.setStage(0); read.play = true; read.acc = 0; syncBPlay(); kick();
+    });
+    READ.forEach(function (id) {
+      var b = E("button", "cg-btn", $(".cg-citybtns"), C(id).kr);
+      b.type = "button"; b.setAttribute("data-city", id); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { city.shown = false; city.set(id); });
+    });
+    $(".cg-show").addEventListener("click", function () { city.shown = !city.shown; city.apply(); });
+    /* 내가 읽은 값 적어 보기(업그레이드 A): 눈금 한 칸이 10℃ · 50~250mm라 기온은 ±1.5℃, 연교차는 ±2℃, 연강수량은 ±15%까지 맞게 봄 */
+    var gIns = $$(".cg-gin"), gRes = $(".cg-gres");
+    var GTOL = { tmax: function (a, v) { return Math.abs(a - v) <= 1.5; }, tmin: function (a, v) { return Math.abs(a - v) <= 1.5; },
+      range: function (a, v) { return Math.abs(a - v) <= 2; }, pann: function (a, v) { return Math.abs(a - v) <= Math.max(20, v * 0.15); } };
+    var GHINT = { tmax: "최난월은 기온 선의 가장 높은 점을 왼쪽 눈금으로 읽습니다.", tmin: "최한월은 기온 선의 가장 낮은 점을 왼쪽 눈금으로 읽습니다.",
+      range: "연교차는 최난월 기온에서 최한월 기온을 뺀 값입니다.", pann: "연강수량은 12개 막대를 오른쪽 눈금으로 읽어 모두 더합니다." };
+    function guessClear() {
+      gIns.forEach(function (inp) { inp.value = ""; inp.className = "cg-gin"; inp.nextElementSibling.textContent = ""; inp.nextElementSibling.className = "cg-gst"; });
+      gRes.textContent = "";
+    }
+    $(".cg-gcheck").addEventListener("click", function () {
+      var s = stats(C(city.id)), n = 0, good = 0, hints = [];
+      gIns.forEach(function (inp) {
+        var k = inp.getAttribute("data-k"), raw = inp.value.replace(/[−–]/g, "-").replace(/[^0-9.\-]/g, ""), st = inp.nextElementSibling;
+        if (raw === "" || isNaN(parseFloat(raw))) { inp.className = "cg-gin"; st.textContent = ""; st.className = "cg-gst"; return; }
+        n++;
+        var ok = GTOL[k](parseFloat(raw), s[k]);
+        if (ok) good++; else hints.push(GHINT[k]);
+        inp.className = "cg-gin " + (ok ? "ok" : "no");
+        st.className = "cg-gst " + (ok ? "ok" : "no"); st.textContent = ok ? "맞게 읽었습니다" : "다시 읽어 봅니다";
+      });
+      gRes.textContent = !n ? "그래프에서 읽은 값을 하나 이상 적어 봅니다." : n + "개 가운데 " + good + "개를 맞게 읽었습니다. " + (hints.length ? hints[0] : "「값 보기」로 정확한 값을 확인해 봅니다.");
+    });
+    $(".cg-gclear").addEventListener("click", guessClear);
+    $(".cg-jul").addEventListener("click", function () { city.jul = !city.jul; city.set(city.id); });
+    ED.start.forEach(function (id) {
+      var b = E("button", "cg-btn", $(".cg-startbtns"), C(id).kr);
+      b.type = "button"; b.setAttribute("data-city", id); b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { make.load(id); });
+    });
+    $$(".cg-hemiseg .cg-segb").forEach(function (b) { b.addEventListener("click", function () { make.hemi(b.getAttribute("data-hemi") === "s"); }); });
+    $(".cg-reset").addEventListener("click", function () { make.load(make.from); });
+
+    /* 패널 위치 · 접기 · 끌어 옮기기 */
+    var panel = $(".cg-panel"), phead = $(".cg-head"), fold = $(".cg-fold");
+    var mode = "right", panelMoved = false;
+    var posBtns = $$(".cg-posseg .cg-segb");
+    /* 플로팅: 패널 옆에 280px 이상 남으면 그림을 그 자리에 맞춤. 옮겨 둔 패널은 무대 밖으로 나가지 않게 함 */
+    function layout() {
+      var pad = 18;
+      if (mode === "float" && !panelMoved && !root.classList.contains("cg-collapsed") && views.clientWidth - panel.offsetWidth - 32 >= 280) pad = panel.offsetWidth + 32;
+      views.style.paddingLeft = pad + "px";
+      /* 좁은 무대(플로팅 패널 옆 등): 그래프 폭을 줄이고 지구를 아래로 보내는 편이 크게 보이면 그렇게 함(1차본은 글씨가 약 6px) */
+      var aw = views.clientWidth - pad - 18, ah = views.clientHeight - 28, wide = Math.min(aw / 1000, ah / 640) * 1.08;
+      var n1 = Math.min(aw / 680, ah / 975) > wide, n3 = Math.min(aw / 680, ah / 660) > wide;
+      if (n1 !== read.narrow) read.layout(n1);
+      if (n1 !== city.narrow) city.layout(n1);
+      if (n3 !== make.narrow) make.layout(n3);
+      globe.place();
+      if (mode === "float" && panelMoved) {
+        var rb = root.getBoundingClientRect();
+        panel.style.left = clamp(parseFloat(panel.style.left) || 0, 0, Math.max(0, rb.width - panel.offsetWidth)) + "px";
+        panel.style.top = clamp(parseFloat(panel.style.top) || 0, 0, Math.max(0, rb.height - 60)) + "px";
+      }
+    }
+    function setPanel(m) {
+      if (["right", "left", "float"].indexOf(m) < 0) m = "right";
+      mode = m; panelMoved = false;
+      root.classList.remove("cg-pos-right", "cg-pos-left", "cg-pos-float", "cg-collapsed");
+      root.classList.add("cg-pos-" + m);
+      panel.style.left = ""; panel.style.top = "";
+      fold.textContent = "접기";
+      fold.setAttribute("aria-expanded", "true");
+      posBtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-pos") === m ? "true" : "false"); });
+      layout();
+    }
+    posBtns.forEach(function (b) { b.addEventListener("click", function () { setPanel(b.getAttribute("data-pos")); }); });
+    fold.addEventListener("click", function () {
+      var c = root.classList.toggle("cg-collapsed");
+      fold.textContent = c ? "펴기" : "접기";
+      fold.setAttribute("aria-expanded", c ? "false" : "true");
+      layout();
+    });
+    var pDrag = null;
+    phead.addEventListener("pointerdown", function (e) {
+      if (mode !== "float" || e.target.closest("button")) return;
+      var pb = panel.getBoundingClientRect(), rb = root.getBoundingClientRect();
+      pDrag = { dx: e.clientX - pb.left, dy: e.clientY - pb.top, rb: rb, w: pb.width, h: pb.height };
+      if (phead.setPointerCapture) phead.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    phead.addEventListener("pointermove", function (e) {
+      if (!pDrag) return;
+      var x = clamp(e.clientX - pDrag.rb.left - pDrag.dx, 0, Math.max(0, pDrag.rb.width - pDrag.w));
+      var y = clamp(e.clientY - pDrag.rb.top - pDrag.dy, 0, Math.max(0, pDrag.rb.height - Math.min(pDrag.h, 60)));
+      panel.style.left = x + "px"; panel.style.top = y + "px";
+      if (!panelMoved) { panelMoved = true; layout(); }
+    });
+    phead.addEventListener("pointerup", function () { pDrag = null; });
+    phead.addEventListener("pointercancel", function () { pDrag = null; });
+
+    /* ================= 확인 문제 (버튼 → 창) ================= */
+    var answered = QUIZ.map(function () { return null; });
+    var qStatus = [];
+    var qBtns = QUIZ.map(function (item, i) {
+      var b = E("button", "cg-qbtn", $(".cg-qlist"));
+      b.type = "button";
+      E("span", "cg-qno", b, String(i + 1));
+      E("span", "cg-qtt", b, item.title);
+      qStatus.push(E("span", "cg-qst", b, "풀기"));
+      b.addEventListener("click", function () { openQuiz(i, b); });
+      return b;
+    });
+    var modal = $(".cg-modal"), dialog = $(".cg-dialog");
+    var dNum = $(".cg-dnum"), dQ = $(".cg-dq"), dOpts = $(".cg-dopts"), dFb = $(".cg-dfb");
+    var dPrev = $(".cg-prev"), dNext = $(".cg-next"), dX = $(".cg-x");
+    dQ.id = uid + "-q";
+    dialog.setAttribute("aria-labelledby", uid + "-q");
+    var qCur = 0, backFocus = null;
+    function renderQuiz() {
+      var item = QUIZ[qCur], picked = answered[qCur];
+      dNum.textContent = "확인 문제 " + (qCur + 1) + " / " + QUIZ.length;
+      dQ.textContent = item.q;
+      dOpts.textContent = "";
+      item.opts.forEach(function (txt, i) {
+        var b = E("button", "cg-opt", dOpts, txt);
+        b.type = "button";
+        if (picked === i) b.classList.add(i === item.ans ? "ok" : "no");
+        b.addEventListener("click", function () { answered[qCur] = i; renderQuiz(); updateQuizList(); dOpts.children[i].focus(); });
+      });
+      if (picked === null) { dFb.className = "cg-dfb"; dFb.textContent = ""; }
+      else { var right = picked === item.ans; dFb.className = "cg-dfb " + (right ? "ok" : "no"); dFb.textContent = right ? item.ok : item.no; }
+      dPrev.disabled = qCur === 0;
+      dNext.disabled = qCur === QUIZ.length - 1;
+    }
+    function updateQuizList() {
+      QUIZ.forEach(function (item, i) {
+        var p = answered[i], st = qStatus[i];
+        if (p === null) { st.className = "cg-qst"; st.textContent = "풀기"; }
+        else if (p === item.ans) { st.className = "cg-qst ok"; st.textContent = "정답"; }
+        else { st.className = "cg-qst no"; st.textContent = "다시"; }
+      });
+    }
+    function openQuiz(i, from) {
+      qCur = i; backFocus = from || null;
+      renderQuiz();
+      modal.hidden = false;
+      var first = dOpts.querySelector(".cg-opt");
+      if (first) first.focus();
+    }
+    function closeQuiz() {
+      modal.hidden = true;
+      if (backFocus) backFocus.focus();
+    }
+    dX.addEventListener("click", closeQuiz);
+    dPrev.addEventListener("click", function () { if (qCur > 0) { qCur--; renderQuiz(); backFocus = qBtns[qCur]; } });
+    dNext.addEventListener("click", function () { if (qCur < QUIZ.length - 1) { qCur++; renderQuiz(); backFocus = qBtns[qCur]; } });
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeQuiz(); });
+    modal.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); closeQuiz(); return; }
+      if (e.key !== "Tab") return;
+      var f = Array.prototype.slice.call(dialog.querySelectorAll("button")).filter(function (b) { return !b.disabled; });
+      if (!f.length) return;
+      var i = f.indexOf(e.target);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    });
+
+    /* ================= 처음 상태: ?view=read&on=tmax,tmin,range · ?view=city&city=Sydney&show=1&start=7 · ?view=make&from=Cairo · &panel=float ================= */
+    var qs = new URLSearchParams(location.search);
+    read.setStage(5);
+    (qs.get("on") || "").split(",").forEach(function (k) { if (KEYS.some(function (x) { return x[0] === k; })) { read.G.on[k] = true; read.last = k; } });
+    read.G.annotate();
+    city.shown = qs.get("show") === "1";
+    city.jul = qs.get("start") === "7";
+    city.set(qs.get("city") || "Singapore");
+    make.load(qs.get("from") || "Seoul");
+    syncBPlay();
+    setPanel(qs.get("panel") || "right");
+    updateQuizList();
+    setView(qs.get("view") || "read");
+    $$(".cg-keybtns .cg-btn").forEach(function (b) { b.setAttribute("aria-pressed", read.G.on[b.getAttribute("data-key")] ? "true" : "false"); });
+    if (window.ResizeObserver) new ResizeObserver(layout).observe(root);
+    else window.addEventListener("resize", layout);
+  }
+  Up(document.currentScript.parentElement);
+})();
+</script>
+</div>
+</body>
+</html>

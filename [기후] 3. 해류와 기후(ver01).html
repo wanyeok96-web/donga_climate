@@ -1,0 +1,1715 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>해류와 기후 (ver01)</title>
+<style>.ds-page{margin:0}</style>
+</head>
+<body class="ds-page" style="margin:0">
+<div class="ds-ocean-cur">
+<style>
+.ds-ocean-cur{
+  --bg:#f4f3ee; --panel:#f7f7f4; --card:#fff; --ink:#1d2126; --ink2:#5b636d; --line:#e2e0d9;
+  --accent:#1f6feb; --accent-soft:#e7efff;
+  --hot:#d9480f; --hot-soft:#fff1e8; --mild:#1971c2; --mild-soft:#e9f2fc;
+  --warm:#e03131; --cold:#1c7ed6;
+  box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 320px;
+  height:100vh; min-height:560px; background:var(--bg); color:var(--ink);
+  font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  font-size:15px; line-height:1.5; position:relative; overflow:hidden;
+}
+.ds-ocean-cur.oc-pos-left{grid-template-columns:320px minmax(0,1fr)}
+.ds-ocean-cur.oc-pos-float{grid-template-columns:minmax(0,1fr)}
+
+/* 무대: 보기 세 개(SVG) */
+.ds-ocean-cur .oc-stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:linear-gradient(180deg,#f7f9fb 0%,#edf2f6 100%)}
+.ds-ocean-cur .oc-views{position:absolute;left:0;top:0;right:0;bottom:0;box-sizing:border-box;padding:14px 18px;pointer-events:none}
+/* 3D 캔버스: 무대 전체에 깔고, 위의 SVG는 그래프만 마우스를 받음 */
+.ds-ocean-cur .oc-cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none;outline:none;cursor:grab}
+.ds-ocean-cur .oc-cv:focus-visible{box-shadow:inset 0 0 0 3px #74a7ff}
+.ds-ocean-cur .oc-hit{pointer-events:all}
+.ds-ocean-cur .oc-svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}
+.ds-ocean-cur .oc-title{font-size:19px;font-weight:700;fill:var(--ink)}
+.ds-ocean-cur .oc-tsub{font-size:14px;fill:var(--ink2)}
+.ds-ocean-cur .oc-tick{font-size:13px;fill:var(--ink2)}
+.ds-ocean-cur .oc-small{font-size:12px;fill:var(--ink2)}
+.ds-ocean-cur .oc-grid{stroke:#dde3ea;stroke-width:1}
+.ds-ocean-cur .oc-zero{stroke:#adb5bd;stroke-width:1.2}
+.ds-ocean-cur .oc-axis{stroke:#9aa1a9;stroke-width:1.5}
+.ds-ocean-cur .oc-halo{paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+
+/* 지도 */
+.ds-ocean-cur .oc-seabg{fill:#d5e7f5}
+.ds-ocean-cur .oc-landp{fill:#efe8d6;stroke:#b3a88c;stroke-width:.9}
+.ds-ocean-cur .oc-mapframe{fill:none;stroke:#c9d3dd;stroke-width:1}
+.ds-ocean-cur .oc-latl{stroke:#9fb3c8;stroke-width:1;stroke-dasharray:4 5}
+.ds-ocean-cur .oc-latt{font-size:12px;fill:#6b7f94}
+.ds-ocean-cur .oc-ocean{font-size:14px;font-style:italic;fill:#5f87ad}
+.ds-ocean-cur .oc-desert{font-size:13px;font-style:italic;font-weight:700;fill:#a0702a;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+
+/* 해류 화살표 */
+.ds-ocean-cur .oc-cl{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.ds-ocean-cur .oc-cur.warm .oc-cl{stroke:var(--warm)}
+.ds-ocean-cur .oc-cur.cold .oc-cl{stroke:var(--cold)}
+.ds-ocean-cur .oc-cur.warm .oc-ch{fill:var(--warm)}
+.ds-ocean-cur .oc-cur.cold .oc-ch{fill:var(--cold)}
+.ds-ocean-cur .oc-cur.sel .oc-cl{stroke-width:5.5;opacity:1}
+.ds-ocean-cur .oc-cur.dim{opacity:.22}
+.ds-ocean-cur .oc-cur.oc-off{display:none}
+.ds-ocean-cur .oc-chit{fill:none;stroke:transparent;stroke-width:16;stroke-linecap:round;cursor:pointer;pointer-events:stroke}
+.ds-ocean-cur .oc-dot{fill:#fff;pointer-events:none}
+.ds-ocean-cur.oc-noflow .oc-dots{display:none}
+.ds-ocean-cur .oc-cname{font-size:13px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round;pointer-events:none}
+.ds-ocean-cur .oc-cur.warm .oc-cname{fill:#c92a2a}
+.ds-ocean-cur .oc-cur.cold .oc-cname{fill:#1864ab}
+.ds-ocean-cur .oc-cur.sel .oc-cname{font-size:15px}
+.ds-ocean-cur .oc-cur.nolabel .oc-cname{display:none}
+.ds-ocean-cur .oc-eff{display:none;pointer-events:none}
+.ds-ocean-cur .oc-cur.sel .oc-eff{display:inline}
+.ds-ocean-cur .oc-effd{fill:#fff;stroke:#343a40;stroke-width:2.5}
+.ds-ocean-cur .oc-efft{font-size:14px;font-weight:700;fill:#212529;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-ocean-cur .oc-v.long{white-space:normal;font-size:13.5px}
+
+/* 도시 점 */
+.ds-ocean-cur .oc-city{cursor:pointer}
+.ds-ocean-cur .oc-city .oc-cdot{stroke:#fff;stroke-width:2}
+.ds-ocean-cur .oc-city .oc-cring{fill:none;stroke:var(--accent);stroke-width:3}
+.ds-ocean-cur .oc-city.faint .oc-cring{stroke:none}
+.ds-ocean-cur .oc-city:focus{outline:none}
+.ds-ocean-cur .oc-city:focus-visible .oc-cring{stroke:var(--accent);stroke-width:3;stroke-dasharray:4 3}
+.ds-ocean-cur .oc-cityn{font-size:15px;fill:var(--ink);paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-ocean-cur .oc-city.now .oc-cityn{font-weight:700}
+.ds-ocean-cur .oc-city.faint .oc-cdot{fill:#ced4da}
+.ds-ocean-cur .oc-city.faint .oc-cityn{fill:#868e96;font-size:13px}
+
+/* 바람 */
+.ds-ocean-cur .oc-wind{fill:none;stroke:#5c7cfa;stroke-width:4;stroke-linecap:round;stroke-dasharray:14 10}
+.ds-ocean-cur .oc-whead{fill:#5c7cfa}
+.ds-ocean-cur .oc-windt{font-size:15px;font-weight:700;fill:#3b5bdb;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round}
+.ds-ocean-cur .oc-windt.sm{font-size:12.5px;font-weight:600}
+
+/* 기온 선 · 막대 */
+.ds-ocean-cur .oc-tl{fill:none;stroke-width:3.5;stroke-linejoin:round}
+.ds-ocean-cur .oc-bv{font-size:14px;font-weight:700;fill:var(--ink)}
+.ds-ocean-cur .oc-bn{font-size:12.5px;font-weight:700;fill:var(--ink)}
+.ds-ocean-cur .oc-gapt{font-size:14px;font-weight:700;fill:#495057}
+.ds-ocean-cur .oc-hit{fill:transparent;cursor:crosshair}
+.ds-ocean-cur .oc-hit:focus{outline:none}
+.ds-ocean-cur .oc-hit:focus-visible{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+.ds-ocean-cur .oc-guide{stroke:#495057;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.ds-ocean-cur .oc-gtxt{font-size:13px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:4;stroke-linejoin:round;pointer-events:none}
+
+/* 보기 ③ 바다 위 공기 */
+.ds-ocean-cur .oc-sky{fill:#e7f1fb}
+.ds-ocean-cur .oc-sea.warm{fill:#f59f8b}
+.ds-ocean-cur .oc-sea.cold{fill:#74a9dd}
+.ds-ocean-cur .oc-sand{fill:#e3c48d}
+.ds-ocean-cur .oc-wave{fill:none;stroke:rgba(255,255,255,.75);stroke-width:2.5;stroke-linecap:round}
+.ds-ocean-cur .oc-seat{font-size:14px;font-weight:700;fill:#fff}
+.ds-ocean-cur .oc-ph{font-size:15px;font-weight:700;fill:var(--ink)}
+.ds-ocean-cur .oc-cloud{fill:#adb5bd}
+.ds-ocean-cur .oc-rain{stroke:#4dabf7;stroke-width:2.5;stroke-linecap:round;stroke-dasharray:8 10}
+.ds-ocean-cur .oc-fog{fill:rgba(255,255,255,.72)}
+.ds-ocean-cur .oc-fogt{font-size:13px;font-weight:700;fill:#5b636d}
+.ds-ocean-cur .oc-up{fill:none;stroke:var(--warm);stroke-width:4;stroke-linecap:round}
+.ds-ocean-cur .oc-uph{fill:var(--warm)}
+.ds-ocean-cur .oc-flat{fill:none;stroke:#868e96;stroke-width:3;stroke-linecap:round;stroke-dasharray:6 6}
+.ds-ocean-cur .oc-flath{fill:#868e96}
+.ds-ocean-cur .oc-part{stroke:#fff;stroke-width:1.2}
+.ds-ocean-cur .oc-pbar.lima{fill:var(--cold)}
+.ds-ocean-cur .oc-pbar.darwin{fill:#20a17b}
+.ds-ocean-cur .oc-lgt{font-size:13px;font-weight:700;fill:var(--ink)}
+
+/* 패널 */
+.ds-ocean-cur .oc-panel{box-sizing:border-box;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;min-height:0}
+.ds-ocean-cur.oc-pos-left .oc-panel{order:-1;border-left:0;border-right:1px solid var(--line)}
+.ds-ocean-cur.oc-pos-float .oc-panel{position:absolute;top:16px;left:16px;width:320px;max-width:calc(100% - 32px);max-height:calc(100% - 32px);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,.12),0 12px 32px rgba(0,0,0,.16);z-index:20}
+.ds-ocean-cur .oc-head{display:flex;flex-direction:column;gap:2px;padding:12px 16px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.ds-ocean-cur.oc-pos-float .oc-head{cursor:move;border-radius:14px 14px 0 0}
+.ds-ocean-cur.oc-pos-float.oc-collapsed .oc-head{border-bottom:0;border-radius:14px}
+.ds-ocean-cur .oc-head-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-ocean-cur .oc-ptitle{font-size:18px;margin:0;font-weight:700;line-height:1.35}
+.ds-ocean-cur .oc-src{font-size:12px;color:var(--ink2);margin:0}
+.ds-ocean-cur .oc-fold{display:none}
+.ds-ocean-cur.oc-pos-float .oc-fold{display:inline-block}
+.ds-ocean-cur.oc-collapsed .oc-body{display:none}
+.ds-ocean-cur .oc-body{display:flex;flex-direction:column;gap:8px;padding:10px}
+.ds-ocean-cur .oc-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px}
+.ds-ocean-cur .oc-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin:0}
+.ds-ocean-cur .oc-h::before{content:"";width:4px;height:14px;border-radius:2px;background:var(--accent)}
+.ds-ocean-cur .oc-sub{font-size:12px;font-weight:600;color:var(--ink2)}
+.ds-ocean-cur .oc-sub.warm{color:#c92a2a}
+.ds-ocean-cur .oc-sub.cold{color:#1864ab}
+.ds-ocean-cur .oc-line2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ds-ocean-cur .oc-line2 .oc-seg{flex:1}
+.ds-ocean-cur .oc-seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ds-ocean-cur .oc-segb{font:inherit;font-size:13px;padding:5px 0;border:0;background:#fff;color:var(--ink);cursor:pointer}
+.ds-ocean-cur .oc-segb + .oc-segb{border-left:1px solid var(--line)}
+.ds-ocean-cur .oc-segb[aria-pressed="true"]{background:var(--accent);color:#fff;font-weight:700}
+.ds-ocean-cur .oc-vlist{display:flex;flex-direction:column;gap:5px}
+.ds-ocean-cur .oc-vbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13.5px;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-ocean-cur .oc-vbtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-ocean-cur .oc-vno{flex:none;width:20px;height:20px;border-radius:50%;background:#f1f3f5;color:var(--ink2);font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.ds-ocean-cur .oc-vbtn[aria-pressed="true"] .oc-vno{background:var(--accent);color:#fff}
+.ds-ocean-cur .oc-vctl{display:flex;flex-direction:column;gap:7px;border-top:1px dashed var(--line);padding-top:8px}
+.ds-ocean-cur .oc-check{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer}
+.ds-ocean-cur .oc-check-in{margin:0;accent-color:var(--accent);width:15px;height:15px}
+.ds-ocean-cur .oc-mini{font:inherit;font-size:12px;padding:2px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink2);cursor:pointer;white-space:nowrap}
+.ds-ocean-cur .oc-row{display:flex;gap:4px}
+.ds-ocean-cur .oc-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+.ds-ocean-cur .oc-btn{font:inherit;font-size:12.5px;padding:5px 4px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-ocean-cur .oc-row .oc-btn{flex:1 1 auto}
+.ds-ocean-cur .oc-curbtns .oc-btn{white-space:normal;line-height:1.25;word-break:keep-all}
+.ds-ocean-cur .oc-btn:hover,
+.ds-ocean-cur .oc-mini:hover,
+.ds-ocean-cur .oc-vbtn:hover,
+.ds-ocean-cur .oc-qbtn:hover,
+.ds-ocean-cur .oc-opt:hover{border-color:#b9bfc6}
+.ds-ocean-cur .oc-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.ds-ocean-cur .oc-btn.warm[aria-pressed="true"]{background:#fff5f5;border-color:var(--warm);color:#c92a2a}
+.ds-ocean-cur .oc-btn.cold[aria-pressed="true"]{background:var(--mild-soft);border-color:var(--cold);color:#1864ab}
+.ds-ocean-cur .oc-btn:focus-visible,
+.ds-ocean-cur .oc-mini:focus-visible,
+.ds-ocean-cur .oc-segb:focus-visible,
+.ds-ocean-cur .oc-vbtn:focus-visible,
+.ds-ocean-cur .oc-qbtn:focus-visible,
+.ds-ocean-cur .oc-opt:focus-visible,
+.ds-ocean-cur .oc-check-in:focus-visible,
+.ds-ocean-cur .oc-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-ocean-cur .oc-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ds-ocean-cur .oc-stat{background:#f8f8f6;border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;min-width:0}
+.ds-ocean-cur .oc-k{font-size:11.5px;color:var(--ink2);line-height:1.3}
+.ds-ocean-cur .oc-v{font-size:15px;font-weight:700;line-height:1.3;white-space:nowrap}
+.ds-ocean-cur .oc-v.warm{color:var(--warm)}
+.ds-ocean-cur .oc-v.cold{color:var(--cold)}
+.ds-ocean-cur .oc-result{border-radius:8px;padding:8px 10px;border-left:4px solid var(--ink2);background:#f8f8f6;display:flex;flex-direction:column;gap:2px}
+.ds-ocean-cur .oc-result.hot{border-left-color:var(--hot);background:var(--hot-soft)}
+.ds-ocean-cur .oc-result.mild{border-left-color:var(--mild);background:var(--mild-soft)}
+.ds-ocean-cur .oc-rk{font-size:15px;font-weight:700}
+.ds-ocean-cur .oc-result.hot .oc-rk{color:var(--hot)}
+.ds-ocean-cur .oc-result.mild .oc-rk{color:var(--mild)}
+.ds-ocean-cur .oc-rt{font-size:12.5px;margin:0;line-height:1.45}
+.ds-ocean-cur .oc-note{font-size:11.5px;color:var(--ink2);margin:0}
+.ds-ocean-cur .oc-lab{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600;color:var(--ink2)}
+.ds-ocean-cur .oc-seatv{font-size:17px;font-weight:700;color:var(--cold)}
+.ds-ocean-cur .oc-seatv.w{color:var(--warm)}
+.ds-ocean-cur .oc-range{width:100%;margin:0;accent-color:var(--accent)}
+.ds-ocean-cur .oc-range:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-ocean-cur .oc-ends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink2);margin-top:-4px}
+.ds-ocean-cur .oc-credit{font-size:11px;line-height:1.45;color:var(--ink2);margin:0;padding:2px 4px 4px}
+.ds-ocean-cur .oc-p{font-size:12.5px;margin:0;line-height:1.5}
+.ds-ocean-cur .oc-rchart{display:block;width:100%;max-width:300px;height:auto}
+.ds-ocean-cur .oc-rchart .oc-rt2{font-size:11.5px;fill:var(--ink2)}
+.ds-ocean-cur .oc-rchart .oc-rt3{font-size:12.5px;font-weight:700}
+.ds-ocean-cur .oc-rchart .oc-rt3.warm{fill:#c92a2a}
+.ds-ocean-cur .oc-rchart .oc-rt3.cold{fill:#1864ab}
+.ds-ocean-cur .oc-qlist{display:flex;flex-direction:column;gap:6px}
+.ds-ocean-cur .oc-qbtn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer}
+.ds-ocean-cur .oc-qno{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-ocean-cur .oc-qtt{flex:1;min-width:0}
+.ds-ocean-cur .oc-qst{flex:none;font-size:11.5px;color:var(--ink2)}
+.ds-ocean-cur .oc-qst.ok{color:#2b8a3e;font-weight:700}
+.ds-ocean-cur .oc-qst.no{color:#c92a2a;font-weight:700}
+
+/* 확인 문제 창 */
+.ds-ocean-cur .oc-modal{position:absolute;left:0;top:0;right:0;bottom:0;z-index:60;background:rgba(20,24,30,.5);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.ds-ocean-cur .oc-modal[hidden]{display:none}
+.ds-ocean-cur .oc-dialog{background:#fff;border-radius:16px;width:100%;max-width:540px;max-height:100%;overflow:auto;box-sizing:border-box;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.ds-ocean-cur .oc-dhead{display:flex;align-items:center;justify-content:space-between}
+.ds-ocean-cur .oc-dnum{font-size:13px;font-weight:700;color:var(--accent)}
+.ds-ocean-cur .oc-x{font:inherit;font-size:20px;line-height:1;width:34px;height:34px;border:0;border-radius:50%;background:#f1f3f5;color:var(--ink2);cursor:pointer}
+.ds-ocean-cur .oc-dq{font-size:18px;font-weight:700;margin:0;line-height:1.45}
+.ds-ocean-cur .oc-dopts{display:flex;flex-direction:column;gap:8px}
+.ds-ocean-cur .oc-opt{font:inherit;font-size:15px;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;line-height:1.45}
+.ds-ocean-cur .oc-opt.ok{border-color:#2b8a3e;background:#ebfbee;color:#2b8a3e;font-weight:700}
+.ds-ocean-cur .oc-opt.no{border-color:#e03131;background:#fff5f5;color:#c92a2a}
+.ds-ocean-cur .oc-dfb{font-size:14px;margin:0;padding:10px 12px;border-radius:10px;background:#f8f9fa;color:var(--ink2)}
+.ds-ocean-cur .oc-dfb:empty{display:none}
+.ds-ocean-cur .oc-dfb.ok{background:#ebfbee;color:#2b8a3e}
+.ds-ocean-cur .oc-dfb.no{background:#fff5f5;color:#c92a2a}
+.ds-ocean-cur .oc-dfoot{display:flex;justify-content:space-between;gap:8px}
+.ds-ocean-cur .oc-dfoot .oc-btn{font-size:14px;padding:7px 14px}
+.ds-ocean-cur .oc-dfoot .oc-btn:disabled{opacity:.4;cursor:default}
+.ds-ocean-cur .oc-svg.oc-off,
+.ds-ocean-cur .oc-vctl.oc-off,
+.ds-ocean-cur .oc-card.oc-off{display:none}
+
+@media (max-width:820px){
+  .ds-ocean-cur,
+  .ds-ocean-cur.oc-pos-left{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+  .ds-ocean-cur .oc-panel,
+  .ds-ocean-cur.oc-pos-left .oc-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
+  .ds-ocean-cur .oc-views{padding:8px}
+}
+</style>
+
+<div class="oc-stage">
+  <canvas class="oc-cv" tabindex="0" role="img" aria-label="3D 지구 위의 해류. 끌어서 돌려 봅니다. 화살표 키로도 돌립니다."></canvas>
+  <div class="oc-views"></div>
+</div>
+
+<aside class="oc-panel" aria-label="조작 패널">
+  <div class="oc-head">
+    <div class="oc-head-row">
+      <h2 class="oc-ptitle">해류와 기후</h2>
+      <button type="button" class="oc-mini oc-fold" aria-expanded="true">접기</button>
+    </div>
+    <p class="oc-src">중학 사회 ① · 기후</p>
+  </div>
+
+  <div class="oc-body">
+    <section class="oc-card">
+      <h3 class="oc-h">조작</h3>
+      <div class="oc-line2">
+        <span class="oc-sub">패널 위치</span>
+        <div class="oc-seg oc-posseg" role="group" aria-label="패널 위치">
+          <button type="button" class="oc-segb" data-pos="right" aria-pressed="true">오른쪽</button>
+          <button type="button" class="oc-segb" data-pos="left" aria-pressed="false">왼쪽</button>
+          <button type="button" class="oc-segb" data-pos="float" aria-pressed="false">플로팅</button>
+        </div>
+      </div>
+      <span class="oc-sub">보기</span>
+      <div class="oc-vlist" role="group" aria-label="보기">
+        <button type="button" class="oc-vbtn" data-view="map" aria-pressed="true"><span class="oc-vno">1</span>난류와 한류</button>
+        <button type="button" class="oc-vbtn" data-view="warm" aria-pressed="false"><span class="oc-vno">2</span>난류가 데우는 겨울</button>
+        <button type="button" class="oc-vbtn" data-view="cold" aria-pressed="false"><span class="oc-vno">3</span>한류와 메마른 해안</button>
+      </div>
+      <label class="oc-check"><input class="oc-check-in oc-flowbox" type="checkbox" checked>해류의 흐름을 알갱이로 보여 줍니다</label>
+      <div class="oc-line2">
+        <span class="oc-sub">3D 보기</span>
+        <button type="button" class="oc-mini oc-resetview">처음 시점으로</button>
+      </div>
+
+      <div class="oc-vctl" data-for="map">
+        <div class="oc-line2">
+          <span class="oc-sub">걸러 보기</span>
+          <div class="oc-seg oc-filtseg" role="group" aria-label="걸러 보기">
+            <button type="button" class="oc-segb" data-filt="all" aria-pressed="true">전체</button>
+            <button type="button" class="oc-segb" data-filt="w" aria-pressed="false">난류</button>
+            <button type="button" class="oc-segb" data-filt="c" aria-pressed="false">한류</button>
+          </div>
+        </div>
+        <span class="oc-sub warm">난류</span>
+        <div class="oc-grid2 oc-curbtns" data-kind="w"></div>
+        <span class="oc-sub cold">한류</span>
+        <div class="oc-grid2 oc-curbtns" data-kind="c"></div>
+        <button type="button" class="oc-btn oc-unsel">고르지 않음</button>
+      </div>
+
+      <div class="oc-vctl oc-off" data-for="warm">
+        <span class="oc-sub">도시 짝 (난류 쪽 · 반대쪽)</span>
+        <div class="oc-grid2 oc-pairbtns"></div>
+      </div>
+
+      <div class="oc-vctl oc-off" data-for="cold">
+        <div class="oc-lab"><span>오른쪽 칸의 바다 온도</span><span class="oc-seatv">14℃</span></div>
+        <input class="oc-range oc-seat-in" type="range" min="12" max="26" step="1" value="14" aria-label="오른쪽 칸의 바다 온도">
+        <div class="oc-ends"><span>12℃ · 차가움</span><span>26℃ · 따뜻함</span></div>
+        <p class="oc-note">바다 온도를 올리면 공기 알갱이가 어떻게 움직이는지 살펴봅니다(예시 모형).</p>
+        <span class="oc-sub">공기 알갱이</span>
+        <div class="oc-row">
+          <button type="button" class="oc-btn oc-play">멈춤</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="oc-card">
+      <h3 class="oc-h oc-readh">읽은 값</h3>
+      <div class="oc-stats">
+        <div class="oc-stat"><span class="oc-k oc-k1"></span><span class="oc-v oc-v1"></span></div>
+        <div class="oc-stat"><span class="oc-k oc-k2"></span><span class="oc-v oc-v2"></span></div>
+        <div class="oc-stat"><span class="oc-k oc-k3"></span><span class="oc-v oc-v3"></span></div>
+        <div class="oc-stat"><span class="oc-k oc-k4"></span><span class="oc-v oc-v4"></span></div>
+      </div>
+      <div class="oc-result" aria-live="polite">
+        <span class="oc-rk"></span>
+        <p class="oc-rt"></p>
+      </div>
+      <p class="oc-note oc-readnote"></p>
+    </section>
+
+    <section class="oc-card oc-aux" data-for="rule">
+      <h3 class="oc-h">난류와 한류 구별법</h3>
+      <svg class="oc-rchart oc-rule" viewBox="0 0 288 118" role="img" aria-label="난류는 저위도에서 고위도로, 한류는 고위도에서 저위도로 흐릅니다"></svg>
+      <p class="oc-note">남반구에서도 적도에서 멀어지는 쪽이 고위도입니다.</p>
+    </section>
+    <section class="oc-card oc-aux oc-off" data-for="rise">
+      <h3 class="oc-h">공기가 올라가야 비가 옵니다</h3>
+      <p class="oc-p">공기가 위로 올라가면 식으면서 수증기가 물방울로 바뀌어 구름과 비가 생깁니다.</p>
+      <p class="oc-p">아래가 차가운 공기는 무거워 위로 올라가지 못합니다. 그래서 한류가 흐르는 바닷가에는 비가 잘 내리지 않고 안개가 자주 낍니다.</p>
+    </section>
+
+    <section class="oc-card">
+      <h3 class="oc-h">확인 문제</h3>
+      <div class="oc-qlist"></div>
+    </section>
+
+    <p class="oc-credit">자료: 해안선 Natural Earth · 도시 기온·강수 WMO 기후 평년값</p>
+  </div>
+</aside>
+
+<div class="oc-modal" hidden>
+  <div class="oc-dialog" role="dialog" aria-modal="true">
+    <div class="oc-dhead">
+      <span class="oc-dnum"></span>
+      <button type="button" class="oc-x" aria-label="닫기">×</button>
+    </div>
+    <p class="oc-dq"></p>
+    <div class="oc-dopts"></div>
+    <p class="oc-dfb" aria-live="polite"></p>
+    <div class="oc-dfoot">
+      <button type="button" class="oc-btn oc-prev">이전 문제</button>
+      <button type="button" class="oc-btn oc-next">다음 문제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  function Up(root) {
+    var NS = "http://www.w3.org/2000/svg";
+    var RAD = Math.PI / 180;
+    var uid = "oc" + Math.random().toString(36).slice(2, 8);
+
+    /* 도시 월평균 기온(℃)·강수(mm): 자료발췌/로직/기후/cities.js 에서 필요한 6곳만 */
+    var CITIES = [
+      {"id":"London","kr":"런던","lat":51.51,"lon":-0.13,"t":[5.2,5.5,7.5,9.9,13.1,16.2,18.3,18.1,15.5,11.8,8,5.6],"p":[55,40,40,45,50,55,45,55,50,65,65,55]},
+      {"id":"Quebec","kr":"퀘벡","lat":46.81,"lon":-71.21,"t":[-12.5,-10.8,-4.5,3.5,10.8,16.5,19.2,18.1,13.1,6.5,-0.5,-8.5],"p":[90,75,85,80,95,105,115,105,100,100,95,90]},
+      {"id":"Oslo","kr":"오슬로","lat":59.91,"lon":10.74,"t":[-3.2,-3.5,0.5,5.8,11.5,15.6,18.2,17.1,12.5,7.1,1.2,-2.1],"p":[55,45,50,50,60,70,80,90,85,85,75,65]},
+      {"id":"Iqaluit","kr":"이칼루이트","lat":63.75,"lon":-68.52,"t":[-26.5,-27.2,-22.5,-13.8,-3.1,4.5,8.2,7.5,2.1,-4.5,-13.2,-21.5],"p":[20,20,25,30,35,45,60,65,55,40,35,25]},
+      {"id":"Lima","kr":"리마","lat":-12.05,"lon":-77.03,"t":[23.5,24.2,23.8,21.8,19.5,17.8,16.8,16.5,16.8,18.2,20.1,21.8],"p":[1,1,1,0,1,2,3,4,3,2,1,1]},
+      {"id":"Darwin","kr":"다윈","lat":-12.46,"lon":130.84,"t":[28.5,28.3,28.6,28.6,27.4,25.6,25.1,26.1,27.9,29.3,29.7,29.5],"p":[430,370,320,100,20,5,1,5,15,50,145,255]}
+    ];
+    /* 육지 윤곽: 자료발췌/로직/기후/land-50m.js (Natural Earth 1:50m, 퍼블릭 도메인) */
+    var LAND_PATH = "M-163.7 82.9l2.1 .1-1.4 .1zM-163.2 81.3l2.7 .3-3.5-.2zM-164.1 79l.8-.3 .9 .1 3.4 .9-1.3 .1-3.9-.5zM-149.9 76.9l.7 .2-1.6-.1 .4-.1zM-176.5 43.8l.2 .2-.3 .1-.2-.3 .4 0zM-172.8 13.5l.6 .1 0 .2-.3 0zM-155.8-20l0-.3 .6 .3 .4 .5-.8 .5-.3-.1-.1-.6zM-156-20.8l-.4 .2-.3-.4zM-157.6-21.3l-.5 0-.2-.3 .3-.1zM-159.3-22.1l-.2 .2-.3-.1 .4-.2zM-174.4-52.3l.4 0-.1 .2-1.2 .1 1-.3zM-169.1-52.9l.8-.6 .5 0-.7 .5zM-166.5-53.7l-1.3 .4 1.1-.4-.3-.2 .8 0zM-163.4-54.7l-1.2 .3-.3-.1 .4-.4 .9-.1 .5 .3zM-152.5-57.7l.3 .1-.7 .1 .2 .2-1 .2-.3 .3 .2-.2-.6-.1 .1 .2-.4-.5 .2-.2 .4-.1 .4 .4-.1-.6 .3 .2 .3-.3 .8 .2zM-152.1-58.2l-1.3 .1 .7-.4 .7 .2zM-165.7-60.3l.1 .4-.5 .1-1.3-.4 1.2-.2zM-147.1-60.4l-.4 .5-.4 .1zM-130-55.3l-.3 .5-.5 0-.2-.4 .3-.1-.3-.8-.8 .2-.2 .4-.2-.1 .6-.6-.6-.2-.6-.7-.7-.1-.1-.4 .5 0-.4-.2 .3-.1-.5 .1-.3-.3 .1-.4-.3 .3-.6-.3-.6-.9 .3 1.2-.8-.2-.1-.4 .2-.1-.4-.1 .1 .2-1-.1 1 .4-.5 .3-1.9-1-1.3-.3 .3-.2 0-.3 .2 .4 .3-.2-.4-.2-1 .3-1-.2 0-.2-2.7 .1-.1-.2-.7-.1 .2-.4-.5 .3-.7-.1 .2-.2-.9 0 .2-.1-.2-.3 .3 0-1.7 .2 .2-.3-.8 .4 .3 .1-.3 .2 .6 0-.4 .5-1-.1-.2 .3-1 .2-.3 .4-1-.1 .9-.5-.9 0 .6-.9 .9-.3 1.3 .1-1-.3 .7-.3-1.5 .3-.8 .3-.7 .6-.6 0 .3 .3-1.5 .8 .8 .2 0 .2-.8 .6-2.2 .8-.2 .4-1.8 .6-.2 .1 .3 .1-1.4 .6-.1-.2-1.4 .4-.3 0 .3-.1-.3-.1-.6 .5-1 0-.2 .3 0-.3 1.6-.8 .8-.1 .1 .2 .5 0-.2-.2 .2-.3 1.4-.6 .2 .1 .4-.5 .8-.2-.2-.2 .1-.4 .4-.1-.3-.2 .7-.7-1.4 .5-.3-.3 .4-.1-.7 0 0 .6-1.6-.7-1.7 .5 .5-.5-.4 0 .2-.5-.6-.7 .5-.4-.8 .4 .2 .1-.1 .2-1.3 .2-1.1-.7-.4 0 .6-.4 .5 .1-.1 .2 1-.2-1.7-.1 .2-.2-.4-.2-.3 .2-.6-.6 .4 0-.3-.1 .5-.1-.1-.2 .5-.4 .4 0 .2-.2-.2 .1 0-.3 .4-.1 0-.2 1.1 .2 1-.5 1.4-.2-.1-.6-.5-.1 .6-.2 0-.2-.9 0-.9 .4-.5-.3 .1 .3-.6-.2-2.4 0-.4-.1 .1-.2-.5-.3 .7-.1-1.9-.4 2.5-.4-.2-.2 1.3-.3 .9 0-.3 0-.1 .4 .3 .1 1.8 .1 .4-.3 .5 .1-1.6-.7 1 .4 1.4 .1-.7-.3-1 0 .3-.3-1.9-.1-.6-.5-2.7-.8 .4 0 .2-.5 1.9 0 .8-.3 .5-.6 1.1-.5 1.8-.3 0 .3 .2 0 .5-.2-.7-.1 .4-.2 1.8-.1 1.4-.5 .9 .3-.4 .3 .8-.3 1 .3 1.9 0-.2 .1 .6 .2 2.6 0 4.7 .5 1.4-.1 7.9 1.4-.6-.2 .3-.1-.3-.1 1.5-.6 .5 .2-.3 .2 3.5-.8 1.2 0-2.4 .6-1.5 .7 .2 .1 1.4-.7 .7-.1 .1 .3 .9-.5 1.2-.3-.2 .3 1.4-.6-.5-.1 .2-.2 .8 .3 .6 .6 .9 .3 .5 0-.1-.3 .7-.5 .5 .5-.4 .3 1 0 .5-.4 1.3 0 4.5 .9 1.8 0 1.4 .5-.8 .1-.6 .4 .3 .1 2.6 .1 2.4-.3 .5 .3 .6 0 .1 .3 .3-.2 .6 .3 0 .2-.5 0 1.2 .7-.4-.3 0-.3 .5 .1-.8-.9 1.6-.4 .6-.4-1.9 .4-1-.1 .4-.3 2.1-.3 1.7 .8 1 0 1.2 .4 3.9-.1-.2-.3 1 .5 .4-.1 0-.2-1 0-.5-.5 1.4-.1 .9 .2-.3 .3 .7-.2-.4 .7 1 .3 0 .2-1-.1 .6 .5-.2-.3 .6 0 .1-.4-.4-.4 .2-.3 2.1-.6-.5-.4-.7 .2 .5-.3-.2-.2 .7-.1-.1 .2 .2-.3-2.5-.3-.6-.4 .3-.3 .4 0 0-.2-.4 .1-.2-.2 .1-.4 .3-.2 .5 .1 .2-.2-.5-.1 1.3-.4 1.6 .7 0 .4 1.4 .7-.7 0-.2 .1 .5 .1-.9 .3 2.5 .2-.8 .2 .7 .4-.1 .4 .4 .2 .9-1 1.3 .5 .2 .5-.5 0 0 .3 .9 .8 .8-.3 .9-1.2 .8-.1-.2 0 .2-.3-.5-.1-.1-.6 2.9 .1 .2 .1-.4 .1 .6 .3 .9 .1-.7 .2 .6 0 .1 .2-1.3 .3 .4 .3 .2-.1-.1 .3 .8 .4-.1 .3-2.1 .8-1.3-.6-.3 .1 .9 .2 .4 .5-.7 0-1.1-.4-1.1 .1 .7 .4-1.5 .8-2.2-.6-1.7 0 1.5 .1 .9 .5 1.6 0 .4 .2-1.1 .9-.7 .2-.8 0-.2-.2-.4 .2 .2 .2-.2 .2-3.5-.5 .4 .3 1.1 .1-.3 .1 .7-.1 1.1 .4 0 .2-.7 .3-1 0 .5 .2-.9 .2 .3 .2-.7-.2 .3 .2-.7 .3 .3 .1-.6 .3-.6 .9-.3 .1 .2 .1-.4 1.3 .7 .4 0 .4 .2-.4 .9 0 .8 1.4-.4 .4 2.2-.3 1.8 .4 1.3 .8 1.8 .4 .5 .3-.2 .2 .3-.2 2.7 .2 .2 .3-.2 .6 .3 .4-.2 .8 .7 .6-.2 .2 1.2 .5 .2 .3-.5 .3 .8-.2 .8 .5-.4-.4 .1-.2 .3-.2 .4 .4 .2-.3-.3-.3 .6-.5-.7-1.4 .2-.1-.2-.4-.6-.5 1.9-.6 1.3-1.1-.4-1.4-1.6-.9 .8-1 .4 .1-.2-.1 .2-.3-.4-.4 .2-.1-.3-.1 .2-.2-.6 0 .7-.8-.5-.2-.1-.5 .7-.3 2.8 .5 .9-.4 1 .4-.1 .3 1.2 .2-.3 .2 .2 .1 1.7 .4 .5-.1 .1 .2-.4 .3 .1 .4-1 .1 1 .1 0 .6 .4 0-.3 .5-.2-.2-.4 .2 1.5-.1 .5 .4-.8 .6 1-.6-.1 .4 .3-.3 .1 .4 1.3-.8 .4 .4 0-.4 .6-.3-.3-.1 .3-.1-.1-.2 .5 .1-.4-.1 0-.3 .4 0-.2-.1 .7-.4-.3 .3 .5-.1 .5 .8 .4 .1-.6 .1 .8 0-.1 .2 .4 .2-.6 .4 .9-.2-.7 .5 .8-.2 .5 .3 0 .3-.5 .1 .7 .1-.2 .2 .7 .2-.1 .3-1.1-.1 .8 .3-.2 .1 .5 0-.3 .2 .3 0 0 .2 .7 .1 .1 .2 .3-.1-.1 .2 .2 .1-.4 .4 .8-.2 .4 .1-.4 .4 .5-.4 .5 .4 .8-.1 .6 .3-1.2 .6-1.8 .3 .3 .2-.2 .2 1.6-.7 .8-.1-.5-.1 1 0 .3 .4-.4 .2 1-.2 .6 .5 .1 .7-.5 .1 .6 0-.3 .1 .3 .3-1.3 .6-1.5 .2-1.4 1-1.8 .2-1-.2-3.8 .1-.9 .9-.9 .1-1.4 1-1.3-.3 1.2 .4-.2 .4-1.3 .9-.9 .2-1.3 .9-.8 .2 .3 .2-.7 .3 1.1-.4 .4-.6 1.1-.6 1.6-.4 1.7-1.4 3.3-.9 .9 .2 .4 .4-1.1 .7-.6-.2-.8 .2 2 .3-.6 .6 .5 0-.1 .2 .4 .7 .7 .1-.3 .1 1.3 .4 .8-.3 .5 .2 .2 .3-.2 0 .5 .1-2.3 .7-.3-.1 0 .2-.7-.1 0 .3-1.2 .8-.6-.3-.1-.3 .3-.5-.2 .1 1.7-.8 .3 .3 0-.2 .7-.2-1.5 0 .6-.4-.3-.1-.2 .3-1.1 .4-.1-.2-.4 .3-.7-.1 .1 .4-1.1 .4-.4-.1 0 .2-.3 0 0-.3-.4 .6-1 .2-.6 1 .2 .2-.4 .3 .6 .5 .4 0-.1-.3 .2 .4-1.3 .2 .1-.2-.3-.1-.1 .4-1.4 .1-1.1 .5 0-.4 .1 .3-.4 .4 .3 .1-.1 .6-.8 .9-.6-.6 .4-.5-.4 .2-.1 .3 .6 1.1-.9 1.2 .2-.8-.2 0 0-.4-.4 0 0-.2 .3 0-.3-.3 .4-.6-.2-.1-.3 .4-.2-.1 .2 .2-.2 0 .2 .7-.3-.1 .4 .4-.9-.3 .2-.5-.3 .5 1 .5-.2 .2-.6-.5 .8 .6-.2 .3-.3-.2 .5 .4-1-.2 1.3 .4 .5 1.1-.4-.9 .1 .6-.3-.2-.5 .3-.1-.2 0 .2 .6 0 0 .3 .2-.3 .1 .2-.4 .4-.8-.1 .5 .2-.3 .3-.3-.2 .1 .2 .5 0 .1 .2-1 .1-.5 .8-.1-.3 0 .3-.8 .2-1.1 1-.7 .2 0 .2-.2-.1 .1 .2-.8 1.1 1.4 4.3 0 1-.4 .6-.6 .1 .2-.2-1.1-1.2 .2-.2-.2 .1 0-.4-.3 .1-.4-.6 .3-.4-.3-.1 .1 .2-.2 0 .1-1.1-1.3-1.2-1.3 .4-.4-.4 .1-.2-.2 .1-.7-.2 .4 0-.2-.1-.9 .2 .2-.3-.3 .3-.7 .1 .2-.1-.2-.4-.1 .3-1.5 .2-.6-.2-.2 .3 .7-.1-.1 .2 .4 0-.3 .4 .7 .4-.2 .2-1-.5 0 .4-.2-.2-.4 .2-.5-.2 .1-.3-.7-.2-.4 .2-1.5-.1 0-.3-.1 .3-.9 .3 .3-.1-.3 0 .1-.3-.3 .1 .1 .3-.4 .4-.9 .5 .2-.1-.6-.1 .2 .2-.8 .4 .2 0-.4 .3 0 .5-.4-.2 .7 1.5-.6 1.6-.2 1.8 .1 .5 .5 .5-.1 .3-.4-.7 1.5 2.7 .5 .5 .6 .1 .7 .5 2.1-.5 .5 .2 .6-.1-.1-.3 .7-.5 .2-1.3 .3-.4 2.1-.5 .8 .2-.1-.2 .3 0 .3 .2-.9 1.8 .3 0-.3 .2 .2 .1-.3 .9-.2-.4-.3 .4 .2 0-.2 1.8-.6 .7 .3 .1 0-.2 .5 .3 .4-.2 2.7-.1 .7 .2 .5 .4-.3 0 .3 .2 .3 0-.1-.2 .4 .4-.2 .2 .2 .5-.3 .6 0 1.3-.1-.3-.2 .2 .1 .9-.2 .3 1.8 2.4 .2-.2 .8 .3 1.5-.8 1.1 .2 .7 .3 1 1.2-.1-.7 1.3-.9 .1-.7-.2 .1 .5-.7 .4-.3 .5 .1-.1 .2 .3-.5 .8 0 1.7-1.1 .5 .4-.9 .4 .4 .9-.5 .9 .5 .8 .5-.3-.4-1.7 1.7-.5 0-.2-.4 .1-.1-.3 .3-.3 .4 .7 1.2 .3 .3 .7 1.9-.1 .3 .3 1 .2 .7-.4 .5 0-.6-.1 2.4-.1-1 .2 .6 .7 .2-.2 .4 .4-.1-.2 .2-.1 .8 .5-.4 .8-.4 0 .3 .2 1.1-.2 1.4 .9 .3 .4-.2 .9 .3-.5 .4 .1 .8 .6 0 .7 .2-.5 1.1 .3 .1-.3 1.4 .1 .3 .1-.1 .4 .4-.4 1.6 .9 .2 .5 .2-.2 .1 .5 .2-.2 .3 .2 .5 2 .2 .3 .5 .1 .1 .5-1.4 1.3-.7 1.3-.7 .2 .8 0 1-.7 .2 .9 .3 .2 1.1-.3-.3 1 .4-.8 .5-.4 .4 0-.2-.1 .4-.7 .7 .1 .1-.2 1.8 .8 .2 .3 .2-.2 .4 .2 .2 .4-.3 .2 .4-.1-.3 1 .5-.7 0 .3 .8-.4 1.2 .4 2.2 .1 1.5 .8 1.3 1.2 1.7 .2 .3 .5 .4 1.7-.2 1.1-1.4 2.1-1 .8-.8 1.5-.3 .2-.2-.4-.2 .2-.2 .8 .2 .4-.2 .7 .2 1.2-.3 1.8-.5 .6-.1 1.3-1.2 1.6 0 .8-.7 .3-.3 .6-1 .1-.2-.3 0 .3-1.4 .1 0 .2-.9 .5-1.4 .4-1.1 .8 .1 .2-.3 .2-.5 0 .3 .2-.3 .2 .1 2.3-.2 .5-.9 .8-1.2 1.9-1.1 .8-.1-.3 .8-.3 .7-1.1-.4 0-.3-.4 0 .8-.7 .6-.1 .8-2.1 2.5-2 .2-1.6-.4-.6-.6 0-.7 .3-.2-.1-.5-.3 1.8 .2 .4 .8 .3 .3 .4-.2 .3 .3 .6 .4 0 0 .6-.8 1.2-3.6 .9-1.2-.2 .2 1-.3 .4 .2 .5-.2 .2-1.2 .3-1.3-.5-.2 .2 .1 1.2 .4 .3 .5 0-.1-.2 .4-.1 .2 .6-.4 .2-.5-.4-.5 .2 .7 .3-1 .6-.3 1.4-1.3 .3-.7 .8 .8 .9 .9 .2 .1 .4-.4 .2 .4 .1-1.7 1.1-.4 1-.4 .1-.4-.3-.3 .2 .6 .2-.5 .2-.5 .6 .2 0 .1 .5-.4 .1 .5 .1 .6 .7-.8-.2-1.6 .6-.2 1-.3 .1-1.1-.5 .5-.2 .1 .3 .6-.7-1.1 .3-.2 .4-.6-.3 .4-.4 1.2-.2-1.2-.1-.4 .6-.5-.3 .5-.3-.9 .1-.3-.5 1 .1 .5-.3 .1 .5 .2-.1 0-.6-.7-.2 .6 .3-.9 .2-.7-.3 .3-.1 0-.3-.9-.2-.3-.4 .4 0-.1-.2 .2-.1 .8 .5 .2-.2-.1-.2-.3 .3-.2-.2 .2-.1-.6-.3 .6-.2-.3-.4 .5 0-.3-.2 .2-.4-.3 .5-.2-.1 .1-.8 .3-.1-.5 0-.1-.5 1.2 .1-.3-.4-.5 .3-.5-.3 .6-.1-.4-.2 .3-.2-.1-.4-.7-.1 0-.2-.5 .2 .1 .2-.3-.3 .8-.4-.2-.3 .9-.1 .2-.4 .2 0-.2 .7-.4 .1 .4 0 .1-.4 .2 0-.1 .8 .1-1.1 .4-.2 .4 .2-.5-.5 .7-.3 0-.3-.6-.2 .5-1.7 .2 0-.2-.2 .4 .1-.1-.4-.3-.1 .5-.4-.2 .2-.5-.2-.2 .3-.4 0-.4-.7 .3-1.1 .5-.8-.5-1.9 .5-.1 1-2.1 .8-2.7-.3-2.1 .3-.2-.1-1.2 .9-2.6 .2-2.7-.2-.5 .3-.3 .2-1.4-.3-3-1.1-1.1-3.6-1.9-.8-.8-.5-.7 .2-.5-.6-1.1-.4-.2 0-.4-.4-.4-1.2-2.7-1.2-1.8-1.2-.9 .3-.3-.4-1.3 1.3-1.1 .3-.6-.1-.5-.1 .4-.4 .2-.6-.4 0-1.2 .6-.5-.2-.2 .5-.6-.1-.6 1.2-.4-.1-.4 .4-.2 0-.6 .8-.3 .7-1.2-.2-.2-.1 .2-.1-.3 .2-.5-.2-.8 .3-.3-.3-.4 .1-.4-.8-.9-.2-.6 .3-.3 .3 .3-.3-.4-.3 .1-1-.6-1.1 .8 .5 .7-.8 .3-.3-.7-.2 .3-.4-.5-1-.2-.2 .2-.4-.6-.2 0 .2 .3-.4-.2 0-.6-.9-.4-.1-.3-.5-.3 .3 .4-.2 .2-.5-.3-.3-1 .2-.2-2-1.8 .4 0-.2-.5-1 .2-2.9-.8-3-2.3 .4 .3-.9-.4 .1 .2-1.7 .5-3.2-1-2.2-1.3-1.5-.3-1.5-1-.6-.7-.2-.4 .4-.2-.2-.2 .3-.3 0-.4-.6-1.1-1.1-1.3-.9-.6 .3 0-.5-.1-.3-.5 .2 0-.9-.4 .1-.2-.5 0 .3-.6-.7-.4-.1-.4-.6-.2 0-.6-.6-.1-1.1-1-.9-1.7 .1-.5-.6-.1-.2-.3-.3 .1-.8-.4 .3 1.9 1.4 1.2 1.3 2.1 .2 .1-.1-.3 .2 .2 .9 1.8 0 .6 .3 .2 .1-.2 .9 .8-.6 .6-.4-.7-1.4-.9-.3-.3 0-.8-.3-.6-.8-.7-.4 .2-1.4-1 .7-.2 .2 .2-.2-.2 .3-.5-.9-1-.8-.4-.6-1.4-.4-.4 .1-.3-.5-.4-.4-1-.9-.4-.1-.3-2.1-.6-.1-.5-1.2-1.2 .1-.6-.6-.3-.1-.3 .1-.3 .3 .3-.3-.5 .9-.1-.9 0-.1 .3-.5-.2 .1-.2-.8-.7-.1-.9-.6-.6 .3-1.1-.4-1.3 .4-.9 .1-2.5 .8 0-.9-.1 .1-.3 .1 .2-.2-.5 .3-.1-.3 0-.6-1 0-.4 1.9 .3 .1 .2-.4 .5 .6-.5-.1 .6-.4 .2 .4 0 .4-.9-.5-.4 .2-.4-.7-.3 0-.2 .3 0-.4 0 .1-.4-.3 .3-.4-.1-.1-.2 .4 0-.3 0 0-.5-.2 .4-.6-.2-.4-.4 .2-.5-.2 .4-1 0-.3-.1 .5-.1-.6 0 0-.4-.1 .2-.5 0-.6-.3 .3-.4 .7-.1-1 .2-.2-.2 .1-.5 .4-.2 .7 .3-.5-.4 .2-.3-.8 .5-.3 .5-.3-.4 .5-.3-.4 .1 .2-.5-.3 .1-.1-.3-.7-.4 .3-.2 .9 .4-.8-.4 .3-.2-.6 .1-.5 .5-.7-.4 .3-.4 .4-.1-.8-.2 0-.3 .8-.8-.2-.1-.2 .5-.1-.6zM-170.4-63.7l1.7 .4-1 .3-1.3-.5-.5 .2-.3-.2 .2-.2 .6 .1zM-178.7-68.6l3.4 .9 .1 .3-.2 0 .6 .1-.1 .7 .5 .3 .3-.2 0 .3 .3-.2-.4-.2 .2-.2-.6-.3 1.4 0-.1 .3 .1-.2 .7 0-.5-.1 1.2 .2 1.2 .7 .9 .1-.8 .2-.2 .3-.8-.2 .4 .3-1.7-.2 .6 .2-.5 .3 .5 .2-.9 .2 .7 .4-.5-.1-.3 .2-.1-.2-.4 .1-2.2-.6-.2-.5-2.3 0-.5-.5 .4-.4-1.2 .2-.1 .3 .4 .4-.6 .4 0-3.9 1.5 .4zM-177.5-71.2l-2.5 .2 0-.5 2.5 .2zM-128.1 74.3l1 .2-1 0zM-131.6 74.3l.6 .1-.2 .2-1-.2zM-122.3 74.4l-.6-.1 .3-.3-.7-.2 .3-.1 2.4 .1 .3 .2-.7 .3zM-116.6 74.1l-.8 0 1.2-.2zM-119.8 73.8l.9 .1-.8 .1zM-125.3 73.7l1.2 .1 .3 .4-1.3 0-2.1-.5-.1-.4 1.6 .1zM-97.2 72.1l.8-.3 .3 .1-.9 .3 1.3-.1 .2 .1-.1 .2-.5 .2-2.1 0-4.1-.5 2.1-.3 .4 .2 1.6-.2 0 .3 .4-.2 .3 .2zM-125.5-50.3l.7 .8 1.4 .8 .1 .3-.6 0-1.2-.4 .3-.4-.7 .3-.3-.2 .2-.1-.4 0 .1-.2-.6 0 0-.2 .4-.1-1.4-.5-.4 .1 0-.3 .4 0 0-.2-.6 .1-.2-.2 .4-.2zM-132-52.9l.9 .7-.3 0-.9-.7 .2-.1-.4-.1 .7-.1 .2 .3zM-128.8-52.8l-.4-.2 .2-.3 .4 .2 .1 .6-.2 .2zM-130-53.5l.1 .3-.6-.4zM-132.6-53.7l.4 0 .1-.3 .4-.1-.3 .8-.3 .1-.4-.1 .3 0-.7-.5 0-.3 .8 0 .1 .3zM-132.7-54.7l-.7-.6 .8 .4zM-132.6-55.9l.4 .4-.4 0 .6 .3 0 .5-.6-.4-.2 .1-.3-.3 .1-.3-.7-.2 .4 0 0-.2-.5 0 .3-.1-.1-.2 .5 .2zM-131.5-55.4l-.3 .2 .2-.6 .4-.1 .2 .2-.2 .5zM-132.7-56.1l.3-.4 .3 .6zM-133.9-56.2l-.3 .1 .1-.4-.3-.2 .1-.2 .6 .2zM-133-56.6l-.3-.2 .1 .3-.4 0-.4-.5 1 .1zM-134.6-56.8l-.1 .6-.3-.3 .1-.2-.4-.1 .1-.2-.3-.2-.3 .2 0-.3 .7-.1zM-133.8-57.6l-.5-.4 .4 .6-.7 .3 .1-.4-.4-.9 .7 .3zM-135.2-58.1l.2 .3-.3 0 .4 .3-.7-.2-.3 .3-.7-.6 .8-.3 .2 .3zM-96.3-69.3l1 .5-1.3 .3-3-.5 1.1-.3 0-.3 .5 .1-.3-.2 .4-.2zM-95.7-69.3l-.1-.3-.2 .1 .5 .1zM-113.6-72.7l.4-.3 1.9 .3-.6 .3 .2 .1 1.5-.4-.5-.3 .7 0 1.2 .4 .6 .9 .4 .1 .5-.3-.4-.2-.5-1 .2-.2 1.5 .1 1.1 .4 1 1.2-.1 .5 .9 .5 .5 .1 .1-.2 1.4 .6 .5 0 .2 .3-2.5 .1 .4 .2-.1 .3 .9-.3 .4 .3-.1 .2-1 .2-2.2-.1 .1-.2-1.7-.3-.7 .4-5.6 .5-.6-.3-.1-.4-2.8-.2-.7-.7 5.6-.2-2.2-.4-3.8 .1-.8-.4 3.1-.5-2.6 .1-.3-.1 .5-.2-.9 .1-.4-.2 .8-.5-.2-.2 1.8-.6 2-.3 .5 .3-.4 .5zM-97.2-73.8l.2 .1-.6 .2 .3 .1-1.1 .4 .8 0 .5 .2 0 .2 .6-.1 0 .3-.3 .1 .2 .5-1 .2-.7-.3-.2 .1 .3 .4-.3 .1-4.2-1.5 .5-.3 .9 .4 1.2-.2-.4-.3 .7 0-1.7-.3 1 .1-.5-.3 1.1-.1-.3-.1 1 .2zM-119.1-74l1.6-.2 2.1 .7-3.6 .8-.5 .4-.7 .1-.4 .7-2.2 .4-1.2-.6-1.8-.3 2-1.8-.9-.5 3.2-.2 1.8 .4 .5-.1zM-106.9-73.5l1.6-.3 .7 .2-.7 .7zM-99.4-73.9l1.3-.2 .4 0-.6 .2zM-93.5-74.7l-1.2 .1-1.9-.5 .9-.4 1.3-.1 .9 .5zM-104.5-75.4l.9 .2-1.3 .1zM-97-75.5l1-.1-.9 .2zM-108-75.8l.8-.1 .3 .2 .2-.1-.1-.2 .4-.1 .8 .2 .1 .2-.6 .6-1.1 .2-1.3 0-.3-.2-4.7 .7-.9-.3 3.4-.5-2.8 .1-.1-.2 .4-.1-.5 0-.2 .2-.3-.1 0 .2-1.2 .1-1.9-.3 .3-.2 2.2-.2-2.1 .1 2.2-.3-1.6-.2 1.8-.1-1-.1 1.6-.2 .4 .3 1.1 0 1.6 .7 2 0 .2-.2-1-.2 .5-.2-.9-.3 1.5-.4 .7 .6-.3 .1 .7 .1zM-119.4-75.6l1.6-.5 .3 0-.8 .5zM-97.5-76.2l-.4 .4 .5 .1 .1 .3-.6 0 .2 .3-.4-.1 0 .2-2.1 0-.3-.2 .4 0-.6-.1 1.5-.4-3.6 .1 .7-.3 1.1 .1-.9-.3 .3-.1-.5-.1 .3-.2 1.8 .6 .3-.1-.4-.1 .6 0-.9-.1 .4-.1-.9-.2 2 0 .2-.2 .9 .2zM-103.3-75.8l.3-.1-1.4-.2 1.7-.2 .7 .4-.6 .1zM-103-76.4l-1.4 .1-.2-.3 .5-.1zM-115.8-76.9l-.5 0 .3 .2-1.2 .4-.8-.1 .2-.4-.5 .1-.5 .2 .2 .1-.4 .3-.6-.2-.1 .2 .2 .1-.9 .2-.4-.4-1.6 .3-.2-.3-.3 .1 .5-.3 3.3-.9 2.3 0-.2-.2 .6 0 .9 .2-.8 .2zM-113.5-76.8l-1.3 0 .9-.1zM-106-77.7l.5 0 1 .5-.7 0zM-110.8-77.8l.6 0 .1 .2-2.1 .3-1-.2 0-.4 3.4-.1zM-101.3-77.9l.3 .2-1.5-.1zM-114.3-78.1l.7 .3-.7 .1-.7-.3zM-95.3-78.2l.4 .1-2.1 .3-.7-.3 .8-.1-1.1-.1-.3-.2 .2-.1-.2-.2 3.4 .4zM-109.4-78.3l-3.9 0 2.9-.5 1.1 .3zM-102.6-78.9l.9-.2 .6 .3 1.5 .2-.2 .3 .8 .3-.2 .1-.8 .1-1.1-.4-1.5 0-.1-.2-1.8 .1-.5-.2 1.4 0-.4-.1 .6-.1-.8-.1 .3-.1-.3-.1-.7 .2 .2-.2-.9-.1 .2-.2 1.7-.1 1 .4zM-98.9-79.7l-1.2-.3 1.1-.1 .2 .2zM-75.9 73.3l-.2-.2 .9-.1-.5-.1 .3-.1 1.2 .2-.5 .3 .3 .2-.2 .1zM-90.8 72.6l0 .4-.4 .2-.3 0 .1-.3-.3-.3zM-75.8 70.1l0-.2 .6-.2 .8 .2-.4 .3zM-75.3 50l.5 .2-.6 .1zM-75.5 49.1l-.1-.2 .5-.1-.5 .4zM-75.4 48l.2 .6-.4 .2 0-.7zM-91.4 1l.3-.4-.3-.6-.2 0 .2-.1 .5 1zM-76.2-17.9l-.7-.1-.3 .3-1.1-.6 .4-.2 1.6 .3zM-80.7-23.1l.9 .2 .5 .5 .6 0 1.2 .5 .6 .6 1.2 .2 0 .4 .8 0 .7 .4-.9 .4-2.6 0 .6-.5-.1-.2-.9-.2-.6-.8-.7 0-1.8-.7-.1 .2-.5-.1-.3-.2 .4-.1-.1-.2-.9 0-.7 .5-.5 0-.1 .3-.9 0 .6-.2-.1-.3 1.1-.6 1.2-.2zM-83-21.6l0-.3 .3 0 .1 .3-.4 .2-.2-.2zM-77.6-23.7l-.4-.5 .4 0zM-78.1-24.5l-.3-.1 .2-.1 0-.5 .5 .5-.3 .4zM-77.2-26.6l-.7-.3 .4 0 .4 .4 .1 .2-.2 .4-.2-.1 .2-.2zM-78.7-26.5l-.3-.2 1.1 0zM-81.3-53.2l.6 .5-1.3-.3 .2-.2zM-79.1-56.2l-.7 .4 .3-.3-.5 .2 .7-.7 .4 .3-.3 .4zM-79.3-62l-.5 .4-.5-.2 .4-.6 .6 .1zM-83.1-62.2l-.6 0-.2-.3 .5-.4 1.4 0-.1 .2zM-78-63.1l-.5-.3 .6-.1 .4 .2zM-76.7-63.4l-.7-.2 .7 .1zM-84.5-65.5l2.5 .9 .3 .4-.2 .2 1.1-.1 .5 .3-.7 .3-1.4-.2-.9-.4-1.3 .8-.8 .2-.4-.6-1.4 .1 .9-.5-.1-.5 .6-1.2 .6 0 .3 .6zM-85.2-66l.3 0 .3 .4-.5-.1zM-75.1-67.5l-1.8 .3-.4-.5 .6-.6 1.6 .1zM-85-71.1l.2 .1 .1-.6-1.2-.4 .6-.2 1 .1-.5-.2 .2-.1-.8 0-.2-.4 .3-.2 1 .2-1.2-.3 1.1-.4 2.8-.2 1.3 .9-.9 .5 .6-.2-.3 .6 1.1-.5 .8 .1 0 .3 .4 .1-.3-.2 .2-.3 1.2 .2-1-.3 .7-.2 2.1 .1 .6 .4-.8 .5 .8-.4 .8 .1 0 .2-.9 .1 .5 0-.3 .5 1.1-.6 .2 .1-.5 .3 .5-.2 .5 .3-.1-.2 .4-.2 1.7 .4-1.4 .5 1.9-.3 .1 .2-1.3 .5 .6-.1-.1 .4 .4-.5 .9-.2 1.6 .2 0 .2-1.6 .4 1.3-.2-.2 .2 .3 .1 .8-.4 .7 .5-2.1 .3 .8-.1 1.8 .3-2.3 .2 .6-.1 .6 .2-.1 .2-1.4-.1 2.6 .5-.3 .1 .3 .3 .5-.3-.3 .4 .6-.2 0 .2 .4-.1 .1 .3 0-.2 .6-.1-.2 .2 1.1 .2-.2 .1 .1 .2-.6 0 1-.1 .6 .2-.7 .4 1.6-.2 .8 .4-.8 0 .5 .2-.3 .1-.7-.1 .6 .4-.6 0 .2 .2-.3 .2-.8-.3 .1 .2-.3 0 .4 .1-.3 .7-.7-.3 0-.2-.3 .3-.8-.7 1-.5-1.4 .3 .1-.2-.4 .1-1.2-.5 .1 .3-.7-.2 .7 .5-.2 .1-1.3-.3 .5 .1 .3 .5 .8 .2-.2 .1 .5 .2 .1 .3 .1-.2 .4 .1 0 .2 .3-.2 .5 .2-.1 .2 .4 .1-.5 .1 1.2 .6-.2 0 .1 .4-.2 .1-.5-.6 .1 .5 .4 .4-.5 0 .1 .3-2.8-1.1 .2 .3-1.2-.4 2.9 1.6-.3 .3-2.8-.5-.5-.4-1.3-.3-.4 .1-.7-.4 .6-.2-.9-.1 .1-.2-.3 .1-1-.6 .2-.2-.8 .2 0-.2-.8-.2 .2 .3-2.2 .3-1.3-.4 .1-.4 .7-.2-.1-.2 .2-.1 1.8 .4 0 .3 .1-.2-.4-.3 2.2-.2-.1-.3-.7-.4 1.4-.5 .8-.6-1.1-1.1-.5 0-.1-.3-.2 0 .1 .2-.4-.1-.5-.2 .2-.1-.2-.2-1.7 .4 0-.3 1-.2-.9-.3 .3-.2-.9 .1 .2-.2-.7 0-.2-.4-1.3-.4-.3 .2 .6 .2-.3 .3-2.6-.2 .8 .4-2.2-.3-2.7 0-.5-.1-.1-.4-1.5 .2-.9-.2-.7-.6 2.4 .1-2.6-.4-.3-.5 .3-.3-.2 0 .1-.3 .6-.6 1.7-.7 2.4 0 .2 .1-1.8 .9 .4 .3 .1 .6 1.2 .5-1.6 .4 1-.2zM-86.9-68.1l.5-.1-.2 .5-.3-.1zM-75.3-68.7l.5 .3-.6-.1zM-79.4-68.9l.8-.5 .4 .1-1.1 .5zM-77.3-69.4l.6 0-.3 .3-.3-.1zM-80-69.5l-.8-.2 1.4 0-.6 .1zM-90.4-73.9l-1.7 1.1-2.1 0 .7 .3-.6 .5-1.1 0-.4-.9 0-.8 .9 0-.5-.2 1.8-.3 2.3 .2zM-77.2-73.5l1.1 .6-3.4 .1-1.3-.5-.1-.4 2.8 .1zM-93.2-76.7l-.3 .3 2.2-.3 .8 .2-.9 0 2.1 .2-2.1 .1 2.1 .4-.3 .2 .7 .1 .3-.2 .4 .2 2.2 .1 2.1-.4 1.7 0 2.5 .4 .2 .1-.9 .3 1 .1-.9 0 .2 .1-.2 .2-1.6 .1-1.6-.4 .2 .1-.2 .2-.9 .1-4 0-.2-.1 .3-.2-.9 .2-1.4 0-.3-.2-.2 .2-.9-.2-.4-.5 .3-.4-1-.7-2.2 .1-.7-.2 .3-.1-1.2-.2 .5 0-.4-.2 1.2-.1 2.4 .3zM-94.9-75.9l.4-.1 .2 .2-.5 0zM-90.6-76.7l.9-.1 0 .3-.5 0zM-91.1-77.6l.9 0 .5 .3-1.4-.1zM-93.1-77.7l-.4 .2-2.5 0-.3-.1 .8-.2 1.9 0zM-66.4-82.9l-2.1 .2 3.6-.2 3.7 .6-3.2 .6-4.3 .4 3.9-.2-4.8 1.1-1.1-.1 .4 .3-1.8 .1 1.5 0-.8 .2 .3 .1-3.3-.1 .9 .1 .3 .2-.3 .1-3.4 0 2.4 .4-4.1 0 4.2 .4-2 .2 1.2 .2-.8 .3-2 .1-.1 .4-.4 .1-2.1 .1-1.1-.2 .4 .1-.8 .1 2.6 .1 .3 .3 .9-.1 .3 .1-.3 .3-2.7 .4 .2-.2-.2-.1-1.5-.2 .3 .2-1.7 0-.3-.2-.1 .3-1 .1-1.2-.3-.2 .2-.7 0-.1-.2 0 .2-.9 0-.1-.4 0 .4-1.1-.1 .1-.3 .9-.3 1.8-.1-.9-.2-.3-.4 1.2-.1 1.2 .4 2 .1 1-.6-1.2 .5-1.1 0-.6-.4 1.3-.3-.7 0 .1-.3-.8 .4-.6 0 .3-.2-1.7 .1 .8-.6 5-.2-2.6 0 .8-.1-1.7-.6-1.1-.1-.1-.5 2.8 .1 3.2 .6 .4-.1-.9 0-2-.6 6.1-.6-1.8-.1 1.8-.4-2.3 .3-.6 .3-5.3 .3-1.5-.1 1.4-.4 1.9-.1-4.4 .4-1.6-.2 2.8-.1 1.6-.3-4.7 .3-.4-.1 .8-.2-.5 0 .3-.1 1.8-.1-3 .1 .8-.2-1.9 0 3.6-.5 3.1 .1-1.6-.2 1.7-.2 5.5 .5-3-.5 .7-.1-.4-.1 1.3 0-.4-.1 .2-.1 2.3 .1-1.5-.2 2.7 0 1.5 .4 .4-.1-1.5-.4 2.7 0 1.7 .3-.7-.2 1.3-.2 1.2 .2-.5-.1 1.4-.1zM-90.6-80.6l1.4 .1 0 .2 .7 .2 .3 0-.4-.3 .9 0 .1 .2-.3 .1 .9 .2-.3 .3 1.7 0 .6 .3-2 .3-.6 .3-.4-.3-.3 .3 .3 .2-.7-.1-.1 .4-1.2-.4 .5 .4-1.9 0-1.4-.3 .9 0-1.4-.1-.3-.2 .4 0-1-.2 2.9-.4-4.4 0 1.3-.3-2.1-.1-.3-.3 2.2 .1 .3-.2-1.1 .1-1-.2 .9-.1-.6-.3 2.2 .1-1.6-.2 .2-.2 2.1-.1-1-.2 2 .1zM-63 80.7l-3.8-.4 5.6 0-.5-.3 1.1-.3 .7 .1 .2 .1-.1 .2 .5 .1-.4 .1-.1 .4-.8 .2zM-67.8 79.5l1.8 .1 .5 .4-.8 .1zM-67.1 79.3l-.3 .2-1.1-.1 .5-.2zM-71.3 79.1l4.6-.7-2.6 .8-.4 .4-1.3 .1-.8-.2 .1-.3zM-76.5 70.9l1.3-.1 .2-.2 .4 .2 .2-.2 .8 .1-.9 .3-1.9 .1zM-68.5 70.7l.3 1.1-.3 .4-.7 .3-3.2 .2-.7-.3 2.2 0 .7-.2-1.7-.1 1.1-.2-1.5-.3-.6 .3-.9-.1 .3 .2-.5 .2-1.4-.4 .1-.2 .9 0 .2-.2 .7 .2-.1-.2 1.4-.1-.9-.2 2.7-.2 .5 .2 0-.2-1.3-.2 1.6-.3-2.3-.4 .2-.6-.4-.1 0-.2 .2-.2 1.6-.1 .2 .5 .4 0zM-72 69.7l-.8-.1-.2-.1 .5 0zM-61.8 69.4l-.3 .3-.5-.5 .4 0zM-68.7 67.7l-.4-.2 .8-.7 .6-.2-.3 .4 .3 .1-.4 .4zM-65.6 65.5l-.6 .4 .2-.3zM-62.8 64.6l-1.5 .1 .8-.4 .3 0-.1 .3zM-62.5 64.3l0-.3 .4 .1-.1 .3-.6 .1zM-68.6 55.2l.6 .4-.9-.1 0-.3-.5 .1 .2 .2-.8-.4 .1-.2 1.5 .1zM-67.3 55.3l-1-.3 1.1 0 .1 .2zM-70.5 55.2l-.9-.3 1 0 .1 .2zM-63.8 54.7l-.8 .2-.2-.1 .3-.1zM-71.6 54.2l-.3 .1-.3-.3 .2-.1 1 .2-.1 .3zM-68.8 52.6l.6 .5-.3 .2 2.3 1.2 1 .2-.3 .2-3.6 0-2.8-.3 .1-.2 1-.1 .5 .2-.6-.4 .4-.5 .1 .4-.2 0 .4 .3 .5 0 .4 .3 .3-.2-1.1-.4 0-.2 .7-.4-.9 0-.1-.3 .3-.2-.3-.1 1-.3 .2 .2zM-72.2 53.8l-.7 .3 .1-.2-.2-.1-.2 .2-.1-.3-.5-.2 .7-.1 .6 .2zM-74.7 52.7l1.6 .7-1.2-.3zM-74.9 52.3l-.2-.5 .3-.2 .3 .4-.2 .3zM-75 51.4l-.3 .2 .1-.3 .6-.1 0 .2zM-74.6 50l-.3-.3 .2-.3-.3 .1-.1 .4-.5-.2 .3-.1-.2-.2 .4-.1-.1-.2 .4-.4 .3 .1 0 .9zM-75.2 48.1l.4-.2 .2 .7-.3 0zM-74.7 45.7l.4-.5 .1 .5zM-74 44.6l.2 .7-.3 0-.5-.7 .5-.2 .1-.3 .3 .2zM-73.3 44.4l.5 .1-.2 .3-.4-.2zM-74.2 42.9l.1-1.1 .6 .1 0 .6-.3 .1 .3 .4-.6 .4-.3-.2zM-65.6-18.2l-.5 .3-1-.1-.2-.4 1.7 0zM-71.6-19.9l1.6 .2 .3 .4 .5 0-.4 .2 .9 .2 .3 .4-.3 .3-.2-.2-2.1 .1-.4 .7-.7-.6-1.4 0-.4 .2-.6-.4 .3-.3 1.4 .3 .5-.3-.5-.4 .1-.3-.7-.4 1.6 .1zM-73.7-21.1l.7-.2-.2 .3-.5 .1zM-71.9-41.1l-2.1 .5 .4-.3 1.3-.3-.3 .3zM-63.9-46.5l1.9 .1-.8 .4-.2-.3-.6 .1-.5-.2-.3-.3 .4-.4-.1 .3zM-64.4-49.8l1.3 0 1.1 .4 .3 .3-1.3-.1zM-67.8-60.4l-.6 .1 .3-.3zM-65.4-61.6l.7 0-.2 .2zM-71.2-62.9l.8 .2-.4 .1zM-74.7-68l1.2 0 .1 .2-1.1 0zM-30.4 80l-1.4-.2-.2-.1 .3-.1 2.1 .3zM-43.7 78.8l.7 .7 0 .3-.3 .2-.5 0 .3 .2-6.3 .6-4.4 .1-.2-.3 1-.5 1.1 0 2-.7-.4-.1 .2-.4 1.4-.9 3.1-.2 1.9 .4 .3 .1-.1 .3-1.5 .2zM-34 79.3l-2.6 0 1.1-.2zM-20.8 74.5l-.4-.4-.8 0 1.4-.5-.1 .5 .3 .3zM-57.2 64.2l-.1 .2-.6 0-.4-.1 .2-.2-.3 0 .6-.3 0 .3 .6 0zM-55.1 63.3l-1.3 .1 .8-.3 .4 .1zM-60.4 62.6l-.7 .1 .3-.2 1 .1-.4 .1zM-58.1 62.1l-.9 .1 .6-.3 .8 .1zM-36.6 54.3l.7 .3 .1 .2-.3 .1-.8-.6-1.1-.3 1.3 .1zM-58.2 51.6l-.1-.2 .5 .2-.9 .3 0 .2-.5-.1 .1 .2-.3 .1-.2-.4 .5-.2 .2-.4 .5 0-.1 .2zM-59.3 51.4l-.6 .6-.6 .2-.5-.1 .8-.3-.4-.1 .4-.1-.4-.2 .5 .1zM-51.5 1.2l-.4 .3 .4-.9 .2-.1 .1 .2zM-48.4 .4l-.5 1.1-.3-.1 0 .2-.3-.1-.3 .3-.6 0-.4-.6 .2-.1-.2-.1 .2-.7 1.5-.1zM-49.9-.3l.2 .1-.1 .2-.5 0 0-.2zM-50.4-.6l0 .6-.2-.2zM-61.5-10.6l-.2-.1 .8-.1-.1 .7-.9 0 .4-.2zM-16.9-28.3l.8-.3-.6 .6zM-61.1-45.7l.4-.1 .4-.5 .5 .3-.9 .4-.7-.1 0-.5 .5-.6 .5-.2 .1 .3-.6 .7zM-56-51.2l.2 .1-1 1.5 .6-.5 0 .2 .7-.1-.6 .5 .9 0-.2 .4 .9-.4 .1 .2 .8 0 0 .2-.6 .3 .5 .1-.4 .3 1.1-.2-.9 .8 .2 .2 .8-.5-.3 .6 .4-.3 .1 .3-.4 .8-.5 .1 0-.5-.4 .3-.2-.1 .4-.5-.4-.5-.3 .5-.4 0-.4 .5-.6-.1 1.1-.7-.8 .2-.5 0 .2-.3-3.4 .2 0-.3 1-.6-.9-.1 .5 0 .3-.5 .4 .1-.2-.4 .4-.1-.1-.2 .6-1 .8-.7 1-.2-.5 .3zM-14.6-66.4l-.5 .3 .4 .1-.1 .2 .4 0-.1 .2 .9 .1-.2 .1 .2 .4-.3 0-.1 .3-.4 0-.2 .3-3.2 .7-.1 .2-.8 .1-2.4-.5-1.6 .1 0-.3 .5 .1 .7-.4-.6 .1 .1-.2 .4-.1-.5 .1-.4-.3-1.3 .1-.2-.2 2.1-.1 .1-.2-.7 0 .7-.2-1.1-.2-1.6 .1 .6 0-.2-.3 .8 0-.5 0 .3-.1-.3-.1 .4 0-.1-.2 1.1 .3 0-.2-.5-.1 .4-.1-.6 0 .2-.1 1.5 .4 0 .3-.3 0 .6 .4 .6-.3 .3-.5 .7 .3 .1-.3 .6-.1 .7 .5-.2-.5 .7 .2 1.1-.2 .3-.3 .7 .3zM-50.7-69.8l-.5 .3-.2-.4 .3 0zM-51.9-69.6l-1.9 .3-.4-.1 .5-.1-1.2-.2 .1-.2 .5 0-.5-.2 .4-.2 2.4 .5zM-25.3-70.7l-2.7 .2 .4-.4 1.8-.1 .3 .2zM-25.8-83.3l-6.2 .3 6.9-.2 .6 .3 3 .3-1.6 .3-6.8 .2 .4 .2 4.4-.1 .8 .3 3-.4 .2 .4-.4 .3-1.7 .6 3.6-.8 2.1 .2 1.4-.4 1.9 0 2.8 .3-3.1 .5 .3 .1-.3 .1-2.3 .2 .9 .2-3.5 .1-.8 .3 .1 .2 .7 .1 0 .4 .4 .1-2.1 .5-.6 1 .8-.2 1.4 .2-1.2 .1 1.4 .4 .9-.1 .1 .4-4.3 .2 1.1 .4 1.6 .2 .4 .3 0 .6-2.7 .1 1.2 0 .1 .5 .5-.4 .4 0 .7 .7-1.8 .2-.9-.1 .2-.3-.2-.1-.3 .5 1.9 .3-.1 .3-1.8 .2-3.2-.6 .7 .4-2.5 .1 .8 .2-1.1 .1 3.5-.3 2.1 .5-.3 .8-1.8-.4-.5-.5-2.1 .3 1.9-.2 .1 .4-.5 .1 3.2 .7-.5 .3 .1 .2 .6-.3 .3 1-.9 0 0-.4-.3 .5-1.3-.2-.6-.6-1.3-.4-1.2 0 1.3 .1 .1 .2-1 .3-1.7 0 .3 .3-1 .3 2.6 0-1.1 .4 2.1-.4 3.3 .3-2.1 .5 0 .2-.9 .1-1.3 .6-4.2 .4 .1 .2-1.7-.3 .1 .4-.9 .3-1.5 1.3-1.3 0 .3 .3-2.2 .5-.2-.1 .7-.6-.9-.1 .4 .1-.3 .4-.4-.1 .3 .3-2 .1 .6 .3-.7 .3-.8 0 .9 .5-.6 .3-.8-.1 1 .2 0 .4-.8 .6-.8-.1 .6 .2-.3 .3-1 0 .7 .1-.1 .4 .2 .3-.5 .2 .3 0-.7 1.2-.9-.1 .7 .2 .1 .3-.2 .2-.7-.1 .3 .1-.2 .1-.5-.1 .2-.4-.4 .3-.8-.2 0-.2 .6-.3-.6 .3-.6-.2 .1-.6-1 .4-1.3 0 .4-.2-.6 0 0-.2-.9-.4-.1-.3 .6-.2-.8 .1 0-.2-.7-.3 .5-.5-.6 .2-1.1-.8 0-.4 1.2-.2-1.2 .1-.2-.1 .5-.4 .8-.1 .4 .3-.1-.3-.9-.5 .3 .4-.5 .2 .1-.2-.2 0-.6 .6-.6-1.1 1.4-.5-1.5 .3-.6-.1 .1-.4-.3 0 2.2-.9-1.8 .7-.6 0 .2-.4 1-.3-1.3-.1-.2-.1 .1-.3 1.3-.4 1.9 .3-.6-.2 .3-.1-2.8 .3 .5-.7 1.6 .1 .4-.3-1 .2-1.2-.1 .4-.3 1.9 0 .3-.2-.4 .1 .1-.4 .8-.1-.8 0 .8-.8-2-.1-1.7-.3-.5-.3 1.7-.1 2.1 .4-.6-.2 0-.3-.5-.1 .8 0-2.1-.3 1.3-.4-1.6 .1 .3-.2-.6-.6-.2 .1 .4 .4-.5 .2 0 .2-1.6-.1 .8-.8-.8 .2 .3-.2-.3-.1 .7-.1 .2-.3-1-.1 .4-.3-.1-.2-.7-.1 .3-.2-.4-.3-1 0 .9-.4-2.3-.9 .4-.1-.3-.2-4.8-.7-2.1 .3-1.7-.1 .4 .2-1.6-.1-1.2-.3 1.4-.3-1.8-.1 .2-.2-.9 .2-.6-.3 3.1-.3 1.7 .1 .1-.2-.5-.2-2.6 .2-1.2-.2 .5-.1-1.2 0-1.5-.4 .1-.2 6.9-.8 .5-.2 .5-.6 .6-.1-2.6 0-.4-.2 2.7-.7 .8-.1 .6 .2-.1-.2 .2-.1 1.6 .1 .3-.3-.1-.3 .8-.2 3.8 .5-2.7-.6 4.8-.4 .8 .2 .1 .5 .7-.3-.2-.1 .1-.2 2.1 .4 1.4 0-1.2-.3-.3-.3 1 0 5.5 .7-.1-.3 .3-.4-1.3-.2 4.2-.1-4.8-.3 3.2-.2 1.7 .2 .9-.2 2.2 .3 .3-.2-.8-.2 1-.1 7.7-.1zM-55.5-72.6l-.7-.1 1.2-.1zM-18.9-75.3l.9-.1 .6 .4-1.5-.1zM-19.1-76.4l0-.3 .4 .1 0 .6zM-18.9-78.1l-.2 .2-.2-.4 .4-.1zM-17.4-79.9l-1.3 .2-.4-.2 1.6-.1zM-18.7-81.8l-.7-.1-.2-.2 .5 .1zM-46.4-82.7l1.7 .3-.2 .3-1.9-.2-.6-.3zM-57.2 63.5l-1.8 .7 .2 .3-.7-.2-.1 .3-.4-.2-1.1 .6-.6 0 .1 .2-.5 .1 .3 .3-.5 .2 .3 .3 1.4-.1-.4 .1 0 .2-.4-.2-.4 .3-.9-.2 .1 .5-.7-.4-.5 0-.3 .4 .3 .2-.9-.1-.3 .4 .2 .1-.7 .1-.1 .7 .8 0-.7 .2 .5 .1-.2 .2 1.1 .2-.1-.2 1.3-.2-.9 .2 .5 .2-.2 .2 1.5 1.1 0 .2-.4 .1 .9 .1-.5 .2 0 .2 .7 0 .3 .3-1 .5 .8-.1 .2 .2-1.3 .2 1.6 .1 0 .3-.6 .2 .8 .1 .1 .3 .4-.1-.1 .4-1.9-.2 .4 .4 .8 .2-.4 .3-.5-.1 .7 .2-.8 .2 1.1 0-.7 .2-.8-.1 .3 .4-.2 .1-1.1-.2 0 .2-.7 .1 .6 0 .1 .2-1.1 .1 .9 .2-6.8 1.2-7.1 0 1.9 .8 2.5 .1-1.1 .5-1.4 .1-6.2-.4 4.2 .6-.5 .3-2.4 .1-3.5-.8 .6 .4-.6 .1 .5 .3 1.6 .3 .8 .4 .4 0 0-.2 4.3 .1 .2 .2-.6 .3-3.1 .1 1.5 .2 1.8-.1 1.3 .8 4.4-.3 .9 .4 4.2 .5 3.4 .1-3.4 .1 1.5 .2-2 .1 .3 0-.1 .2 1 .2 4.4-.2-2.2 .3 .8 .5 .7 0-.4 .3 .2 .1 1.9 .1 5.5-1.3 7.7-.3 .3 .3-.5 .3 .7 0 2.1-.2 2.3-1 2.6-.4 1.6 .2 1.9-.4 4-.2 .3-.2 7.4-.3-6.3-.4-.4-.4-2.7 0-3.2-.4-.1-.2 .8-.6 1.4-.6 2-.2 3.2-.8 4.6-.6 6-.4-.4-.2 1.3-.8 1.7 0 1.1-.5-1.6 0 .3-.1-.6-.2 .1-.2 .8-.3 1.6-.1-.3-.3 1.1 .1 1.7-.4 .5-.6-1.4-.4 .5-.1 1.1 .3 .8-.5-.3-.2 1.1 .3 .6 .5 .9-.2-.1-.7 1.9-.1 .3 .2-.5 .4 5 0 .6 .4 2.4-.7 5.8-.6 .8 .1 .6-.3 2.6 .6 1.2-.6-.3-.1 1.2 .2 2 0 .6-.2 .3 .3 1.4 .1 .9-.3 .2 .1-.2 .4 .4 .2 1.7-.1 .6-.5 .7 .2-.1 .2 .7 .1 1-.4 .8 .5 1.7 .1 6.1-1 .4-.4-.4-.7 .9-.2 .7 0-.4 .4 .8 0 .8 .6 2.4 0 1.1 .5 1.3-1.4 2.8-.7 3.4-.5-.1-.2 .3-.1 .8 .1-.3 .2 .4 .1 .7 0 .2 .3 .2-.5 .6-.3-.7-.2 .7-.1 1.4 .3-.4-.6 .1-.2 1.6-.4 1.8-.1 1.6 .1 1.9 .6-1.1 0 .4 .3-.7 .3 .4 .1 1.4-.3 1.7 .5 10.3 .3 .4 .7-.5 .2 .1 .5-.7 .2 .3 .3-.1 .2-.9-.1-.9 .5 2 .1-.4 .6-.9 .4-1.1 1.5-.4 .2 .8 .2 .7-.2 0-.3 .4-.3 1.2-.1 1.7-.8 .5-.8 1-.4 0-.3 .5-.3 2.3 0 2.2-.7 1.2-.9 4.3-.6 1.2-.5 1.2 .1 6.4-.7 2 .2 .7-.2 3.5 0 .6 .2 2-.3 .5-.4 1.3-.1 6.8 1 1.1-.4 .3-.4 2.2-.3 2.5 1-1.6 .4-.1 .2 2.8-.4 2 .2 1.7-.2-1.5 .3 .2 .1 4.9-.8 .8 .1 .6-.3 1.3 .1 .8 .6 .9 0 .8-.1 .5-.5 .9-.3 2.8-.1 1 .4 1-.4 2.9 .5 6 .4 .3 .1-.6 .8 2-.3 1.1 .8 4 0 0 .4 2 .1 .6-.2 .2-.4 1.6 .7 4.3 .5 1.6 1.3 .8 .2-.2-.6 .7-.1 .6 .3 1.1-.1 3.2 .3 .6 .4 2 .4 .2-.2 .5 .5-.7 0-.2 .2 0 .3 .3 0-.1 .2-1.8-.2 1.4 .3-.3 .4-2.3 0-.7-.2 .3 .3 .9 .2-1.8 .2 .2 .1-.8 .2-.2-.5-.3 0-.1 .2 .3 .3-.2 .1 .6 .6-1.7 0-.3-.2-.8 .4-.1 .4-1.6 .1 1.9 .5-.4 .4 .3 0 .1 .3-.3 .5 .6 0 .7 .7 .7 .3-.5 .2 .6 .1 .8-.3 .3 .3 1.4 .2-.1 .2-2.4-.1-2 .3-.9-.4-.2 .2 .5 .3-1.1 0-.4 .2 .1 .2-.6 .2 .3 .1-.4 .1 .7 .2-2 .4 2 0-.1 .2 .3 .1-.5 .1 .4 .1-.2 .4 3.2 .9-2.4 .3 3.4-.1 3.9 .7-.9 .2 .4 .1 2.9 0 9 1 0 5.6-360 0 0-5.6 8.3 .1 15.2 .7-1-.3 .9-.1-8.6-.4 1.4-.1-.9-.1 .7-.2-1-.2-2.8 0-1.4-.4-5-.6 8.6 .4 1.2 .3 1.3-.2 .9 .2 2.8 0 2-.2 .4-.1-.7-.1 2.2-.1 2.5-.6-1.7-.5 .7-.2-3-.4 9-.5-2.6-.4 2.3-.3-.1-.2 .2-.1-2.8-.3-1.1-.4-4-.4-.4-.1 2.2-.3-4-.3-.2-.2 .5-.7 3.2 0 5.1 .7 1.5-.3-.6-.2 0-.2 3.2 .4-.2-.2 .3-.1-.5-.1 .4-.1-.2-.3-3.9-.3 1.4-.3 2.9 .3-1-.3 .4-.2 3.7-.4 1.4 .2-.3-.2 2.1-.3 2.5 0 .4-.4 .8-.1 5.6 .2 2.8-.2 5.5 .1 3.2-.4 3.1 .1 .6-.6 1.1 .2-.3 .3 .5 .1-.6 .1-.2 .4 2.5-.2-.2-.2 .2-.4 1.3 .2 0 .3-1.1 .5 9.7-.1 .7 .3 2.2-.1-1.7-.4 .5-.2-.2-.2-1.1 0-.4-.5-1.2-.2 .1-.2 2.1 .2 1.8-.2-4-.3-.5-.5 .3-.1 .8 .1-.2 .2 4.3 0 1.8 .3 5.5 0 2.1-.6 .6 .1-.4 .3 .2 .1 1.6 .2 1-.2 3.6 .7 .9-.2 .1-.5 .9 .2-.3-.3 .2-.2 1.6 .6 1.9 0-.2 .3 7.8-.6 1.6-.4 .9-.7-.7-.6-.2-.8-1-1.3 1.3 0 .4-.2 0-.2-.4-.1 .3-.1 .3-.6-.3-.2 .4-.4-.8-.1 0-.4 .5-.2 .1 .4 .4 0 0-.6 .7-.1 .2-.5 1.1-.1-.1-.3 .8-.2-.3-.1 .3-.4 .7 .1 0-.2 1.5-.3 .7-.5 3-.8 .7-.1 .4 .4-.3 0zM-2.8 71.2l-.8-.5 1.5 .1-.5 .3zM-2.7 70.5l-.8 0 .8-.2zM1.5 70.1l-.3 .3-.3-.3 .5-.1zM11.8 4.6l-2.1-2.1 .4 0-.4-.1-.4-.5 .2 0-.5-.6 .5 .3-.8-1 .2 .1 .4-.3 .1-.7 .4 .3 .2-.2-.5-.1-.2-.3 .3 0 0-.5-.2 0 .4-.8 .1-1.2-.1-.5-.2 0 .1-.5-.3 .2-.4-.2-.1-.5-.2-.1-.1 .2 0-.3-.3-.1 0 .3-.7 .1-.5-.2 .1 .2-.3 .1-.1-.3 .1 .3-.8 .1-.6-.5 0-.7-.3 0 .3-.1-.4 0-.7-.7-.9-.1 .2-.2-3.4 .8-2.3 1-1.2-.3 .2 0-.2-.2-.1 .2-1.1-.2 .4 .1-1.4 0 .3 .1-2.4 .7-1.6-.7-2.6-2-.8-.3 0-.4-.4 0-.4-.6 .4-.2-.3 0 .1-.3-.6-.6 0-.4-.7-.3-.2-.6-.3-.2-.1 .2-.4-.4 0-.3 .3-.1-.4-.2 .4-.2-.8 .2-.9-.7 .4-.1-.4 0 0-.8 1.4-.1-1 .1-.4-.5 .2-.1-.9-.8 .4-.1 .5-.8 .6-2.2-.2-1.1-.3-.4 .2-.1 .1-.7-.7-.9-.2 .2 .2-1 .9-1.8 1.1-1 .5-1.6 .8-.4 .7-1.2 1.3-.4 1.1-.8 .8-1-.2-.6 .1-.7 .6-1.2 .7-.7 1.6-.7 1-1.8 .6-.1 .7 .7 1.6-.2 .2 .3 .9 0 3.2-1.4 2.5-.4 1 0 .5 .3 1.2-.5 1.4 .2 1.8-.4 .1 .2 .1-.2 .3 .1 .2 .5 .7-.4-.6 .8 .6 1.1-1.1 1.1 .3 .4 .7 .1 .2 .4 1.1 .3 1 0 1.9 .5 .5 1 2.1 .5 1.1 .6 .7-.1 .4-.4-.1-1 .2-.4 .5-.4 1-.3 1.5 .3 .2 .4 1.6 .2 .3 .5 1.6 0 2.3 .7 1.8-.8-.3 .2 .5-.2 .8 .1 .2 .2-.2-.2-.1 .2 .3 .2 .2-.2 .3 .2 1.3-.1 .6-.4 1.1-2.6 .4-.3-.2-1.1 .2-.4-.2-.3 .4-.5-.8 .2-.7-.2-1 .6-.9 .2-.8-.5-1.4-.4-.2 .6-.7 .1-.5-.1-.2-.4-1.5 0 .7-.3-.9 0 .2-.2-.4-.5 .1-.3-.9-.3 .1-.3 .3 .3 .4-.2-.3-.2 .2-.2-.3-.4 .2-.2-.8 0 .1-.5 .5-.4 .6-.1 .4 .2 0-.2 1.3 .1-.2-.1 1-.3-.7-.1 0-.3 2.2 .1 1-.6 1.1-.3 1.6-.1 .3 .4 .8 0 .3 .4 .4-.1 1.6 .5 1.9-.1 1.1-.4 .4-.6-.4-.7-2.7-1.6-2.1-.9 .3-.1-.2-.1 .9 0 .3-.6 .6-.1-.7-.5 1.5-.4-.1-.3-1.7 .2-.7 .4-1 .1-.8 .5 .2-.3-.4 .2 .7 .9 1.1-.1-.2 .3-.9 0-1.6 .7-.4-.2 .1-.5-1.1-.3 1.2-.5-.1-.2-1.8-.2 .2-.1-.4-.2 1 0-.6 0-.2-.6 .1 .6-.3-.2-.8 .2-.6 .7-.6 .2 0 .9-.6 0 .1-.2-.2 0 0 .4-.3 .3 0 .8-.5 .1-.2 .7-.4 .2 .7 .9 .9 .4-.1 .2-1.5 0-1.3 .9 .6-.5-.7 0-1-.4-1.3 .3 .5 .6-.4-.3-.2 .1 .2 .3-.5-.3 .2 .4-.7-.7-.3 .1 0 .5 .7 .8-.4-.1 .2 .3-.5 .1 .7 .2 .7 .6 0 .4-.5-.3-.5 .1 .5 .5-.8-.1 .5 1.1-.5-.4-.3 .3-.3-.5-.2 .3-.3-.4 .1-.3-.6-.5 .7-.4 1.1 .3 .2-.2-.7-.2-.9 .1-.2-.2-.1 .2-.4-.6 .3-.1-.8-.3-.4-.7-.5-.3-.1-.4 .3-1.1-2.6-1.2 .7 .1-.8-.5-.9-.1-.9-.8 .4 0-.5-.3-.1-.5-.3-.2-.3 0-.4 .5-.4-.7 .3-.1-.2-.2-1.3 .4-.1 .2 .3 .2-.3 .3 .2 .5 1.2 .6 .4 .9 .5 .5 .7 .3 1 0-.3 .4 2.1 .8 .5 .5-.2 .4-.4-.5-1-.2-.4 .8 .6 .3 .1 .4-.6 .2-.5 .9-.5-.1 .6-.8-.5-1.2-.7-.2-.2-.5-.5 .1 .2-.1-.5-.1-.3-.4-.6 0-1.5-1.1-.5-.1-.6-.6-.3-.9-1.4-.5-2.2 1.2-1.2 0-1.3-.4-.8 .4-.3 .4 .3 .5-.1 .4-1.1 .6-1.1 .2-.3 .3 .2 .1-1.2 1.2 .1 .4 .4 .3-.7 .5-.3 .5 .1 .2-.6 0-.8 .8-2.3 .1-1.2 .7-.8-.6 .2-.3-.2 .1-.5-.5-.9 .3-1.2 0 .2-.4-.1-1 .2 0-.5 0-.1-.3 .3 0 .2-.4-.3 .4-.4-.1 .7-1.3-.1-2 .2-.3-.5-.8 1.5-.6 5.7 .5 .5-.3 .4-1.1 0-.8 .6 .5-.7-.7 .2 0-.1-.6-.7-.2-.3-.4 0-.3 .4 0-2.6-.6-.4-.2 .4-.2-.3-.1 .4 0-.5-.2 1.5-.3 .5 .3 1.3-.2-.5-1 .6 0 .2 .3 1.5 0-.3-.1 .1-.2 1.2-.4 .4-.8 1.6-.5 .8 0-.8-.1 .9 0-.4-.3 .9-1.1 .7-.4 1.7 0 0-.4 .8 0 .2 .3 .1-.2 .2 .2 .1-.5 1.2 .3-.8-.3-.1-.4-.3 0 .4-.2-.3-.3-.1-.6-.5-.2 .1-1 .5 .1 .5-.2 .1-.3-.5 .3-.5-.1 .3-.3 2-.6-.2 .1-.1 1 .6 .2-.1 .2-.5 0-.7 .7-.1 .5 .5 .3-.1 .2 1.1 .1-.1 .4 .5 .1 1.2-.6 .8 .4 .3-.1 .3 .4 .6 .2 0-.2-.7-.1-.1-.2 .6 .2 1.8-.4 .4-.3 1.5-.2 .7 .1-.4 0 .4 .3 .6 0 .5-.2 .1-.3 .7-.2 .4-.5-.5 .6 .6 .1-.2-1.7 .7-1 .9-.1 1 .7 .8-.3 .1-1.1-.7 0-.3-.3 .2-.1-.3-.1 .1-.3 2-.4 2.4 .2 .2-.4 .8 0 .2-.2 1.1 .1-1.6-.5 .1-.2-.2-.1-2 .3 .1-.2-.2 .2-.4-.1 0 .2-3 .5 .2-.2-.3-.2-.4 .2 .1-.4-1.2-.2 .2-1-.5-1 .6-.4-.2-.2 .8-.1 2.3-1.5 .8-.2-.1-.5-.7-.4-1.5 .2-.7-.2-.1 .3-.9 .3 .2 .2-.5 .3 .4 .3-.7 .6-2.2 .7-.3 .2 .2 .1-.6 0 .1 .3-.6 .1 .2 .3-.1 .5-.4 .1 .2 .9 .7 .1 1 .8-1 .4 .6 .1-.3 .2-2.1 .5 .7 .1-.2 .1 0 .9-.4 .8-.5 .6-1-.1 0 .2-.4 0-.2 .6-1.3 0 .1-.3-.5-.6 .3 0 .1-.3-1.5-1.5-.3-.9 .3-.1-.6-.1-.2-.6-.4 .8-.6-.1-1.4 1-1.2 .1-.1-.2-.3 .1 .1-.2-1.1-.3 0-.4 .8 0-.5-.1 .5-.4-1.2 .3 0-.4 1-.2-.5-.1 .6-.5 .3 0-.1 .2 .5-.3-.8 .2-1.1 .7 .1-.5 .5 0-.6-.3 .5-.3-.5 .1-.1-.4 2 0 .6-.2-.2-.2-1 .3-1.3-.1-.1-.2 .3-.1-.4-.4 1.8 0-1.4 0-.2-.3 1.6-.3-.6 .1 .3-.2 1.2 .1-.1-.2 .6 0-1.4 0 .9-.4 1 .3-.4-.4 .4-.1-.2-.2 .2-.1 1.1 0 .3 .2 1.4-.4-.2-.1 .3-.1-.4 0-1 .5-.5-.2 2-1.1-.3 0 .2-.2 1.4-.3-.8 0 .9-.7-.2-.1 1.2-.2-.9 .1 .1-.4 .8-.2-.3-.1 1.7-.3-1-.1 .6-.3 .6 .3 .1-.2-.5-.1 .1-.2-.5 .1 .3-.3 .5 .1-.3-.1 .7-.2 .3 .3-.1-.4 1.4-.1-1.1-.1 .9-.3 .9-.7 .6 .2-.3-.2 1.1-.3-.1 .4 .7-.5-.2 .6 .6-.2-.1-.4 .8-.1 .6 .2-.6-.4 1.3-.2 .7 .4 0-.2 1.3-.8 1.1 .1-.8 .7 .2 .1 1.3-.8 .2 0-.1 .5 .4-.1 .5-.3-.3-.1 .5-.2 .7 .1-.5 .3 .4 0-.1 .5 .6-.7 2.2 .6-2.2 .2 .8 .1 .1 .3 .5-.2 .2 .2 1.1 0 .5-.1 0-.2 1 .3-.9 .1 1.4 .2-.4 .3 .6-.2 2.2 .1 2.5 .8 1.4 .2 1.2 .5 .1 .4 .3 .1-.2 .4-1.1 .5-1.4 .2-3.2-.3-3.6-.8 1.8 .8-.3 .1 1.3 .3 .1 .2-.4 .4 .6 .6 0 .4 2.4 .6 .7-.3-1.5-.7 .3-.4 2.9 .6 .6-.2-.6-.5 0-.3 2.4-.9 1.5 .2-.2 .2 .6 .1 .4-.7-.2-.4-.5-.2 .4-1-.9-.4 2.6 .2 .8 .5 0 .2-1.2 0-.6 .4 1.6 .6 1.2-.2 .2-.6 .9-.1 0-.2 3.2-.6 .4 .1 .3-.1-.4-.1 1.5-.4 .7 0-.7 .1 .2 .1-.1 .4-.6 .1 1.6 .1 0-.2 .5-.2 1.7 0 2-.4 .3 .3-.3 .3 .6 0 .2-.3 .6 0 .4-.3-.7-.6 .7-.2 3.3 .3 2.8 .6 1.5 .6 .6-.7-.6 0-.5-.5-1.1-.1 .4-1.1-.6-.1 .1-.3-.2 0 1.7-.6 1.1-1.3 2.1 .1 1.3 .2-.2 .7-.7 .5 .8 .5-.2 .7 .1 1.3 1 .5-.5 .3 0 .4-1.3 .8-.4 0 .1 .3-.8 .2-.3-.1 .3-.1-1.7-.1 1 .4 2.3 .1 .1-.3 1.4-.4 1-.8-.4-.6 .2-.4 .5-.1 1.4-.1 .7 .5 0 .7 1.7 .2-1.3-.2-.1-.2 .5-.3-.3-.6-1.7-.3-2.2 0 .1-.2-.3-.4 .7-.8-1.2-.8 .6-.4 1.3-.3 .1-.4-.3-.3 .8 .2 .1 .3-.5 .5 .3 .1-.2 .3 2.3 .2 .7 .3 .8-.1-2.7-.6-.4-.3 2.2 0-.8-.2 1.1-.3 2.3 .3 .9 .4 1.5 0-.9 .4-.1 .3 0 .6 .4-.5 .4 0-.3 .7 .4 .1 0-.2 .6-.2-.5-.6 .4-.4-.1-.2-.9-.2-.5-.4-1.3-.2 0-.4-.4-.3 .2-.4 6.3-.3-1.1 .5 .9 .3-.8-.3 1.7-.4-1.6-.5 .4-.2 .8 .1-1.4-.2 .4-.2 .7 .1 .6-.3-.5-.2 .7 .1 2.5-.5 4-.4-.9-.1 2.8 0-.4 .2 .8 0 2.2-.3 1.1 .2-.3 .2 .4-.1-.1-.2-1-.4 2.8 .1-.7-.2 .2-.1-.2-.2 1.7-.6 1.6-.2 1.9 .3-1.9 .3 3.2 .2-1 .4 4.7-.2 1.5 .3 .1 .3 .6-.2 .3 .4 .3 0-.4 .3-1-.2 1.2 .3-.8 .5-6.7 1.7-1.1 .5 5.8-.9-1.2-.1 .6-.2 .8 .1 0-.2 .5 .1-.4 0 .2 .2 .7 .1 .7 0 0-.3 .2 .1 .5 .6 0 .3-.4 .2 .6 .2-.5-.2 .7-.5-.4-.2 .6-.1 4.4 0 .4 .1-.4 0-.1 .3 4.4 .3-.3-.1 1.1-.2-.3-.2 .1-.2 1.1-.2 1.1 .4 2.1-.1 1.4 .4-.5 .2 .7 .2-.9 .2 .9 .1 0 .3-1.6-.3 1.2 .6 .3-.1 .3 .2-.7 0 1 .6 1 .1 .2 .3 .6-.2 1.1-1 1 .5 2.4-.2 1.8 .5 .4-.2-.4-.1 .3-.2 1.8 .1-.6-.5 .8-.2-1.1-.1 2-.3-.3-.3 5.5 .5-1.4 0-.7 .1 .3 .1 2.3-.1-.7 .4 .1-.2-.4-.1 0 .3-.7 0 .1 .2 .9-.1 1.2-.5 2.2 .1 .5 .3-1.1 .2 1.8 .2-.6 .3 1.5-.1 .5 .3-.3 0 .7 .2 3.4-.3 3.5 .3 .6 .5-.2 .5 1.1 .2 .1 .5 .3 .2-.4 .4 .7-.4-.1-.5 1.7-.3 3.6 .2 1.1-.2 .4 .4 1 .2 .3 .3 .9 0 .5-.3-.4-.5-.4 0 .3-.5 2.8 .3 2.6-.1 4.1 .9 0 3.9-1.5 .5-1.6-.5-.6 .1 .7 0 .1 .2-1-.2-1.6 .3 1.6-.2 .3 .2-.3 .1 1.3-.2 0 .4 .6 .2 .2-.2 .5 .6-.2 .2 1.1 .8-.5 .5-2.1-.5 .2 .2-4.3 1.1 0 .2-2.3 .9-.2 .4-1.2-.6-2 .2-.9 .5-.2-.1 .3-.5-1.3 .4-.1 .3-.5-.3-.8 .1-.3 .2-.1 .5-1.2 .9-.1 .3 .4 .4 .3-.2 .5 .1-.4 1 .5 .1 0 .5-.3 .2-.4-.2 .4-.3-.3 0-.6 .4-.4 .6 .4 .7-2 .6-.3 .4 .2 .7-1.5 .1 0 .6-.4 .6-1.4 .8-1.1-4.2 .4-1.5 1-.8-.2-.3 1.5-.2 3.8-2.5 1.6-.4 .5-1.4 1.2-.2-1-.2-1.1 .1-.3 .7 .3 .2-.9 0-2.2 1.1 .2-.4-.6 0 .5-.9-.7 .2-.4-.2-2.1 .2-2.8 1.9-.2 .3 1.1 .1 0 .2-3.9 .3-.2-.2 1.2-.1-1-.4-.8 .1 .2-.1-1.1-.2-.9 .5-2.2-.2-.5 .3-.4-.2-3 .2-3.9 2.2-1 .9-2.4 1.2 0 .2 1.5 .1-.1 .8 .5 0-.1-.4 .6-.1-.4 .2 .5 .2-.5 .4 .7-.1 .5-.4 .1 .2-.4 .3 .3 0 .2-.8 1.1 0 1.6 1-.2 .3-.4-.1 .5 .3-.2 .4 .4 .2-1 1.4 .1 .7-.5 1.7-1.5 1.3-.9 1.3-2.6 2.3-1.9 .8-.9-.2 0-.4-.4 .2 .1-.2-.2 0-.6 .7-.5-.1 0 .4-.5 .1-.4 .5-.1 .8-1.2 .8-.9 .3-.2 .6 .9 .5 1.1 1.6 0 1 .2 .2-.4 .7-.7 .1-.1 .2-.7-.1 0 .3-.3-.1 .1 .2-.3 .1 0-.3-.3 .4-.4 .1-.2-.4 .3-.1-.2 0-.1-.4 .5-.7-.3-.3 0-.5-.3-.1 .3-.2 .5 .1-.3-.3-.1-.6-.5 .1-.3-.3-.4 .3-.4-.2 .2-.2-.5 0 .4-.5 .5-.1-.4-.1 .2-.7-.6-.3-.2 .2-.3-.4-1.5 .4-1.6 .9-.1-.2 .6-.2 .1-.3-.5-.1 1-1-.5-.5-.1 .2-.5-.1-.7 .7-1.1 .4-.4 .6-1.2 .1-.1 .7 1.2 .4 .2 .3-.1 .4 .3 .2 1.5-.7 1.9 .4-.4 .6-.4-.2-1.1 .4 .1 .2-.3 .3-.4-.1 .1 .2-.9 .7-.2 .5 1.1 .5 .6 1.6 1 .9-1.4-.3-.5 .2 .7-.1 1 .7 .2 .4-1.7 .7 1.1-.1 .8 .4-.6 .4 .4-.1 0 .5-.2-.2-.3 .2 .3 .1-.2 .1 .2 0-.1 .6-.5 0-.1 .3-.3 0-.1 .6-.5 .7-.5-.1 .3 .5-.8 .2 .2 .2 .3-.1 0 .6-.4 0 .1 .2-.7 .4 .1 .2-.9 .1 .3 .3-.7 .6-.8 .2-.1 .5-.9 0-.7 .3-.2-.2-.4 .5-.4-.1-.4-.7-.2 .2 .3 .3-.1 .4-.4 0-.1 .3-.4 .1-.2-.2-.1 .3-.4-.1-1.3 .6-.2-.1-.2 .4 .3 .4-.2 .2-.4 0-.2-.6 .2-.6-.4-.2 0 .2-.4 .1-.5-.5-.1 .3-1.1 .3-.2 .4-.5-.1 .1 .3-.8 .8-.4 .9 .9 1.1-.1 .2 2.4 2.3 .5 1.5 .1 1.3-.1-.2-.1 .2 .1 .6-.3 .7-1.7 .9-.3-.3-.1 .3-.3-.1 .2 .2-.3 0 .3 .2-.2 .2-.5-.3 .5 .6-.8-.4 .4 .6-1.4 .8 .2-1.5-1.1-.6-.3 .1 .1-.3-.2-.2-.3 .2-.1-.6-.5-.7-.9-.5-.8 0 .1-.7-.4-.2-.6 .2 0 1.2-.8 1.9 .1 1 .5 0 .5 1 .2 1.1-.2-.6-.1 .2 .2 .4 1.1 .3 1.7 1.6 .3 .6-.1 1.8 .6 .6 .2 .9-.2-.2-.5 .3-2.2-1.6 0-.4-.6-.7-.4-2-.7-1.4-.9-.9-.4 .1-.1-.6 .5-1.4-.1 .2-.1-.7 .4-1-.3 0 0-1.5-.4-.8-.1 .3-.3-1.2-.1-1.7-.3 .1-.5-.9-.1 .7-.4 .2-.2-.3 .1 .4-.9 .7-.1-.4-.1 .3-.3 0 0-.4-.2 .3 0-.6-.5 .5 .4-1.6-.6-1.7-.1 .4-.4-.5 .3 .2 .2-.2-.3-.5-.5-.2-.1 .2 0-.5-.3 .2-.1-.4 0 .3-.6-.9-.2-1.2-.4-.5-.6 .3-.3-1 0 .2-.3-.1 .3 .2-.2 .5 .2 .4-.4 .6 0-.4-.3 .1 .1-.4-.4 .7-.1-.5-.1 .6-.3-.4-.2 .2 .2 .2-.4 .1-.1-.5 0 .4-.2 .1-.1-.2-.2 .2 .1-.5-.3-.3 .3 .3-1.1 .6-.3 1.2-1.2 .6-.1-.2-.3 .1 .2 .2-1.3 1.3-1.7 1.2-.1 .5-1 .3-.3 .5-.4-.1-.3 .2-.2 .6 .2 1.6-.2-.1 .2 .2-.6 2.1 .1 1-.5 0-.4 .7 .1 .3 .4 .1-1 .1-.3 .7-.6 .3-.9-.8-.9-2.5-.8-1.2-.5-1.9-1.1-2-.4-2.1 .1-.6-.2 .2 0-.3 .2 0-.3-.5 .2-.9-.3-.7 .5-.4-.6 .1 .1-.5 .2 0-.6-.1 .1 .2-.3 .3 .3 .3-.3 .3-1 .5-.5-.1-1.5-1.5 1.2-.3 .3-.5-.8 .3-.9-.3-.4-.5 .4-.3-.6 .3 0-.3-.6 0-.3-.3-.1-.6-.5-.1-.3-.7-.3 .1 .4 .1-1.8 .2-1.1-.2-.1 .2-2.1 .1-4.1-.7-.6-1.3-.6 0-1.5 .6-.9-.2-1.2-.9-.9-.3-1.5-2.3-.5 .2-.6-.5-.2 .5-.8 0 .1 .4-.4 .2 .4 0 .7 1.7 1.3 1 .1 .6-.2 0 .8 1.3 .2-1.2 .3-.2 .2 .3 .1 .8-.3 .8 .5 0 0 .3 2.6-.3 2-2.1-.1 .7 .3 1.2 .6 .6 1.6 .4 1 1.2-1.3 1.9-.3 0 0-.2-.3 .4-.2 .5 .1 .7-1 .2-.4 .8-1.1 .4-.2 .6-1 0-1.5 .5-.4 .3 0 .5-.9 .5-2 .6-.6 .5-4.8 1.5-.4-.1-.3-.6 .1-.4-.6-1.5 .1-1.3-.5-.9-.6-.6-.9-1.8-1.1-.6-.4-.6-.3-.9 .1-.7-.6-1.1-1-.6-.3-.5 .1-.2-2.1-3-.6-.1 .4-1.5-.3 .3-.5 1.5-1-.8-.6-1.4-.2 .4 .3 .7 .8 1 1.7 3.4 .6 .6-.3 0 .2 1 1.2 .9 0 .4 .4 .5-.2 .1 .4 2.2 1.1 .7 .9 2.6 .3 .4 .1-.4 .3 .5 1 .4 2.2 2.2-.1 .4-.8 .5 .7-.1 1.1 1.1 .6 .1 .9-.4 .8 .1 .8-.5 2.7-.3 .7-.5 .5 .2-.3 1.4 .2-.2 .2 .2-.5 .1-.1 .9-2.8 4.9-1.9 2-2.4 1.6-2.3 2.8-.5 .1-.1 .4-.6 .3-.1 .6-.9 1.4-.4 1.4 .7 .9-.2 1.4 .4 1.6 .9 .7-.2 .6 .2 1.3-.2 .4 .2 0 0 1.5 .2-.1-.1 .9-1.6 1.7-1 .2-1.2 .8-.5 .8-1.5 1-.3-.1 .2 .1-.1 .7 .6 1.2 0 .7 .2-.3-.1 2.1-.4 .5-2.2 .9-.2 .4 .2 .3 .2-.2-.6 2.4-1.1 .9-1.3 1.9-2.9 2.2-.7 .3-.6-.1-.2 .3-.8 .2-2.2-.2-2.6 .8-1.2-.4 0-.3-.4 .2 0-.6-.5-.9 .4-.3-.1-.8-.9-1.3-.6-1.4-1.4-1.6-.8-3.2 0-1.8-2.7-4.4 0-2.2 .8-2.4 1.1-1.3 .1-1-.8-2.1 .4-.3 0-.3-1.1-2.3 .8-.2-.8 0-.1-.6zM48.8-41.6l.7 .8 .9 .5-.8 .1-.3 .6 .1 .3-.2 .3-.2-.1 .1 1.4 1 .3 .8 .6 .9 .2 2.2-.2-.1-2.1-.2-.3-.5-.1 0-.3 .4 .1-.1-.4-.5-.1 0 .2-.3-.6 .2-.6 1 .4 .5-.1 .3-.4-.6-.4-.3-.6-.8 .1-.2 .3 .1 .5-.4-.7 .1-.9-1.3-.4-.5-1-.5-.2 .1-.2 1.1 .1-.5-.4 .4-.5 1.8 .1-.4-.3 .4-1.1-.7-.3-.4 .2-.9-.3-1.9 .6-.6 .6-1.2 .2-.1 .5-.7 .7 .6 .4 .2 .5 .1-.3-.1 .9 .9 1zM8.4-3.3l.5-.5-.2 .6zM-15.7-28.2l.3 .3-.2 .2-.2-.2zM-13.9-28.7l0 .4-.4 .2-.2 0 .3-.1 .2-.5zM3.1-39.3l-.7-.3 .8-.4-.1 .2 .4 .1zM9.6-40.3l0 1.1-1 .2-.2-.2 .1-1.1-.3-.6 1-.4 .6 .8zM9.6-42.2l-.4 .8-.6-.5 0-.5 .7-.3 .1-.3zM-6.3-54l.3 1.1-.5 .6 .2 .1-2.1 .3 0 .2-.9 .2-.5 0 .2-.2-.5 .1 .5-.3-.8 0 .5-.2-.5-.1 1.6-.5-1.1 .1 1-.6-1.2-.2 .5-.4-.5-.5 1.6 .1 .4-.4-.7-.1 .5-.4 .6-.2 0 .3 .2 0 .2-.4 .3 .2-.2 .1 1.1-.1 .4 .4-.2 .2 .4 0 0 .2-.2-.1 .1 .2zM-3.3-51.4l-.8-.3-.8 .1-.4-.3 1.2-.4 0-.6-.6 .1 .4-.3 1.1-.3 .5 .1-.4-.2 .2-.7-.3 .1-.4-.5 .6-.4-1.9 .3-.3-.3 .5-.5-.2-.2 0-.2 .3 0-.2-.3-.4 .3 .2-.3-.4 .2-.3 .7 .1-.8 .4-.7-.5 .3-.4-.2 .4-.2-.2 0 .3-.3-.2-.2 .2-.1-.1-.2 .5-.2-.2-.2 .4-.2 0-.3 1.9 0-.1 .3-.8 .3-.1 .4 2-.1 .3 .2-.8 .9-.7 .2 .6 .1-.7 .3-.4-.1 1.7 .2 .4 .3 .5 .9 1.1 .6 .2 .5-.8-.1 .4 0 .7 .5-.4 .3 1.7 .1-.1 .7-.4 .1 .1 .2-.9 .3 1 .1-.4 .5-2.4 0-.6 .3-1.4 0-.3 .4-.5-.2-.9 .4-.6-.1 .8-.4 .7-.7 1.1 0 .7-.5zM11.1-54.9l.7 .2-.8-.1zM10-55.2l-.1-.3 .7-.1 .2 .3-.2 .2zM-6.2-56.6l.4 .1 0 .2-.5 0 .2-.2-.2-.1zM-5.7-57.2l-.3 .2 0-.2-.8-.2 .5-.3 .2 .4zM-6.4-58l-.7 .2 .2-.1-.2-.3 .9-.3-.4 .4zM-1.1-60.4l-.2 .5 0-.3-.4-.1 .3 0-.2-.2 .2-.1zM-6.7-62l-.5-.3 .6 .1-.2 .1zM12.1-78.2l-1-.3-.5-.4 1.2 .5zM16.6 69.7l-.4 .4-.6-.2 .3-.2zM24.2-35.6l.2 .2 1.3 .1 .1 .2 .5-.2-.1 .3-1.4 .1-.1-.2-1.1-.2 .1-.4 .2 .2zM15.1-37.3l.2 .3-.2 .3-.3 0-2.4-1.1 .3-.4 .2 .2 .4-.2 .5 .2 1.8-.3-.4 .5zM24.1-38.7l.4 .7-1.6-.9 .4-.1 .2 .2zM13.2-54.5l.2-.2 .3 .1 0 .3-.3 .1-.2-.2zM12.3-55.2l-.4 .4-.9-.9 .6-.3 .2 .3 .1-.3 .6-.1 .1 .4-.4 .2 .2 .1zM16.4-56.6l.7-.7-.7 1.1zM18.9-57.4l-.8 .5 .2-.2-.2-.5 .8-.3 .2 .1-.3 .3zM23.3-58.5l-1.3 .6 .2-.3-.3-.3 .9-.1zM22.4-58.9l-.3 0 .5-.2 .4 .3-.5 .1zM20.3-60.3l-.5 .2 .1-.3zM14.1-68.2l-.9 .2 .3-.2zM16.4-68.8l.1 .2-.5 .2-1.7 .2 .8-.2 .9-.9-.2 .7 .4-.2zM15.2-68.6l-.8-.1 .6-.3 .4 .2zM18.1-69.4l-.1 .2-1.2 .1 .2 0 0-.3 .4 0-.2-.1 .8 0zM19.6-70l-.8 .4-.7 0 1-.4 0-.2 .2 .2zM23.3-70.3l-.3-.2 .6 0zM22.6-70.5l-.6-.2 1.4-.1-.3 .2zM23.5-78.1l-.4 .1 1.8 .2-2.1 .5-.4 0 .3-.3-1.8 .1 .8-.4-1.5-.6 1.8-.1 .3 .4 .7-.1zM18-79.7l-.3 .3 .7-.2 .3 .3 2.1 .2-.3 .1 .9 .3-2.2 .3-.2 .3-.6 .1-.2 .5-.6 .1-.5 .7-.4 .1-2.3-.6-.4-.3 3-.3-2.9 0-.4-.2 3.5-.4-.8-.1 .4-.2-1.4 .2 0-.3-.4 .2-.5-.1-.1 .2 .2 .1-1.4 .2-1.8-.8 1 0-.4 0-.1-.2 .2-.1-.9 .2-.5-.4 0-.3 1.6 .1 1.4-.2-1.1 .3 1.4 .3 0-.3 .8-.2 1.5 .8-.5-.7 .3-.3 1.5 .1zM22.3-80l.2-.4 .5-.1 .3 .1-.2 .2 1.2-.2 2.6 .2 .3 .3-1.6 .5-1.7 .2-3.8-.3-.4-.1 1.1-.1-2.5-.2 .6-.1-1-.1 1.9-.1-.1-.3zM26.4 70.1l.3 0 .2 .3-.9 0 0-.2zM55.7 21l0 .4-.3-.1-.2-.2 .3-.2zM49.9 13.1l.6 2.3-.3 .6-.5-.5 .1 1.3-.4 .4 0 1.1-2.2 6.5-1.7 .8-1.5-.6-.7-2.7 .2-.9 .3-.2 .6-1.3-.5-2.3 .5-.9 0-.5 1.8-.5 .2 .2-.1-.2 .6-.5 .2 .2 .4-.7 0 .3 .3-.4 .2 .1-.2-.3 .1-.7 .4 0 .5-.4 0-.8 .4-.4zM39.2 6.3l.1-.6 .3 .7zM53.7-12.3l-.4-.2 .2-.2 1 .1-.4 .2zM55.3-26.6l1-.4-.3 .3zM33.7-35l-.7 .4-.6-.1-.1-.4 2.3-.6-.7 .4 .2 .3zM28.2-36.4l-.5 .5 0-.3zM26.2-38.5l-.2 .3-.2-.4zM26.4-39l-.3-.1 .2-.1-.5 0 .5-.2 .3 .4zM48.7-68.7l-.4-.3 0-.3 .3-.1 .6-.1 1.1 .3-.7 .3zM53.1-71l-.9-.3 .7-.1 .3 .2-.2 .2zM56.1-72.8l-.4 0-.3 .3-.1 .6 1.2 .8 1.1 .4-3.9-.1-.3-.1 .3-.2 .5 0-.8-.2 0-.2-1.5 0-.5-.3 .2-.3 1-.2 .3-.4-.3-.1 .8-.1-.2-.2 .2-.1 1.4-.2 1.6 .2-.2 .2zM50.9-80.1l.5 .2-1.3-.1zM56-80.3l1.1 0-.1 .2-1-.1zM52.2-80.3l1.1-.1 .6 .1-1 .1zM51.7-80.7l-2.9 .3 .2 .2-.6 .1-1.4-.1-.4-.1 1.3-.2 1.2 0 .1-.3 1.6-.1zM47.7-80.8l-1.3 .3-1.5-.1 2.5-.3 1.3 .3zM55.7-80.6l-1.7-.3 .7-.2 3 .3zM58-81.3l-2.5 0 2.2-.3 .9 .2-.7 0zM69.6 49.3l1-.1-.8 .2 .5 .2-1.1-.1-.4 .2 .2-1 .1 .4 .5-.1-.2 .2zM57.3 20.4l.4-.4 0 .5-.3 0zM98.9 1l.4 .6-.1 .2-.4-.2-.1-.6zM97.8-.6l-.7-.8 .3-.1 .5 .5zM95.8-2.9l.7 .5-.7-.3zM81-8.9l.9 2-.5 .7-.9 .3-.4-.3-.4-2.1 .1 .3 .3-1.6 .3 .1-.4-.1 0-.2 .3 0zM92.5-11.9l.3-.3 .1-1.2 .2-.1-.4 2zM90.6-22.9l.3 .4-.1 .3-.3 .1 .2-.3-.2-.4zM70.1-66.6l-.6-.1 .6 0zM59.6-69.7l-1.1-.6 .5-.2 1.5 .6-.3 .2zM77.6-72.6l.8 .1-1.5 .2zM79.5-72.7l-.9-.2 .6-.2 .3 .2zM75-73.1l-.4 .2-.5-.1 .3-.1zM70.3-73.5l.8 0 .5 .3-1.7 .1 .1-.3zM68.2-76.3l-6.8 1-1.7 .7-1.2 .1 .1 .3-2.2 .9-2.1-.1-.5-.4 2.3-.7-.5-.1 .9-.4-.7-.1 .8 0 .3-.1-.1-.2 .8 .1 .5-.4 3.1-.6 1.8 .1 4.5-.8 1 .1 .4 .3zM81.5-75.3l.7-.2-.2 .3zM95.3-76.3l1.3 0-.3 .2zM97.6-79.8l1.3-.2 1.2 .2-.4 .5-.7 0 .9 .3-.5 .2-1.8 0-4.5-.7 1.9-.6 2.6-.1 .4 .2zM76.1-79.6l1.5 .1-1 0zM91.1-80l2.7 .1-1.4 .2zM59.9-80l-.6 .1-.4-.1 .6-.1zM57-80.5l2.3 .2-2 .1zM97.9-80.8l-.9 .3 .4 .2-.2 .1-3.3 .2-2.4-.4 1.1-.1 .7-.3-.7 0 .5-.2 2.1-.3 1.6 .3zM62.1-80.6l-2.5 .2-.3-.2 .4-.2 2.5 0zM80.4-80.9l-1.4 .1 .2-.2zM57.2-81l1.4 0 .3 .2-1 0zM64.1-81l.7-.2 .6 .3-2.9 .1zM101.1 65.4l.2 .1-.3 .2-.7-.1 .2-.2zM119.9 9.3l.9 .7-.4 .3-1.3-.6-.1-.2 .2-.1zM118.8 8.3l.2 0 .1 .4-2 .4-.3-.1 0-.5 .8-.1 .2 .3 .4 0-.4-.4 .1-.2 .8 .3zM115.9 8.8l.4-.6 .4 .1-.1 .6-.6 0zM122.8 8.6l-2.9 .3 0-.5 .7-.2 .8 .4 .9 0 .6-.3-.1-.2 .2 .2zM115.7 8.4l-.6 .4-.6-.7 1 .1zM108.3 6.3l.5 .5 1.6 .1 .4-.5 .4 .3 1.3 .2 .5 .8 1.1-.1 .3 .2 .2 1-1.3-.5-1.8 0-2.2-.6-1.4 0-1.4-.3 0-.3-.3-.2-1-.1 .3 0 .6-.9 .7 .2 .2-.2 .7 .3zM112.7 7.1l.2-.2 1.1 0-.5 .3zM116.3 3.3l0 .6-.2 .2 0-.6zM107.9 3.1l-.3 .1 .2-.7 .5 .3-.2 .4zM106.6 2.9l.1 .2-.7-.3-.2-.6-.7-.2 .3-.4 .6-.1 .4 1 .4 .1zM97.5-5.2l.8 1.1 1.4 .9 .8 1 .4 .3-.1-.3 .2-.1 1.4 1.5 .6 .2 0 .2-.5 .2 .8-.3 .4 .2 .1 .3-.4 .2 0 .4 .3 .3 .7 .1 .1 .8 .3 .3-.1 .5 .7-.2 .6 .7-.3 2.7-.4-.3-.2 .2-.5-.2 .1 .4-2.2-1.7-.9-1-1.3-2.4-1.1-1.2-.6-1.5-.9-.5-.7-1.2-.6-.2-.8-.9-.4-.9 1.3 .4zM117.5-4.1l.3 .4-.7 .1 1 1.3-.3 .3 1.2 1-.5 .2-.6-.3 .1 .2-.5 .7 .1 1-.7 .4-.2-.2 .1 .3-.5 .5 .2 .6-.5 1.2-1.3 .6-.4-1-.6 .3-.1-.3-.6-.3 0 .3-1.1 .4-.2-.7-1.4 .1-.3-1.7-.9-.9 .2-.4-.4-.4 .1-.8 .6-.8 1.6 .6-.2-.2 .5-1.1 1.5-.5 .9-1 .1-.4 1.4-.4 .2-.2-.2-.2 .5-.2 .9-1.4 0 .4 .3-.4 .5 .5-.1 .6 .5-.2 0 .4 .4-.1 .9 .4-.2 .3-.8 .1-.1 .2 .4 .4-.9 .1zM102.5-1.1l.5 .2 0 .2-.5-.2zM108.2-4.2l.2 .3-.3 .2-.1-.3zM117.3-8.7l1.9-1.8 .4-.8 .1 .8-2.5 2.1zM121.5-13.1l-.1 .8-.2 .1-.8-1.3 .8 .1zM110.8-19.6l-.3 .9-.8 .5-1-.3 0-.8 .6-.6 1.4-.2 .3 .4zM120.8-21.9l-.5-.6-.2-1.2 .9-1.3 .6-.3 .3 .3-.5 1.8-.5 .7zM112.8-74.1l-1.3-.3 1.9 0zM107.7-78.1l-1.3 0 1.1-.1zM102.4-78.8l1.4-.3 1.5 .5-.6 .3-5.4 .3 .7-.3 .4-.5 .6 0 .6-.6 1.3 .1zM130.1 11.8l.2-.5 .3 .5zM123.4 10.5l-.2 .3-.4 0zM124.3 10.2l-.7 .1 .1-.7 1.2-.6 .3-.4 2.1-.2-1.9 .9zM123.4 8.6l-.2-.1 .2-.2 .5 0zM124.4 8.4l.1-.3 .6 .1 0 .2zM126 7.9l-.2 .1 .2-.3 .6-.1 .2 .1-.3 .3zM123.1 4.7l-.1 .5 .2 .1-.6 .4 .3-1.1 .2-.2 .1 .4zM122.3 5.4l.1-.6 .3-.2-.1 .8zM127.2 3.6l-.5 .2-.7-.6 .9-.1 .3 .3zM130.8 3.5l0 .4-1-.6-.3 0 0 .2-.6-.3-.4 .2-.4-.2-.2 .3 .3-.6 1.3-.1 .9 .2zM124.4-.5l-1.1 .2-.3-.2-2.4 0-.4 .2-.1 .9 .6 .8 .9-.6 1.3 0 .3-.2 .2 .4-.5-.1-.6 .7-.9 .3 .9 1 0 .7 .6 .8-1.3 .4 0-.7-.7-.6 .2-.7-.4-.1-.4 .2 .1 2.7-.7 .1-.3-.4 .1-1.8-.6-.1-.1-.7 .3-.2 .4-1.6 .2-.2 .1 .2-.1-.8 .6-1.1 .3 .1 .4-.4 1.8 .5 1.1-.1 1.1-.8 .2 .2zM130.1 2.1l-.4-.2 .7-.2 0 .3zM125.3 1.9l-1 0 .4-.3 .4 .1zM127.6 1.3l.6 .4-.7 0 0-.2zM123.4 1.5l-.2 .1 0-.3-.3 .3-.1-.3 .7 0zM127.8 .9l-.3-.1-.2-.5 .3 0 0 .3 .3 .2zM128.2-1.4l.5-.2 0 .5-.4 .4 .6 .5-1-.2 .5 1.3-.7-.7-.3-1.3 .2-.7 .4-.4 0 .9-.4 .4 .3 .1zM128.5-2.1l-.2 .1-.1-.3 .5-.2zM122.3-6.6l-.3 .2-.2-.2 .3-.1zM126.2-8.6l.3 .4 .1 1-.4 .3 0 .6-.5-1-.3 .6 .3 .7-.4 .4-.1-.5-.3 .2-.8-.5-.1-.6 .2-.4-.5-.4-.2 0-.1 .4-.3-.3-.3 .2-.2-.3-.5 .9-.2-.2 .3-.8 1.2-.8 .4 .3 0 .4 .4-.2 .7-.8 .6 0 0-.8 .7 .5 .1 .5zM123.8-9.8l.4-.3 .4 .1-.2 .4-.5 0zM122.4-9.9l.5-.2 .1-.8 .6 .1-.5 1.2 .1 .5-.8-.6zM123.4-10l.6-1.3 0 .9-.7 1zM124.9-11.4l.4 1.1-.2 .1-.1-.2 0 .4-.3-1-.3 .1-.1-.6 .3 .2zM123.2-11.5l-.4 .7-.8 .4 0-1.5 .9 .5zM125.5-11.8l.2 .8-.5-.1-.3-.5 .1-.2-.6-.4-.1-.4 .9 .1 .3 .3zM124-11.8l-.5-.4-.3 .3 0-.7 .7 .4zM124.2-14.1l.2 .4-.2 .2-.2-.2zM122.3-18.4l-.1 .7 .3 .6-1.1 1.8 .5 1.3 .3 .1 .4-.4 .5 .5 .2 0 0-.3 .6 .3-.4 .2 .6 .6 0 .4-.2-.3-.6-.1-.1-.4-.6-.5 0 .7-.8-.7-.5 .3-.5-.3-.2 .1 .3-.8-.3-.3 0 .4-.2 0-.3-.4-.3-1.4 .4 .3 .2-.2 .2-2.3 .5-.1 .8 .3 .2-.2zM127.9-26.4l-.2 .3 .2-.6 .4-.2 0 .2zM126.9-33.5l-.6 .3 0-.3zM144.7 40.7l1.6 .5 1.2-.2 .1-.2 .6 .1 .1 1.3-.1-.2-.2 .3 0 .9-.4-.2 .2-.1-.2-.1-.1 .2-.2-.2-.4 .8-.9-.1 .2-.2-.7-.4-.3-.7 .3 .2-.9-1.4zM148.1 40.2l-.3-.3 .1-.2 .4 .5zM144.1 39.6l-.2 .5 0-.5zM137.4 36.1l-.9-.2 .1-.2 .7-.1 .8 .3-.4 0zM143.4 12.6l.1 1.1 .3 .6 .2 .2 .5-.3 .1 .3 .7 .4 .1 1.5 .5 .5 .1 1.4 .4 .7 2.4 1.3 .1 .2-.2 .1 .8 1 .2 .8 .3 .2 0-.4 .8 .4 0 .9 1 .6 1.4 1.9-.1 1.2 .5 1 0 .5-.7 2.7-.4 1-1.2 1.2-.5 1.4-.6 .8-.3 1.7-.4 .3-1.6 .1-1 .8-.7 0 .1 .2 .2-.1-.1 .3-1-.6 .1-.3-.5 .3-.3-.2 .4-.2-.2-.2-1.4 .9-1-.4-1.1 0-1-.5-.6-.7 .1-.5-.9-1.1 .3 0 0-.2-1.1 .2 .3-.8-.4-.6-.4 .9-.8 .1 .1-.3 .4 0 .1-.7 .4-.6-.1-1-.6 1-.8 .4-.5 .7 .1 .3-.9-.4 .3 0-.2-.6-.5-.7-.4-.1-.1-.7-3.1-1-2.2 .2-1.6 .6-1.4 0-1.7 .7-.7 .9-1.3 .1-.8-.2-1.5 .2-.4 .4-1.6 .7-1.4-.1-.9-.6-.6-.1 0-.8 .4 .1 .3-.4 0-1.5-.6-1.1-.2-1.5-1.7-2.9 .2-.1 .2 .5 .3-.3-.4-.7 .2 .5 .2-.1 .3 .3 0-.4-.8-1.5 .4-1-.1-.8 .4-.8 0 .7 .6-.7 2-1.1 .7 0 1.4-.4 .3-.3 1.9-.4 1.3-1.5-.2-.6 .2-.4 .7-.7 .6 1.1 0-.5 .2 .1 .1-.2-.4-.4 .1-.3 1.2 .2-.4-.1 .2-.4-.2-.4 .3-.2 .4 .1-.3-.2 .2-.2 .4 .1-.2-.4 .4-.4 .3 .3 .2-.6 .5 .2 .3-.5 .6 .3 .7 .8-.1 .5 .5-.5 .5 .1 .1 .3 .1-.3 .3 .2 .2-.3-.4-.4 .4-.8 .5-.3-.2-.2 .5-.7 .3 .2 .4-.5 .1 .2 1 0 .3-.2 0-.5-.9-.3 .2-.1 .7 .3 .3-.1 .2 .3 1.2 .4 .8 .1 .7-.4-.2 .4 .4 .2 .2 0 .1-.4 .5 .2-.4 1-.6 .1 .1 .6-.6 .9 .9 .8 1.4 .6 .5 .5 .8 .2 .2 .4 .8 .4 .8-.3 .5-.9 .3-1.4 0-2.2 .3-.2-.2-.3 .3-.3 .2-1.2 .4-.2 .3 1.1 .3 .2-.1 .3zM136.7 14.1l.2 .2-.6-.1 .1-.3 .5-.1zM131.5 11.4l-.5 .5-.5-.3-.1-.4 .4 .2 .5-.2zM150.9 9.6l-.5 0 0-.2 .4 0zM138.2 7.5l.6-.1 .2 .3-.2 .4-.5 .3-.6 0 .1-.5zM131.3 7.4l.4-.3-.1 .5-.5 .4zM141.2 2.6l3.3 1.2 1.3 1-.1 .6 1.9 .7 .2 .6-.8 .1 .2 .6 .9 .7 .5 1 .6-.1 .1 .5 .7 .2-.2 .1 .1 .2 .9 .2-.4 .1 .2 .3-.3 .1-.5-.3-2-.3-.8-.7 0-.3-.4-.1-.5-.9-1.2-.5-.8 .2-.4-.3 .2 .4-.4 .1 .1 .2-1.4 0 .9 .3 .3 .5-.8 .3-1.5-.1-1.1-1 .1-.3-.7 .3-.2-.2-.3 .3 .2-.7-.4-.3 .5-.1-.6-.3 .3 0-.5-.6 0-.5-1.1-.9-2.1-.4-.5-.4 .2-.2-.9-.1-.3-.3 .1-.4-.4 .8-.4 .2-.2-.8-.8-.5 .7 0 .5-.4 .5 .2 .2-.5-1.6 .1-.4-.6-.9-.2 .3-.5 1.1-.5 1.7 .4 .2 .6-.2 .3 .1 .6 .3 .5 .1-.3 .5 .8 .4 0 .9-1 .7-.2 0-.3 .7-.3 2.8 .9 .1 .2zM134.1 6.8l.1-.6 .3 .2-.3 .5zM134.7 6.3l-.5-.2 0-.4 .4-.3 .1 .3zM152.3 5l-.3 .1 .1 .4-.6 .1-1.1 .7-.7 0-1.4-.6 .1-.2 1.4 0 .3-.5 .1 .5 .8-.1 .3-.4 .4-.1-.1-.7 .8 .1 0 .4zM152.4 3.7l-1.7-1 1.3 .6 1 .8-.1 .7-.2-.7zM150.5 2.5l-.3 .2-.2-.2 .2-.1zM147.1 2.2l-.6-.1 .4-.2 .5 .1zM136.3 1.9l-.8-.3 1.4 .2zM130.7 1l.4 0-.3 .3zM136.2 1.2l-.3 0-.5-.5 .5 0 .5 .4zM131 .4l-.3-.3 .2 .3-.7-.2 .6-.2 .5 .2 0 .2zM131.5-33.3l.4 0 .1 .4-.7 1.5-.6 .4 .1-.7-.2 .5-.5-.2 .2-.1-.1-.6 .4-.5-.4-.6 .1 .5-.5 .1-.1-.5 .3 .2-.4-.4 1.1-.6 1 .3zM134.2-33.4l0 .2-.5-.3-.4 .1-.4 .6-.3 0-.2-.6-.4 .1 .9-.8 .2 .2 1-.5 .5 .2 .1 .4zM141.8-40.3l.2 .5-.1 .7-.4 .7-.6 .3 .1 1-.4 .9 .3 .5-1 .8 .1-.8-.2 0-.1 .6-.2-.2-.3 .1-.3 .6-.2-.5-.5 .5-1.1 0 .2-.2-.4 .1-.1-.4-.3 .4 .4 .4-.6 .1-.6 .7-.6-.5 .3-.6-.7-.2-1.6 .5-.8 0-.2 .5-.4-.3-.8 .1 .1-.4 .4 0 1.5-1.1 3-.1 .8-1.1 .1-.7 .5-.1-.4 .4 .3 .3 2.2-1.3 .7-1.5-.1-.3-.3 0 .3-.4-.1-.3 .4-.2 .1-.4 .2 0 .1 .4 .4-.1 .1-.3-.4 .1 .1-.4 .6 .1 0 .8zM145.3-44.3l-.2 .6 .2 .4 .5-.1-.3 .2-1.5 .3-.8 .9-1.3-.6-.9 .3-.5-.3-.2 .3 .9 .5-.5 0-.6 .4-.3-1 .6-.6 0-.3 1 0 .4-1.2-.1-.9 .3-.1 1.8 1.4 .9 .2zM146.6-44.4l-1.2 .7 .7-.8zM147.7-45l-.8 .6 1-1 .9-.1 0 .2zM150.6-46.2l-.9 .6-.3 0 .6-.4zM143.3-53.1l-.1 1.2 1.5 3.3-.7-.6-.9 0-.5 1.5 .6 .9 .3 0 .1 .4-.2 .4-.1-.6-.7-.1-.5 .8-.3-.6 .4-1.5-.3-.8 .3-2.4-.5-.5 0-.6 .2-1.1 .5 0 .3-.3 0-.3-.4-.3 .4-.1 .3 .3-.1 .3zM137.7-54.7l-.2-.2-.3 .1 .4-.4 .6 .2zM143.5-73.2l-2.8-.3-1 .1 1.4-.5 2.2 .3zM141-74.2l0 .2-.5 .1-.4-.3zM148.6-75.2l2.2 0-.2 .3-1.5 .1-3-.4 .4-.4 .3 .2 1.6 0zM140.9-75.7l.1-.3 .5-.1 2.2 .2 1.7 .4-.7 .1 .2 .1-.9 .3-.8-.1-.5-.3 .2-.3-.8 0 .1 .3 .9 .4-.6 .2-.5-.2-1.7 .2-.6-.2-.6 .3-1-.1-1.2-.5 .4 0 0-.4 .4-.1-.1-.2 1.2-.2 1.8 .6zM135.6-75.8l.6 .2-.7 .2zM166 78.1l.9 .1 .6-.2-1.2 .3zM167.3 77.7l-.6 .2-.5-.4 .5-.3 2.7 .3-.9 .2zM168.2 47l-.7 .3 .3-.6 .2 .2zM174 40.9l-.2 .4 .2-.3 .3 0-.3 .2 .4-.1-.3 .3 .1 .4-1.7 1.7 .6 .3-.6-.1-.2 .2-.3-.2 .2 .2-1 .4-.4 1.6-.5 .1-.6 .6-1.3 0-.9-.5-.7 .1 .1-.2-.2 .1-.2-.3 .5-.1-.2-.1 .2-.1-.3 0 .2-.2 .3 .1-.2-.3 .3 0 .1-.3 .1 .2 .9-.9 .8-.2 1.8-1.2 0 .2 .5-1.1 1-1.2 .4-.1-.2 .2 .3 .1 .1 .5zM173.5 34.9l.6 .2 0 .2 .2-.1 .3 .6-.2 0 .4 .5-.1 .5 .8 .4 0-.7 .3 .2 .3 .9 1.2 .4 .7-.4 .5 .1-.6 1.5-.8 0-.2 .4 .2 .1-1.1 1.5-.7 .4-.4-.4-.3 .1 .7-1-1.4-.8-.1-.4 .8-.3 .3-1-.3-.7 .3 0-.7-.6 .2 .1 0-.4-.5-.3 .2 .5-.7-.9 .2-.2-.3 .1-.2-.2 .1-.2-.5-.5 .3-.1 .3 .6 .1-.2zM153.2 24.9l.1-.2 .1 .4-.3 .7-.1-.6zM165.4 21l1.6 1.3-.5 0-1.6-1-.8-1.2 1.1 .7zM167.2 20.7l.2 .5-.4-.3 .1-.2zM178.7 18.1l-.9 .2-.5-.4 .3-.4 .6-.2 .4 .4zM179.9 16.6l-1.2 .4-.1-.4 1.4-.4-.4 .5zM167.8 16.5l-.4 .1-.2-.5 0-.2 .6 .4zM167 14.9l.2 .6-.4 .1-.2-.2 0-.8 .2 .6zM162.4 10.8l-.9-.2-.2-.4 .8 .3zM160.8 9.9l-.9-.1-.3-.3 0-.2 .8 .1zM161.2 9l.2 .6-.5-.4-.3-.9 .4 .3-.1 .2zM157.5 8.3l-.3 0 .3-.3 .4 .6-.3-.2zM158.8 7.9l-.3-.4 .9 .5 .4 .3 .1 .3-.3-.2zM156.5 6.7l1 .7-.4-.1zM155.3 6.7l-.6-1.3 .4 .2 .9 1.1-.3 .2zM155.2-50.3l.5-.1 .4-.4-.3 .6-.5 .1zM166.6-54.7l-.8-.6 .5 0 .4 .5zM164.5-59.2l.1 .3-1.2 .4 .4-.5zM161.1-69.4l.5-.2-.2 .2 .1 .5-.4-.2zM168.4-70l1 .1-.2 .3-1.4-.2zM180-71.5l0 .5-1.2 .2-.2-.2 .3-.2z";
+
+    /* 해류 경로 [경도, 위도]: 자료발췌/로직/기후/currents.js 의 CURRENTS (모식도 수준)
+       eff: 해류를 골랐을 때 지도에 띄우는 「영향을 받는 곳」(설명 문장에 나오는 곳만, 대표 지점)
+       같은 이름의 북태평양 해류 두 토막은 한 해류로 묶음. at 이 없던 해류는 고를 때만 이름을 보이므로 위치를 새로 정함 */
+    var CURS = [
+      { id: "gulf", w: 1, n: "멕시코 만류", main: 1, sea: "대서양", at: [-63, 32.5], parts: [[[-80, 25], [-77, 32], [-68, 38], [-52, 41]]],
+        why: "멕시코만 부근의 따뜻한 바닷물이 북아메리카 동쪽 해안을 따라 북동쪽으로 흐릅니다." },
+      { id: "natl", w: 1, n: "북대서양 해류", main: 1, sea: "대서양", at: [-25, 45], eff: { n: "서유럽(온화한 겨울)", at: [2.3, 48.9] }, parts: [[[-46, 44], [-33, 49], [-18, 53], [-6, 58], [5, 63], [14, 69]]],
+        why: "멕시코 만류에 이어 대서양을 건너 서유럽과 노르웨이 앞바다까지 흐릅니다. 서유럽의 겨울을 온화하게 합니다." },
+      { id: "kuroshio", w: 1, n: "쿠로시오 해류", main: 1, sea: "태평양", at: [150, 31], parts: [[[123, 21], [127, 28], [133, 32], [141, 36], [150, 39]]],
+        why: "필리핀 동쪽 바다에서 타이완과 일본 남쪽을 지나 북동쪽으로 흐릅니다." },
+      { id: "npac", w: 1, n: "북태평양 해류", sea: "태평양", dir: "서쪽 → 동쪽", at: [-160, 50], parts: [[[155, 41], [178, 44]], [[-178, 45], [-155, 46], [-135, 47]]],
+        why: "쿠로시오 해류에 이어 북태평양을 서쪽에서 동쪽으로 건넙니다." },
+      { id: "brazil", w: 1, n: "브라질 해류", sea: "대서양", at: [-28, -26], parts: [[[-34, -8], [-38, -16], [-43, -24], [-50, -33]]],
+        why: "남아메리카 동쪽 해안을 따라 남쪽으로 흐릅니다." },
+      { id: "agulhas", w: 1, n: "아굴라스 해류", sea: "인도양", at: [48, -30], parts: [[[41, -14], [37, -24], [31, -31], [24, -36]]],
+        why: "아프리카 남동쪽 해안을 따라 남쪽으로 흐릅니다." },
+      { id: "eaus", w: 1, n: "동오스트레일리아 해류", sea: "태평양", at: [166, -28], parts: [[[154, -18], [156, -27], [152, -36]]],
+        why: "오스트레일리아 동쪽 해안을 따라 남쪽으로 흐릅니다." },
+      { id: "labrador", w: 0, n: "래브라도 해류", main: 1, sea: "대서양", at: [-42, 58], parts: [[[-64, 66], [-58, 58], [-52, 50], [-54, 44]]],
+        why: "북쪽의 차가운 바닷물이 캐나다 동쪽 해안을 따라 남쪽으로 흐릅니다." },
+      { id: "canary", w: 0, n: "카나리아 해류", main: 1, sea: "대서양", at: [-33, 27], eff: { n: "사하라 서쪽 해안", at: [-14, 23.5] }, parts: [[[-12, 42], [-15, 33], [-18, 25], [-21, 17]]],
+        why: "이베리아반도와 아프리카 북서쪽 해안을 따라 남쪽으로 흐릅니다. 아프리카 북서쪽 해안이 메마른 데 영향을 줍니다." },
+      { id: "calif", w: 0, n: "캘리포니아 해류", main: 1, sea: "태평양", at: [-137, 32], eff: { n: "샌프란시스코 해안(안개)", at: [-122.4, 37.8] }, parts: [[[-128, 46], [-124, 38], [-118, 30], [-113, 23]]],
+        why: "북아메리카 서쪽 해안을 따라 남쪽으로 흐릅니다. 샌프란시스코 부근은 여름이 서늘하고 안개가 자주 낍니다." },
+      { id: "kuril", w: 0, n: "쿠릴 해류", sea: "태평양", at: [168, 52], parts: [[[163, 57], [155, 50], [148, 45], [144, 40]]],
+        why: "캄차카반도 쪽에서 쿠릴 열도를 따라 일본 북동쪽 바다로 흐릅니다." },
+      { id: "peru", w: 0, n: "페루 해류", main: 1, sea: "태평양", at: [-94, -22], eff: { n: "아타카마 사막", at: [-69.3, -23.5] }, parts: [[[-76, -42], [-74, -32], [-75, -22], [-79, -12], [-82, -4]]],
+        why: "남아메리카 서쪽 해안을 따라 북쪽으로 흐릅니다. 리마와 아타카마 사막이 있는 해안이 메마른 데 영향을 줍니다." },
+      { id: "benguela", w: 0, n: "벵겔라 해류", main: 1, sea: "대서양", at: [-3, -24], eff: { n: "나미브 사막", at: [15, -23.5] }, parts: [[[16, -34], [13, -26], [11, -18], [9, -10]]],
+        why: "아프리카 남서쪽 해안을 따라 북쪽으로 흐릅니다. 나미브 사막이 생기는 데 영향을 줍니다." },
+      { id: "waus", w: 0, n: "서오스트레일리아 해류", sea: "인도양", at: [100, -28], parts: [[[113, -34], [112, -27], [112, -20]]],
+        why: "오스트레일리아 서쪽 해안을 따라 북쪽으로 흐릅니다." }
+    ];
+    var PAIRS = [
+      { w: "London", c: "Quebec", lead: "런던은 퀘벡보다 약 5° 더 북쪽에 있습니다." },
+      { w: "Oslo", c: "Iqaluit", lead: "이칼루이트가 오슬로보다 약 4° 더 북쪽이지만, 위도 차이만으로는 1월 기온이 23℃ 넘게 차이 나는 것을 설명하기 어렵습니다." }
+    ];
+    var CITY_DY = { London: 28, Quebec: 28, Oslo: -16, Iqaluit: -16 };
+
+    var QUIZ = [
+      {
+        title: "난류가 흐르는 방향",
+        q: "난류는 대체로 어느 쪽으로 흐를까요?",
+        opts: ["저위도에서 고위도로 흐릅니다.", "고위도에서 저위도로 흐릅니다.", "적도를 따라 동쪽으로만 흐릅니다."],
+        ans: 0,
+        ok: "맞습니다. 난류는 저위도의 따뜻한 바닷물이 고위도로 흐르는 해류입니다. 한류는 반대로 고위도에서 저위도로 흐릅니다.",
+        no: "다시 생각해 보세요. 보기 1 「난류와 한류」에서 빨간 화살표가 어느 쪽으로 가는지 살펴봅니다."
+      },
+      {
+        title: "런던의 온화한 겨울",
+        q: "런던은 퀘벡보다 북쪽에 있는데도 1월이 훨씬 따뜻합니다. 그 까닭으로 알맞은 것은 무엇일까요?",
+        opts: [
+          "런던이 퀘벡보다 해발 고도가 훨씬 높기 때문입니다.",
+          "북대서양 해류(난류)가 데운 공기를 편서풍이 실어 오기 때문입니다.",
+          "런던 앞바다에 한류가 흐르기 때문입니다."
+        ],
+        ans: 1,
+        ok: "맞습니다. 북대서양 해류 위를 지나며 따뜻해진 공기를 편서풍이 서유럽으로 실어 와 겨울이 온화합니다.",
+        no: "다시 생각해 보세요. 보기 2 「난류가 데우는 겨울」에서 해류와 편서풍 화살표가 어디로 가는지 살펴봅니다."
+      },
+      {
+        title: "비가 적은 리마",
+        q: "리마는 바닷가 도시인데도 1년 강수량이 약 20mm뿐입니다. 그 까닭으로 알맞은 것은 무엇일까요?",
+        opts: [
+          "리마 앞바다에 난류가 흘러 공기가 잘 올라가기 때문입니다.",
+          "리마가 적도 바로 위에 있기 때문입니다.",
+          "한류 위의 공기는 아래가 차가워 위로 올라가지 못해 비구름이 잘 생기지 않기 때문입니다."
+        ],
+        ans: 2,
+        ok: "맞습니다. 페루 해류(한류) 위의 공기는 아래가 차가워 위로 올라가지 못합니다. 그래서 비구름 대신 안개와 낮은 구름이 생기고, 해안에 사막이 나타납니다.",
+        no: "다시 생각해 보세요. 보기 3 「한류와 메마른 해안」에서 한류 위 공기 알갱이가 어떻게 움직이는지 살펴봅니다."
+      },
+      {
+        title: "남반구의 난류",
+        q: "남반구에서 난류는 대체로 어느 쪽으로 흐를까요?",
+        opts: ["북쪽으로 흐릅니다.", "남쪽으로 흐릅니다.", "언제나 서쪽으로만 흐릅니다."],
+        ans: 1,
+        ok: "맞습니다. 남반구에서는 남쪽으로 갈수록 고위도입니다. 난류는 저위도에서 고위도로 흐르므로 남반구에서는 남쪽으로 흐릅니다. 브라질 해류가 그 예입니다.",
+        no: "다시 생각해 보세요. 「난류와 한류 구별법」의 남반구 설명을 읽고, 보기 1에서 브라질 해류를 골라 출발과 도착 위도를 확인해 봅니다."
+      },
+      {
+        title: "한류와 해안 사막",
+        q: "한류와 그 한류가 흐르는 바닷가 가까이의 사막을 바르게 짝지은 것은 무엇일까요?",
+        opts: ["벵겔라 해류 – 나미브 사막", "멕시코 만류 – 아타카마 사막", "쿠로시오 해류 – 나미브 사막"],
+        ans: 0,
+        ok: "맞습니다. 아프리카 남서쪽 해안을 흐르는 벵겔라 해류(한류) 가까이에 나미브 사막이 있습니다. 남아메리카 서쪽의 페루 해류(한류) 가까이에는 아타카마 사막이 있습니다.",
+        no: "다시 생각해 보세요. 보기 1에서 벵겔라 해류와 페루 해류를 골라 지도에 나타나는 「영향을 받는 곳」을 확인해 봅니다."
+      }
+    ];
+
+    function $(sel) { return root.querySelector(sel); }
+    function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
+    function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
+    function S(tag, at, parent, text) {
+      var e = document.createElementNS(NS, tag);
+      attrs(e, at);
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function E(tag, cls, parent, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      if (parent) parent.appendChild(e);
+      return e;
+    }
+    function setText(e, s) { if (e.textContent !== s) e.textContent = s; }
+    function f1(v) { return v.toFixed(1); }
+    function pts(list) { return list.map(function (p) { return f1(p[0]) + "," + f1(p[1]); }).join(" "); }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function signed(v, digits) {
+      var s = Math.abs(v).toFixed(digits || 0);
+      return (v < 0 && Number(s) !== 0 ? "−" : "") + s;
+    }
+    function deg(v) { return signed(v, 1) + "℃"; }
+    function C(id) { for (var i = 0; i < CITIES.length; i++) if (CITIES[i].id === id) return CITIES[i]; return null; }
+    function CU(id) { for (var i = 0; i < CURS.length; i++) if (CURS[i].id === id) return CURS[i]; return null; }
+    function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+    function mm(v) { return Math.round(v).toLocaleString("ko-KR") + "mm"; }
+    function latTxt(c) { return (c.lat < 0 ? "남위 " : "북위 ") + Math.abs(c.lat).toFixed(1) + "°"; }
+    function dirOf(c) { return c.dir || (c.w ? "저위도 → 고위도" : "고위도 → 저위도"); }
+    /* 해류 경로의 처음 점과 마지막 점 위도 */
+    function latEnds(c) {
+      var a = c.parts[0][0], last = c.parts[c.parts.length - 1], b = last[last.length - 1];
+      return [a[1], b[1]];
+    }
+    /* 공기 알갱이 색: 10℃ 파랑 → 26℃ 빨강 */
+    function tColor(t) {
+      var u = clamp((t - 10) / 16, 0, 1), A = [77, 171, 247], Z = [240, 62, 62];
+      return "rgb(" + [0, 1, 2].map(function (i) { return Math.round(A[i] + (Z[i] - A[i]) * u); }).join(",") + ")";
+    }
+    function svgPoint(svg, e) {
+      var m = svg.getScreenCTM();
+      if (!m) return null;
+      var p = svg.createSVGPoint();
+      p.x = e.clientX; p.y = e.clientY;
+      return p.matrixTransform(m.inverse());
+    }
+    function head(parent, a, b, size, cls) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L;
+      var tip = [b[0] + ux * size * 0.6, b[1] + uy * size * 0.6], w = size * 0.55;
+      return S("polygon", { points: pts([tip, [tip[0] - ux * size - uy * w, tip[1] - uy * size + ux * w], [tip[0] - ux * size + uy * w, tip[1] - uy * size - ux * w]]), "class": cls }, parent);
+    }
+
+    var RM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var views = $(".oc-views");
+    var view = "map";
+    var flowOn = true;
+
+    /* ================= 지도 부품 (정거 원통 도법, 위도에 맞춰 가로를 줄임) ================= */
+    function makeMap(parent, x, y, w, h, r) {
+      var box = S("svg", { x: x, y: y, width: w, height: h, viewBox: "0 0 " + w + " " + h }, parent);
+      S("rect", { x: 0, y: 0, width: w, height: h, "class": "oc-seabg" }, box);
+      var land = S("path", { d: LAND_PATH, "class": "oc-landp", "vector-effect": "non-scaling-stroke" }, box);
+      var grid = S("g", {}, box);
+      var over = S("g", {}, box);
+      S("rect", { x: 0.5, y: 0.5, width: w - 1, height: h - 1, rx: 10, "class": "oc-mapframe" }, box);
+      var cphi = Math.cos((r[2] + r[3]) / 2 * RAD);
+      var kx = Math.min(w / (r[1] - r[0]), h * cphi / (r[3] - r[2])), ky = kx / cphi;
+      var ox = (w - (r[1] - r[0]) * kx) / 2, oy = (h - (r[3] - r[2]) * ky) / 2;
+      var m = { over: over, w: w, h: h };
+      m.P = function (lon, lat) { return [ox + (lon - r[0]) * kx, oy + (r[3] - lat) * ky]; };
+      land.setAttribute("transform", "translate(" + (ox - r[0] * kx).toFixed(2) + " " + (oy + r[3] * ky).toFixed(2) + ") scale(" + kx.toFixed(4) + " " + ky.toFixed(4) + ")");
+      for (var la = -80; la <= 80; la += 20) {
+        var yy = m.P(0, la)[1];
+        if (yy < 8 || yy > h - 8) continue;
+        S("line", { x1: 0, x2: w, y1: f1(yy), y2: f1(yy), "class": "oc-latl" }, grid);
+        S("text", { x: 8, y: f1(yy - 4), "class": "oc-latt" }, grid, (la > 0 ? "북위 " : la < 0 ? "남위 " : "") + (la === 0 ? "적도" : Math.abs(la) + "°"));
+      }
+      return m;
+    }
+
+    /* ================= 해류 화살표 + 흐름 알갱이 ================= */
+    /* 꺾은 점을 캐트멀-롬 곡선으로 이어 촘촘한 점 목록으로 만듦. 그리기와 알갱이 위치에 같은 점을 씀 */
+    function curve(ps) {
+      var out = [ps[0]], STEP = 10;
+      for (var i = 0; i < ps.length - 1; i++) {
+        var p0 = ps[i - 1] || ps[i], p1 = ps[i], p2 = ps[i + 1], p3 = ps[i + 2] || ps[i + 1];
+        for (var k = 1; k <= STEP; k++) {
+          var t = k / STEP, t2 = t * t, t3 = t2 * t;
+          out.push([0, 1].map(function (j) {
+            return 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3);
+          }));
+        }
+      }
+      return out;
+    }
+    function makeFlows() {
+      var F = { list: [], off: 0 };
+      F.add = function (sm, parent) {
+        var cum = [0];
+        for (var i = 1; i < sm.length; i++) {
+          var dx = sm[i][0] - sm[i - 1][0], dy = sm[i][1] - sm[i - 1][1];
+          cum.push(cum[i - 1] + Math.sqrt(dx * dx + dy * dy));
+        }
+        var len = cum[cum.length - 1], n = Math.max(2, Math.round(len / 24));
+        var g = S("g", { "class": "oc-dots" }, parent), dots = [];
+        for (var k = 0; k < n; k++) dots.push(S("circle", { r: 2.3, "class": "oc-dot" }, g));
+        F.list.push({ s: sm, cum: cum, len: len, dots: dots });
+      };
+      function at(f, s) {
+        var c = f.cum, i = 1;
+        while (i < c.length - 1 && c[i] < s) i++;
+        var u = (s - c[i - 1]) / ((c[i] - c[i - 1]) || 1), a = f.s[i - 1], b = f.s[i];
+        return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+      }
+      F.update = function (dt) {
+        F.off += dt / 1000 * 26;
+        F.list.forEach(function (f) {
+          var gap = f.len / f.dots.length;
+          f.dots.forEach(function (d, k) {
+            var s = (F.off + k * gap) % f.len, p = at(f, s);
+            attrs(d, { cx: f1(p[0]), cy: f1(p[1]), opacity: clamp(Math.min(s, f.len - s) / 16, 0, 1).toFixed(2) });
+          });
+        });
+      };
+      return F;
+    }
+    function drawCurrent(map, layer, c, F, labelAt) {
+      var g = S("g", { "class": "oc-cur " + (c.w ? "warm" : "cold") }, layer);
+      var hits = [];
+      c.parts.forEach(function (part) {
+        var sm = curve(part.map(function (q) { return map.P(q[0], q[1]); }));
+        var d = "M" + sm.map(function (p) { return f1(p[0]) + " " + f1(p[1]); }).join(" L");
+        S("path", { d: d, "class": "oc-cl" }, g);
+        head(g, sm[sm.length - 2], sm[sm.length - 1], 14, "oc-ch");
+        F.add(sm, g);
+        hits.push(S("path", { d: d, "class": "oc-chit" }, g));
+      });
+      S("title", {}, g, c.n + " · " + (c.w ? "난류" : "한류"));
+      var la = labelAt || c.at, p = map.P(la[0], la[1]);
+      S("text", { x: f1(p[0]), y: f1(p[1]), "text-anchor": "middle", "class": "oc-cname" }, g, c.n);
+      if (c.eff) {
+        var ep = map.P(c.eff.at[0], c.eff.at[1]), eg = S("g", { "class": "oc-eff" }, g);
+        S("circle", { cx: f1(ep[0]), cy: f1(ep[1]), r: 6, "class": "oc-effd" }, eg);
+        S("text", { x: f1(ep[0] + 10), y: f1(ep[1] - 6), "class": "oc-efft" }, eg, c.eff.n);
+      }
+      return { g: g, hits: hits, c: c };
+    }
+
+    /* 기온 선 그래프 부품: 12달 · 영하 30 ~ 영상 30℃ */
+    function makeTempChart(svg, x0, x1, y0, y1, title) {
+      var T0 = -30, T1 = 30;
+      var c = { x0: x0, x1: x1, y0: y0, y1: y1 };
+      c.xm = function (m) { return x0 + (m + 0.5) * (x1 - x0) / 12; };
+      c.ty = function (v) { return y0 + (T1 - v) / (T1 - T0) * (y1 - y0); };
+      S("text", { x: x0 - 44, y: y0 - 18, "class": "oc-tsub" }, svg, title);
+      for (var v = T0; v <= T1; v += 10) {
+        S("line", { x1: x0, x2: x1, y1: f1(c.ty(v)), y2: f1(c.ty(v)), "class": v === 0 ? "oc-zero" : "oc-grid" }, svg);
+        S("text", { x: x0 - 8, y: f1(c.ty(v) + 4.5), "text-anchor": "end", "class": "oc-tick" }, svg, signed(v));
+      }
+      for (var m = 0; m < 12; m++) S("text", { x: f1(c.xm(m)), y: y1 + 20, "text-anchor": "middle", "class": "oc-small" }, svg, (m + 1) + "월");
+      c.lines = S("g", {}, svg);
+      c.guide = S("line", { y1: y0, y2: y1, "class": "oc-guide", visibility: "hidden" }, svg);
+      c.gtxt = S("g", { visibility: "hidden" }, svg);
+      var hit = S("rect", { x: x0, y: y0, width: x1 - x0, height: y1 - y0, "class": "oc-hit", tabindex: "0", role: "slider", "aria-valuemin": "1", "aria-valuemax": "12", "aria-label": "월평균 기온 그래프. 왼쪽·오른쪽 화살표 키로 달을 옮기며 값을 읽습니다." }, svg);
+      c.rows = function () { return []; };
+      var curM = 0;
+      function show(e) {
+        var p = svgPoint(svg, e);
+        if (!p) return;
+        showM(clamp(Math.floor((p.x - x0) / (x1 - x0) * 12), 0, 11));
+      }
+      function showM(m) {
+        curM = m;
+        var gx = c.xm(m);
+        attrs(c.guide, { x1: f1(gx), x2: f1(gx), visibility: "visible" });
+        c.gtxt.textContent = "";
+        var right = gx < (x0 + x1) / 2, rows = c.rows();
+        S("text", { x: f1(gx + (right ? 8 : -8)), y: y0 + 16, "text-anchor": right ? "start" : "end", "class": "oc-gtxt", fill: "#495057" }, c.gtxt, (m + 1) + "월");
+        rows.forEach(function (r, i) {
+          S("text", { x: f1(gx + (right ? 8 : -8)), y: y0 + 34 + i * 18, "text-anchor": right ? "start" : "end", "class": "oc-gtxt", fill: r[0] }, c.gtxt, r[1].kr + " " + deg(r[1].t[m]));
+        });
+        c.gtxt.setAttribute("visibility", "visible");
+        attrs(hit, { "aria-valuenow": String(m + 1), "aria-valuetext": (m + 1) + "월: " + rows.map(function (r) { return r[1].kr + " " + deg(r[1].t[m]); }).join(", ") });
+      }
+      function hide() { c.guide.setAttribute("visibility", "hidden"); c.gtxt.setAttribute("visibility", "hidden"); }
+      hit.addEventListener("pointermove", show);
+      hit.addEventListener("pointerdown", show);
+      hit.addEventListener("pointerleave", function () { if (document.activeElement !== hit) hide(); });
+      /* 키보드: 초점이 오면 그 달의 값을 보이고 ←→ · Home/End로 달을 옮김 */
+      hit.addEventListener("focus", function () { showM(curM); });
+      hit.addEventListener("blur", hide);
+      hit.addEventListener("keydown", function (e) {
+        var k = e.key, m = curM;
+        if (k === "ArrowRight" || k === "ArrowUp") m++;
+        else if (k === "ArrowLeft" || k === "ArrowDown") m--;
+        else if (k === "Home") m = 0;
+        else if (k === "End") m = 11;
+        else return;
+        e.preventDefault();
+        showM(clamp(m, 0, 11));
+      });
+      c.refresh = function () { if (document.activeElement === hit) showM(curM); };
+      c.line = function (city, color) {
+        return S("polyline", { points: pts(city.t.map(function (v, m) { return [c.xm(m), c.ty(v)]; })), "class": "oc-tl", stroke: color }, c.lines);
+      };
+      return c;
+    }
+
+    /* ================= 3D 장면 부품 (라이브러리 없이 캔버스로 그림) =================
+       지구: 화소마다 시선이 닿는 구 위의 점을 찾아 바탕 그림(바다·육지)을 칠함(「위도와 태양 에너지」와 같은 방식, 밝은 바탕색).
+       해류·바람·핀은 구 위의 선과 점으로 그림. 캔버스는 SVG 그림 자리에 맞춰 겹치고, 그래프·막대는 SVG가 맡음 */
+    var RAD = Math.PI / 180;
+    var cv = $(".oc-cv"), ctx = cv.getContext("2d");
+    /* TS: 캔버스 글씨 배율. 그림 칸이 작아지면 SVG 글씨처럼 같이 작아짐 */
+    var CW = 1, CH = 1, DPR = 1, TS = 1, FONT = "Pretendard,'Malgun Gothic',system-ui,sans-serif";
+    var WARM = "#e03131", COLD = "#1c7ed6";
+    function sizeCanvas() {
+      var r = cv.getBoundingClientRect();
+      CW = Math.max(1, r.width); CH = Math.max(1, r.height);
+      DPR = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+    }
+    function svgRect(svg, x, y, w, h) {
+      var m = svg.getScreenCTM(), r = cv.getBoundingClientRect();
+      if (!m) return null;
+      return { x: m.a * x + m.e - r.left, y: m.d * y + m.f - r.top, w: m.a * w, h: m.d * h };
+    }
+    function hexRGB(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+    function mix(a, b, u) { u = clamp(u, 0, 1); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]; }
+    function rgb(c, k) { return "rgb(" + Math.round(clamp(c[0] * k, 0, 255)) + "," + Math.round(clamp(c[1] * k, 0, 255)) + "," + Math.round(clamp(c[2] * k, 0, 255)) + ")"; }
+    function ctext(text, x, y, o) {
+      o = o || {};
+      ctx.font = (o.bold ? "700 " : "") + ((o.size || 13) * TS).toFixed(1) + "px " + FONT;
+      ctx.textAlign = o.align || "left"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+      if (o.pill) {
+        var w = ctx.measureText(text).width, x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
+        ctx.fillStyle = "rgba(255,255,255,.86)";
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x0 - 7, y - 11 * TS, w + 14, 22 * TS, 8); else ctx.rect(x0 - 7, y - 11 * TS, w + 14, 22 * TS);
+        ctx.fill();
+      } else if (o.halo !== 0) {
+        ctx.lineWidth = o.halo || 4; ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.strokeText(text, x, y);
+      }
+      ctx.fillStyle = o.color || "#1d2126"; ctx.fillText(text, x, y);
+    }
+    function backdrop(rect) {
+      var g = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+      g.addColorStop(0, "#f4f9fe"); g.addColorStop(1, "#e2edf7");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 12); else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.fill();
+    }
+    function clipRect(rect) {
+      ctx.save();
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 12); else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip();
+    }
+    function arrowHead(a, b, len, wid, color) {
+      var dx = b[0] - a[0], dy = b[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L, tip = [b[0] + ux * len * 0.5, b[1] + uy * len * 0.5];
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.moveTo(tip[0], tip[1]);
+      ctx.lineTo(tip[0] - ux * len - uy * wid, tip[1] - uy * len + ux * wid);
+      ctx.lineTo(tip[0] - ux * len + uy * wid, tip[1] - uy * len - ux * wid);
+      ctx.closePath(); ctx.fill();
+    }
+
+    /* 지구 바탕 그림(정거 원통): 바다는 위도에 따라 옅은 파랑, 육지는 베이지 */
+    var TW = 1024, TH = 512, TEX = null;
+    function buildTex() {
+      if (TEX) return;
+      var c0 = document.createElement("canvas"); c0.width = TW; c0.height = TH;
+      var x0 = c0.getContext("2d"), g = x0.createLinearGradient(0, 0, 0, TH);
+      [[0, "#eef4fa"], [0.12, "#cfe2f3"], [0.3, "#b6d4ee"], [0.5, "#a9cbea"], [0.7, "#b6d4ee"], [0.88, "#cfe2f3"], [1, "#eef4fa"]].forEach(function (s) { g.addColorStop(s[0], s[1]); });
+      x0.fillStyle = g; x0.fillRect(0, 0, TW, TH);
+      x0.setTransform(TW / 360, 0, 0, TH / 180, TW / 2, TH / 2);
+      var land = new Path2D(LAND_PATH);
+      x0.fillStyle = "#efe3c4"; x0.fill(land);
+      x0.lineWidth = 0.35; x0.strokeStyle = "#b8a782"; x0.stroke(land);
+      x0.setTransform(1, 0, 0, 1, 0, 0);
+      TEX = x0.getImageData(0, 0, TW, TH).data;
+    }
+    var GL = (function () { var v = [-0.45, 0.55, 0.7], l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+
+    /* 지구 하나: 가운데 경도 lon · 위도 lat, zoom(그림 칸 높이의 반에 대한 반지름 배율) */
+    function makeGlobe(o) {
+      var G = { lon: o.lon, lat: o.lat, zoom: o.zoom, cyf: o.cyf || 0.5, lim: o.lim, D: 5, R: 1, rs: 1, cx: 0, cy: 0, rect: null, lod: false };
+      var img = document.createElement("canvas"), ictx = img.getContext("2d"), key = "", cT = 1, sT = 0;
+      G.fit = function (rect) {
+        G.rect = rect; G.rs = rect.h / 2 * G.zoom; G.R = G.rs * Math.sqrt(G.D * G.D - 1) / G.D;
+        G.cx = rect.x + rect.w / 2; G.cy = rect.y + rect.h * G.cyf;
+        cT = Math.cos(G.lat * RAD); sT = Math.sin(G.lat * RAD);
+      };
+      /* 경도·위도 → 시선 좌표(z가 클수록 앞쪽) */
+      function view(lo, la, r) {
+        var a = la * RAD, b = (lo - G.lon) * RAD, ca = Math.cos(a), x = ca * Math.sin(b) * r, y = Math.sin(a) * r, z = ca * Math.cos(b) * r;
+        return [x, y * cT - z * sT, y * sT + z * cT];
+      }
+      G.P = function (lo, la, r) {
+        var v = view(lo, la, r || 1), l = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]), s = G.D / (G.D - v[2]);
+        return [G.cx + v[0] * s * G.R, G.cy - v[1] * s * G.R, v[2] / l > 1 / G.D, s];
+      };
+      G.render = function () {
+        buildTex();
+        var rect = G.rect, q = G.lod ? 0.55 : 1, W = Math.max(1, Math.round(rect.w * DPR * q)), H = Math.max(1, Math.round(rect.h * DPR * q));
+        var k2 = [G.lon.toFixed(2), G.lat.toFixed(2), W, H, G.R.toFixed(2), G.cx.toFixed(1), G.cy.toFixed(1)].join("|");
+        if (k2 !== key) {
+          key = k2;
+          img.width = W; img.height = H;
+          var im = ictx.createImageData(W, H), px = im.data, D = G.D, D2 = D * D, D4 = D2 * D2, sc = DPR * q;
+          var rs2 = (G.rs + 1) * (G.rs + 1), x0 = rect.x, y0 = rect.y;
+          for (var j = 0; j < H; j++) {
+            var Y = y0 + (j + 0.5) / sc, oy = Y - G.cy, dy = -oy / G.R;
+            for (var i = 0; i < W; i++) {
+              var X = x0 + (i + 0.5) / sc, ox = X - G.cx, rr2 = ox * ox + oy * oy;
+              if (rr2 > rs2) continue;
+              var dx = ox / G.R, dd = dx * dx + dy * dy + D2, disc = D4 - dd * (D2 - 1);
+              if (disc < 0) disc = 0;
+              var t = (D2 - Math.sqrt(disc)) / dd, vx = t * dx, vy = t * dy, vz = D - t * D;
+              var wy = vy * cT + vz * sT, wz = -vy * sT + vz * cT;
+              var la = Math.asin(wy > 1 ? 1 : wy < -1 ? -1 : wy), lo = G.lon * RAD + Math.atan2(vx, wz);
+              var u = lo / (2 * Math.PI) + 0.5; u -= Math.floor(u);
+              var row = ((0.5 - la / Math.PI) * TH) | 0; if (row >= TH) row = TH - 1;
+              var ti = (row * TW + ((u * TW) | 0)) * 4;
+              var lam = vx * GL[0] + vy * GL[1] + vz * GL[2], k = (0.66 + 0.4 * (lam > 0 ? lam : 0)) * (0.88 + 0.12 * vz);
+              var o2 = (j * W + i) * 4, a = G.rs + 0.5 - Math.sqrt(rr2);
+              px[o2] = TEX[ti] * k; px[o2 + 1] = TEX[ti + 1] * k; px[o2 + 2] = TEX[ti + 2] * k;
+              px[o2 + 3] = a >= 1 ? 255 : a <= 0 ? 0 : a * 255;
+            }
+          }
+          ictx.putImageData(im, 0, 0);
+        }
+        /* 둘레의 옅은 빛 */
+        var halo = ctx.createRadialGradient(G.cx, G.cy, G.rs * 0.96, G.cx, G.cy, G.rs * 1.12);
+        halo.addColorStop(0, "rgba(120,170,230,.35)"); halo.addColorStop(1, "rgba(120,170,230,0)");
+        ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(G.cx, G.cy, G.rs * 1.12, 0, 2 * Math.PI); ctx.fill();
+        ctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
+        /* 위도선 30°마다(적도는 진하게) */
+        [-60, -30, 0, 30, 60].forEach(function (la) {
+          var ptsL = [];
+          for (var lo = -180; lo <= 180; lo += 4) ptsL.push([lo, la]);
+          G.line(ptsL, 1.001, la === 0 ? "rgba(255,255,255,.85)" : "rgba(255,255,255,.45)", la === 0 ? 1.4 : 1);
+        });
+      };
+      /* 구 위의 선: 보이는 부분만 그리고, 끝의 보이는 두 점을 돌려줌 */
+      G.line = function (geo, r, color, w, dash, dashOff) {
+        var prev = null, last = null, before = null;
+        ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.setLineDash(dash || []); ctx.lineDashOffset = dashOff || 0;
+        ctx.beginPath();
+        geo.forEach(function (g) {
+          var p = G.P(g[0], g[1], r);
+          if (p[2]) { if (prev) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); before = last; last = p; prev = p; }
+          else { prev = null; last = null; before = null; }
+        });
+        ctx.stroke();
+        ctx.setLineDash([]); ctx.lineCap = "butt";
+        return last && before ? [before, last] : null;
+      };
+      G.turn = function (dlon, dlat) {
+        G.lon += dlon; G.lat = clamp(G.lat + dlat, G.lim[2], G.lim[3]);
+        if (G.lim[0] > -999) G.lon = clamp(G.lon, G.lim[0], G.lim[1]);
+        else G.lon = ((G.lon + 540) % 360) - 180;
+      };
+      return G;
+    }
+    /* 해류 하나의 촘촘한 길(경도·위도)과 길이: 흐름 알갱이 위치 계산용 */
+    function denseParts(c) {
+      return c.parts.map(function (part) {
+        var d = curve(part), cum = [0];
+        for (var i = 1; i < d.length; i++) {
+          var dl = (d[i][0] - d[i - 1][0]) * Math.cos(d[i][1] * RAD), dt = d[i][1] - d[i - 1][1];
+          cum.push(cum[i - 1] + Math.sqrt(dl * dl + dt * dt));
+        }
+        return { d: d, cum: cum, len: cum[cum.length - 1] };
+      });
+    }
+    function along(pt, s) {
+      var c = pt.cum, i = 1;
+      while (i < c.length - 1 && c[i] < s) i++;
+      var u = (s - c[i - 1]) / ((c[i] - c[i - 1]) || 1), a = pt.d[i - 1], b = pt.d[i];
+      return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+    }
+    /* 해류 그리기: 선 + 화살촉 + 흐름 알갱이. alpha로 흐리게, wide로 굵게 */
+    function drawCur(G, c, dense, o) {
+      var col = c.w ? WARM : COLD, hits = [];
+      ctx.globalAlpha = o.alpha;
+      dense.forEach(function (pt) {
+        G.line(pt.d, 1.004, "rgba(255,255,255,.75)", (o.wide ? 7.5 : 5.5) * TS);
+        var tail = G.line(pt.d, 1.004, col, (o.wide ? 5 : 3.4) * TS);
+        if (tail) {
+          var endP = G.P(pt.d[pt.d.length - 1][0], pt.d[pt.d.length - 1][1], 1.004);
+          if (endP[2]) arrowHead(tail[0], tail[1], 14 * TS, 7 * TS, col);
+        }
+        if (flowOn && !RM && o.alpha > 0.5) {
+          var n = Math.max(2, Math.round(pt.len / 4));
+          for (var k = 0; k < n; k++) {
+            var s = (o.phase * 3 + k * pt.len / n) % pt.len, g = along(pt, s), p = G.P(g[0], g[1], 1.006);
+            if (!p[2]) continue;
+            ctx.beginPath(); ctx.arc(p[0], p[1], 2.3 * TS, 0, 2 * Math.PI);
+            ctx.fillStyle = "#fff"; ctx.fill();
+          }
+        }
+        hits.push(pt.d);
+      });
+      ctx.globalAlpha = 1;
+      return hits;
+    }
+    /* 구 위 핀(바깥으로 서는 막대 + 머리) */
+    function drawPin(G, lo, la, h, color, ring) {
+      var b = G.P(lo, la, 1.002), t = G.P(lo, la, 1 + h);
+      if (!b[2]) return null;
+      ctx.strokeStyle = "#495057"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(t[0], t[1]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(t[0], t[1], (ring ? 7 : 5.5) * TS, 0, 2 * Math.PI);
+      ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = "#fff"; ctx.stroke();
+      return t;
+    }
+    function hitLine(G, geo, x, y) {
+      var best = 1e9, prev = null;
+      geo.forEach(function (g) {
+        var p = G.P(g[0], g[1], 1.004);
+        if (!p[2]) { prev = null; return; }
+        if (prev) {
+          var vx = p[0] - prev[0], vy = p[1] - prev[1], L2 = vx * vx + vy * vy || 1, u = clamp(((x - prev[0]) * vx + (y - prev[1]) * vy) / L2, 0, 1);
+          var dx = x - prev[0] - u * vx, dy = y - prev[1] - u * vy;
+          best = Math.min(best, Math.sqrt(dx * dx + dy * dy));
+        }
+        prev = p;
+      });
+      return best;
+    }
+    var rq = 0, retry = 0;
+    function requestRender() { if (!rq) rq = requestAnimationFrame(function () { rq = 0; render(); }); }
+    function render() {
+      var sc = view === "map" ? world : view === "warm" ? warm : cold, rect = svgRect(sc.svg, sc.box[0], sc.box[1], sc.box[2], sc.box[3]);
+      /* 처음 열 때 SVG 배치가 끝나기 전이면 다음 프레임에 다시 그림(최대 60번) */
+      if (!rect || rect.w < 20 || rect.h < 20) { if (retry++ < 60) requestRender(); return; }
+      retry = 0;
+      TS = clamp(rect.w / 900, 0.72, 1.1);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, CW, CH);
+      sc.render(rect);
+    }
+    function ease(u) { return u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2; }
+
+    /* ================= 보기 ① 난류와 한류 ================= */
+    var world = (function () {
+      var svg = S("svg", { "class": "oc-svg", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "세계의 주요 난류와 한류" }, views);
+      S("text", { x: 20, y: 30, "class": "oc-title" }, svg, "난류와 한류");
+      S("text", { x: 140, y: 30, "class": "oc-tsub" }, svg, "빨간 화살표는 난류, 파란 화살표는 한류입니다");
+      var LY = 520;
+      [[40, "warm", "난류 · 저위도에서 고위도로 흐르는 따뜻한 해류"], [520, "cold", "한류 · 고위도에서 저위도로 흐르는 차가운 해류"]].forEach(function (l) {
+        var g = S("g", { "class": "oc-cur " + l[1] }, svg);
+        S("path", { d: "M" + l[0] + " " + LY + " L" + (l[0] + 44) + " " + LY, "class": "oc-cl" }, g);
+        head(g, [l[0], LY], [l[0] + 44, LY], 14, "oc-ch");
+        S("text", { x: l[0] + 64, y: LY + 5, "class": "oc-tick" }, svg, l[2]);
+      });
+      S("text", { x: 40, y: 566, "class": "oc-small" }, svg, "지구를 끌어 돌려 봅니다. 화살표를 누르면 그 해류의 이름과 흐르는 방향을 볼 수 있습니다.");
+      S("text", { x: 40, y: 588, "class": "oc-small" }, svg, "해류 경로는 교과서 그림처럼 단순하게 나타냈습니다.");
+
+      var G = makeGlobe({ lon: -30, lat: 18, zoom: 0.96, lim: [-1000, 1000, -60, 70] });
+      var DENSE = {};
+      CURS.forEach(function (c) { DENSE[c.id] = denseParts(c); });
+      var W = { svg: svg, G: G, box: [20, 46, 960, 440], sel: null, filt: "all", phase: 0, tw: null, lon0: -30, lat0: 18 };
+      /* 고른 해류가 가운데 오도록 지구를 돌림 */
+      function aim(c) {
+        var sx = 0, sy = 0, cx = 0, n = 0;
+        c.parts.forEach(function (part) { part.forEach(function (q) { sx += Math.sin(q[0] * RAD); cx += Math.cos(q[0] * RAD); sy += q[1]; n++; }); });
+        var tl = Math.atan2(sx, cx) / RAD, tt = clamp(sy / n, -45, 55), dl = ((tl - G.lon + 540) % 360) - 180;
+        if (RM) { G.lon += dl; G.lat = tt; requestRender(); return; }
+        W.tw = { l0: G.lon, t0: G.lat, dl: dl, tt: tt, t: 0 };
+        kick();
+      }
+      W.apply = function () {
+        $$(".oc-filtseg .oc-segb").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-filt") === W.filt ? "true" : "false"); });
+        $$(".oc-curbtns .oc-btn").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-cur") === W.sel ? "true" : "false"); });
+        if (view === "map") readMap();
+        requestRender();
+      };
+      W.select = function (id) {
+        var c = id ? CU(id) : null;
+        W.sel = c ? c.id : null;
+        if (c && W.filt !== "all" && W.filt !== (c.w ? "w" : "c")) W.filt = "all";
+        if (c && W.ready) aim(c);
+        W.apply();
+      };
+      W.filter = function (f) {
+        W.filt = ["all", "w", "c"].indexOf(f) >= 0 ? f : "all";
+        var c = W.sel ? CU(W.sel) : null;
+        if (c && W.filt !== "all" && W.filt !== (c.w ? "w" : "c")) W.sel = null;
+        W.apply();
+      };
+      W.update = function (dt) {
+        W.phase += dt / 1000;
+        if (W.tw) {
+          W.tw.t = Math.min(1, W.tw.t + dt / 800);
+          var e = ease(W.tw.t);
+          G.lon = W.tw.l0 + W.tw.dl * e; G.lat = W.tw.t0 + (W.tw.tt - W.tw.t0) * e;
+          if (W.tw.t >= 1) W.tw = null;
+        }
+      };
+      W.busy = function () { return !!W.tw; };
+      W.render = function (rect) {
+        backdrop(rect);
+        G.fit(rect);
+        G.render();
+        [["태평양", -150, 12], ["대서양", -38, 12], ["인도양", 76, -12]].forEach(function (q) {
+          var p = G.P(q[1], q[2], 1);
+          if (p[2]) ctext(q[0], p[0], p[1], { align: "center", size: 14, color: "#5f87ad", halo: 3 });
+        });
+        W.hits = [];
+        var order = CURS.filter(function (c) { return W.filt === "all" || W.filt === (c.w ? "w" : "c"); });
+        order.sort(function (a, b) { return (a.id === W.sel) - (b.id === W.sel); });
+        order.forEach(function (c) {
+          var on = W.sel === c.id, alpha = W.sel && !on ? 0.25 : 1;
+          var geo = drawCur(G, c, DENSE[c.id], { alpha: alpha, wide: on, phase: W.phase });
+          W.hits.push({ id: c.id, geo: geo });
+          if (c.main || on) {
+            var p = G.P(c.at[0], c.at[1], 1.01);
+            if (p[2]) { ctx.globalAlpha = alpha; ctext(c.n, p[0], p[1], { align: "center", bold: true, size: on ? 15 : 13, color: c.w ? "#c92a2a" : "#1864ab" }); ctx.globalAlpha = 1; }
+          }
+          if (on && c.eff) {
+            var t = drawPin(G, c.eff.at[0], c.eff.at[1], 0.07, "#343a40", true);
+            if (t) ctext(c.eff.n, t[0] + 10 * TS, t[1] - 4, { bold: true, size: 14 });
+          }
+        });
+        ctext("끌어서 돌려 봅니다 · 해류를 누르면 고를 수 있습니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+      };
+      W.hit = function (x, y) {
+        var best = null, bd = 12;
+        (W.hits || []).forEach(function (h) { h.geo.forEach(function (g) { var d = hitLine(G, g, x, y); if (d < bd) { bd = d; best = h.id; } }); });
+        return best ? { cur: best } : "rot";
+      };
+      W.reset = function () { W.tw = null; G.lon = W.lon0; G.lat = W.lat0; };
+      return W;
+    })();
+
+    /* ================= 보기 ② 난류가 데우는 겨울 ================= */
+    var warm = (function () {
+      var svg = S("svg", { "class": "oc-svg oc-off", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "북대서양 해류와 편서풍, 같은 위도대 도시의 1월 기온" }, views);
+      S("text", { x: 20, y: 30, "class": "oc-title" }, svg, "난류가 데우는 겨울");
+      var sub = S("text", { x: 200, y: 30, "class": "oc-tsub" }, svg, "");
+      S("text", { x: 24, y: 348, "class": "oc-small" }, svg, "편서풍이 북대서양 해류(난류) 위에서 데워진 공기를 서유럽으로 실어 옵니다. 도시 위 기둥은 1월 평균 기온입니다.");
+
+      var WC = "#e8590c", CC = "#1c7ed6";
+      var chart = makeTempChart(svg, 90, 560, 380, 580, "월평균 기온(℃)");
+      var BX0 = 640, BY0 = 380, BY1 = 580;
+      function by(v) { return BY0 + (10 - v) / 40 * (BY1 - BY0); }
+      S("text", { x: BX0, y: 368, "class": "oc-tsub" }, svg, "1월 평균 기온(℃)");
+      S("line", { x1: BX0, x2: 960, y1: by(0), y2: by(0), "class": "oc-axis" }, svg);
+      S("text", { x: 966, y: by(0) + 4, "class": "oc-small" }, svg, "0");
+      var bw = [], bv = [], bn = [];
+      [0, 1].forEach(function (i) {
+        var x = BX0 + 40 + i * 150;
+        bw.push(S("rect", { x: x, width: 90, rx: 6, fill: i ? CC : WC }, svg));
+        bv.push(S("text", { x: x + 45, "text-anchor": "middle", "class": "oc-bv" }, svg, ""));
+        bn.push(S("text", { x: x + 45, y: BY1 + 22, "text-anchor": "middle", "class": "oc-bn" }, svg, ""));
+      });
+      var gapT = S("text", { x: 960, y: 368, "text-anchor": "end", "class": "oc-gapt oc-halo" }, svg, "");
+      var lgN = [WC, CC].map(function (col, i) {
+        var x = 300 + i * 120;
+        S("line", { x1: x, x2: x + 24, y1: 364, y2: 364, stroke: col, "stroke-width": 3.5, "stroke-linecap": "round" }, svg);
+        return S("text", { x: x + 30, y: 368, "class": "oc-tick" }, svg, "");
+      });
+
+      var G = makeGlobe({ lon: -36, lat: 50, zoom: 1.95, lim: [-90, 20, 30, 66] });
+      var DN = { gulf: denseParts(CU("gulf")), natl: denseParts(CU("natl")), labrador: denseParts(CU("labrador")) };
+      var LBL = { gulf: [-62, 31.5], natl: [-17, 47.5], labrador: [-73, 55] };
+      var WIND = curve([[-50, 50.5], [-38, 53.5], [-26, 55.2], [-13, 55]]);
+      var K = { svg: svg, G: G, box: [20, 46, 960, 280], i: 0, dash: 0, phase: 0, pins: [] };
+      K.set = function (i) {
+        K.i = clamp(isFinite(i) ? i : 0, 0, PAIRS.length - 1);
+        var pr = PAIRS[K.i], w = C(pr.w), c = C(pr.c);
+        sub.textContent = w.kr + "(" + latTxt(w) + ") · " + c.kr + "(" + latTxt(c) + ")";
+        chart.lines.textContent = "";
+        chart.line(w, WC);
+        chart.line(c, CC);
+        chart.rows = function () { return [[WC, w], [CC, c]]; };
+        chart.refresh();
+        [w, c].forEach(function (city, k) {
+          var v = city.t[0], y0 = by(0), y1 = by(v);
+          attrs(bw[k], { y: f1(Math.min(y0, y1)), height: f1(Math.max(2, Math.abs(y1 - y0))) });
+          attrs(bv[k], { y: f1(v >= 0 ? y1 - 8 : y1 + 18) });
+          bv[k].textContent = deg(v);
+          bn[k].textContent = city.kr;
+          lgN[k].textContent = city.kr;
+        });
+        gapT.textContent = "차이 " + f1(w.t[0] - c.t[0]) + "℃";
+        $$(".oc-pairbtns .oc-btn").forEach(function (b, j) { b.setAttribute("aria-pressed", j === K.i ? "true" : "false"); });
+        if (view === "warm") readWarm();
+        requestRender();
+      };
+      K.update = function (dt) {
+        K.phase += dt / 1000;
+        if (!RM) K.dash = (K.dash + dt * 0.035) % 240;
+      };
+      K.busy = function () { return false; };
+      K.render = function (rect) {
+        backdrop(rect);
+        clipRect(rect);
+        G.fit(rect);
+        G.render();
+        var op = G.P(-42, 36, 1);
+        if (op[2]) ctext("대서양", op[0], op[1], { align: "center", size: 14, color: "#5f87ad", halo: 3 });
+        ["labrador", "gulf", "natl"].forEach(function (id) {
+          var c = CU(id);
+          drawCur(G, c, DN[id], { alpha: 1, wide: id === "natl", phase: K.phase });
+          var p = G.P(LBL[id][0], LBL[id][1], 1.01);
+          if (p[2]) ctext(c.n, p[0], p[1], { align: "center", bold: true, size: 13, color: c.w ? "#c92a2a" : "#1864ab" });
+        });
+        /* 편서풍: 바다 위에 떠서 서유럽으로 */
+        var tail = G.line(WIND, 1.05, "rgba(59,91,219,.9)", 4.5 * TS, [14, 10], -K.dash);
+        if (tail) arrowHead(tail[0], tail[1], 18 * TS, 9 * TS, "rgba(59,91,219,.95)");
+        var wl = G.P(-44, 56.5, 1.05);
+        if (wl[2]) ctext("편서풍", wl[0], wl[1], { bold: true, size: 15, color: "#3b5bdb" });
+        /* 도시 핀과 1월 기온 기둥(높이 = 1월 기온 + 30℃에 비례) */
+        K.pins = [];
+        PAIRS.forEach(function (q, j) {
+          var on = j === K.i;
+          [[C(q.w), WC], [C(q.c), CC]].forEach(function (x) {
+            var city = x[0], b = G.P(city.lon, city.lat, 1.002);
+            if (!b[2]) return;
+            if (on) {
+              var h = (city.t[0] + 30) * 0.0035, t = G.P(city.lon, city.lat, 1 + h);
+              ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 13 * TS; ctx.lineCap = "round";
+              ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(t[0], t[1]); ctx.stroke();
+              ctx.strokeStyle = x[1]; ctx.lineWidth = 9 * TS;
+              ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(t[0], t[1]); ctx.stroke();
+              ctx.lineCap = "butt";
+              ctext(deg(city.t[0]), t[0], t[1] - 14 * TS, { align: "center", bold: true, size: 14, color: x[1] });
+              ctext(city.kr, b[0], b[1] + 16 * TS, { align: "center", bold: true, size: 14 });
+              K.pins.push({ j: j, x: b[0], y: b[1] });
+            } else {
+              ctx.beginPath(); ctx.arc(b[0], b[1], 5 * TS, 0, 2 * Math.PI);
+              ctx.fillStyle = "#ced4da"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+              ctext(city.kr, b[0], b[1] + 14 * TS, { align: "center", size: 12.5, color: "#868e96" });
+              K.pins.push({ j: j, x: b[0], y: b[1] });
+            }
+          });
+        });
+        ctx.restore();
+        ctext("끌어서 돌려 봅니다 · 도시를 누르면 그 짝으로 바뀝니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+      };
+      K.hit = function (x, y) {
+        for (var i = 0; i < K.pins.length; i++) if (Math.hypot(x - K.pins[i].x, y - K.pins[i].y) < 14) return { pair: K.pins[i].j };
+        return "rot";
+      };
+      K.reset = function () { G.lon = -36; G.lat = 50; };
+      return K;
+    })();
+
+    /* ================= 보기 ③ 한류와 메마른 해안 ================= */
+    var cold = (function () {
+      var svg = S("svg", { "class": "oc-svg oc-off", viewBox: "0 0 1000 640", preserveAspectRatio: "xMidYMid meet", role: "img", "aria-label": "난류 위와 한류 위 공기의 움직임, 리마와 다윈의 강수량" }, views);
+      S("text", { x: 20, y: 30, "class": "oc-title" }, svg, "한류와 메마른 해안");
+      S("text", { x: 210, y: 30, "class": "oc-tsub" }, svg, "바다 위 공기의 움직임 (예시 모형)");
+
+      /* 월강수량 막대: 리마 · 다윈 */
+      var lima = C("Lima"), darwin = C("Darwin");
+      var X0 = 480, X1 = 970, Y0 = 384, Y1 = 580, PMAX = 450;
+      function py(v) { return Y1 - v / PMAX * (Y1 - Y0); }
+      S("text", { x: 436, y: 334, "class": "oc-tsub" }, svg, "월강수량(mm) · 남위 12°대 두 해안 도시");
+      for (var v = 0; v <= 400; v += 100) {
+        S("line", { x1: X0, x2: X1, y1: f1(py(v)), y2: f1(py(v)), "class": v === 0 ? "oc-axis" : "oc-grid" }, svg);
+        S("text", { x: X0 - 8, y: f1(py(v) + 4.5), "text-anchor": "end", "class": "oc-tick" }, svg, String(v));
+      }
+      var gw = (X1 - X0) / 12;
+      for (var m = 0; m < 12; m++) {
+        [[lima, "lima", 0], [darwin, "darwin", 1]].forEach(function (q) {
+          var val = q[0].p[m], h = Math.max(1.5, Y1 - py(val));
+          var r = S("rect", { x: f1(X0 + m * gw + gw * 0.14 + q[2] * gw * 0.37), y: f1(Y1 - h), width: f1(gw * 0.34), height: f1(h), rx: 2, "class": "oc-pbar " + q[1] }, svg);
+          S("title", {}, r, q[0].kr + " " + (m + 1) + "월 " + val + "mm");
+        });
+        S("text", { x: f1(X0 + (m + 0.5) * gw), y: Y1 + 20, "text-anchor": "middle", "class": "oc-small" }, svg, (m + 1) + "월");
+      }
+      [[lima, "lima", 480], [darwin, "darwin", 680]].forEach(function (q) {
+        S("rect", { x: q[2], y: 351, width: 14, height: 14, rx: 3, "class": "oc-pbar " + q[1] }, svg);
+        S("text", { x: q[2] + 20, y: 363, "class": "oc-lgt" }, svg, q[0].kr + " · 1년 " + mm(sum(q[0].p)));
+      });
+
+      /* 공기 알갱이 모형: 자료발췌/로직/기후/currents.js 의 stepParticles. 좌표는 칸 폭 470 · 바다 높이 250(px) 기준 그대로 쓰고,
+         3D에서는 x/100 · (250 − y)/100 으로 바꾸고 깊이 z를 하나씩 더함 */
+      var parts = { w: [], c: [] };
+      ["w", "c"].forEach(function (k) {
+        var isW = k === "w";
+        for (var i = 0; i < 14; i++) parts[k].push({ x: 20 + Math.random() * (isW ? 380 : 280), y: 130 + Math.random() * 100, v: 20 + Math.random() * 30, ph: Math.random() * 6, z: 0.25 + Math.random() * 1.1 });
+      });
+      var K = { svg: svg, box: [20, 46, 960, 600], run: !RM, seaT: 14, nRise: 0, phase: 0, yaw: -16, pitch: 12 };
+      K.setSea = function (t) {
+        t = clamp(Math.round(isFinite(t) ? t : 14), 12, 26);
+        K.seaT = t;
+        K.nRise = Math.round(clamp((t - 16) / 8, 0, 1) * 14);
+        if (!K.run) K.step(0);
+        requestRender();
+      };
+      var tt = 0;
+      K.step = function (dt) {
+        tt += dt;
+        parts.w.forEach(function (p) {
+          p.y -= p.v * dt * 1.6; p.x += Math.sin(tt * 2 + p.ph) * .4;
+          if (p.y < 118) { p.y = 238; p.x = 20 + Math.random() * 380; }
+          p.temp = 24 - (238 - p.y) / 12;
+        });
+        parts.c.forEach(function (p, i) {
+          if (i < K.nRise) {
+            /* 데워진 공기: 난류 칸처럼 올라감(육지 앞 바다 위에서만) */
+            if (!p.rise || p.y < 118) { p.y = 238; p.x = 20 + Math.random() * 260; }
+            p.rise = true;
+            p.y -= p.v * dt * 1.6; p.x += Math.sin(tt * 2 + p.ph) * .4;
+            p.temp = K.seaT - (238 - p.y) / 12;
+          } else {
+            if (p.rise) { p.rise = false; p.x = 10 + Math.random() * 280; }
+            p.x += p.v * dt * .8; p.y = 216 + Math.sin(tt + p.ph) * 14;
+            if (p.x > 300) p.x = 10;
+            p.temp = K.seaT + 1 + Math.sin(p.ph) * 2;
+          }
+        });
+      };
+      K.update = function (dt) {
+        K.phase += dt / 1000;
+        if (K.run) K.step(dt / 1000);
+      };
+      K.busy = function () { return false; };
+      K.step(0.016);
+
+      /* 3D 상자 투영(두 칸을 나란히: 난류 칸 x 0~4.7, 한류 칸 x 4.9~9.6, 깊이 0~1.6, 하늘 0~2.04, 바다 −0.45~0) */
+      var cY = 1, sY = 0, cP = 1, sP = 0, BK = 1, BX = 0, BYc = 0, DP = 14;
+      function rot() { cY = Math.cos(K.yaw * RAD); sY = Math.sin(K.yaw * RAD); cP = Math.cos(K.pitch * RAD); sP = Math.sin(K.pitch * RAD); }
+      function P3(x, y, z) {
+        x -= 4.8; z -= 0.8;
+        var x1 = cY * x - sY * z, z1 = sY * x + cY * z, up = y * cP + z1 * sP, d = z1 * cP - y * sP, s = DP / (DP + d);
+        return [BX + x1 * s * BK, BYc - up * s * BK, d, s];
+      }
+      function quad(ps, fill, stroke) {
+        ctx.beginPath();
+        ps.forEach(function (q, i) { var p = P3(q[0], q[1], q[2]); if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+        ctx.closePath();
+        if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+      }
+      function box3(x0, x1, y0, y1, z0, z1, top, front, side) {
+        /* 시선 쪽 세 면만: 위 · 앞(z0) · 옆(카메라 쪽) */
+        quad([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], top);
+        quad([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], front);
+        var sx = sY < 0 ? x1 : x0;
+        quad([[sx, y0, z0], [sx, y0, z1], [sx, y1, z1], [sx, y1, z0]], side);
+      }
+      function l3(a, b, color, w, dash, off) {
+        var p = P3(a[0], a[1], a[2]), q = P3(b[0], b[1], b[2]);
+        ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.lineDashOffset = off || 0;
+        ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); ctx.setLineDash([]);
+        return [p, q];
+      }
+      function cloud3(x, y, z, a) {
+        var p = P3(x, y, z), sc = 0.0062 * BK * p[3];
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "#c3cad2";
+        [[-34, 8, 24], [0, -4, 32], [34, 8, 24], [0, 14, 22]].forEach(function (q) { ctx.beginPath(); ctx.arc(p[0] + q[0] * sc, p[1] + q[1] * sc, q[2] * sc, 0, 2 * Math.PI); ctx.fill(); });
+        ctx.fillStyle = "#eef1f4";
+        [[-30, 2, 18], [2, -8, 24], [30, 3, 17]].forEach(function (q) { ctx.beginPath(); ctx.arc(p[0] + q[0] * sc, p[1] + q[1] * sc, q[2] * sc, 0, 2 * Math.PI); ctx.fill(); });
+        ctx.globalAlpha = 1;
+      }
+      function rain3(x0, x1, z, a) {
+        ctx.globalAlpha = a;
+        for (var x = x0; x <= x1; x += 0.22) l3([x, 1.0, z], [x - 0.06, 0.02, z], "rgba(77,171,247,.9)", 2.4 * TS, [8, 9], -K.phase * 40);
+        ctx.globalAlpha = 1;
+      }
+      var SEAW = hexRGB("#f59f8b"), SEAC = hexRGB("#74a9dd");
+      var PG = makeGlobe({ lon: -76, lat: -19, zoom: 2.2, lim: [-110, -40, -45, 10] });
+      var PD = denseParts(CU("peru"));
+      K.PG = PG;
+
+      K.render = function (rect) {
+        /* 위: 공기 상자 두 칸(SVG 20,46 ~ 980,300) · 아래 왼쪽: 남아메리카 서안 지구(SVG 20,322 ~ 400,612) */
+        var m = svg.getScreenCTM(), cr = cv.getBoundingClientRect();
+        var top = { x: m.a * 20 + m.e - cr.left, y: m.d * 46 + m.f - cr.top, w: m.a * 960, h: m.d * 254 };
+        var low = { x: m.a * 20 + m.e - cr.left, y: m.d * 322 + m.f - cr.top, w: m.a * 380, h: m.d * 290 };
+        K.top = top; K.low = low;
+        backdrop(top);
+        rot();
+        /* 상자 크기 맞춤 */
+        BK = 1; BX = 0; BYc = 0;
+        var mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+        [[0, -0.45, 0], [9.6, -0.45, 0], [0, 2.04, 1.6], [9.6, 2.04, 1.6], [0, -0.45, 1.6], [9.6, -0.45, 1.6], [0, 2.04, 0], [9.6, 2.04, 0]].forEach(function (q) {
+          var p = P3(q[0], q[1], q[2]); mnx = Math.min(mnx, p[0]); mxx = Math.max(mxx, p[0]); mny = Math.min(mny, p[1]); mxy = Math.max(mxy, p[1]);
+        });
+        BK = Math.min(top.w * 0.94 / (mxx - mnx), (top.h - 40 * TS) * 0.95 / (mxy - mny));
+        BX = top.x + top.w / 2 - (mnx + mxx) / 2 * BK; BYc = top.y + 30 * TS + (top.h - 30 * TS) / 2 - (mny + mxy) / 2 * BK;
+        var u = clamp((K.seaT - 12) / 14, 0, 1), seaC = mix(SEAC, SEAW, u);
+        var fogA = clamp((21 - K.seaT) / 5, 0, 1), wetA = clamp((K.seaT - 17) / 5, 0, 1);
+        [0, 4.9].forEach(function (ox, bi) {
+          var isW = bi === 0, sc = isW ? SEAW : seaC, seaX1 = isW ? 4.7 : 3.1;
+          /* 뒤 벽(옅게) */
+          quad([[ox, 0, 1.6], [ox + 4.7, 0, 1.6], [ox + 4.7, 2.04, 1.6], [ox, 2.04, 1.6]], "rgba(231,241,251,.9)", "rgba(150,170,195,.5)");
+          /* 바다 */
+          box3(ox, ox + seaX1, -0.45, 0, 0, 1.6, rgb(sc, 1.02), rgb(sc, 0.8), rgb(sc, 0.7));
+          if (!isW) box3(ox + 3.1, ox + 4.7, -0.45, 0.12, 0, 1.6, "#e9cf98", "#c9a66b", "#b8955c");
+          /* 물결 */
+          for (var wz = 0.35; wz < 1.6; wz += 0.45) for (var wx = ox + 0.3; wx < ox + seaX1 - 0.3; wx += 0.9) l3([wx, 0.005, wz], [wx + 0.35, 0.005, wz], "rgba(255,255,255,.7)", 2 * TS);
+        });
+        /* 구름·안개·화살표·알갱이를 깊이 순서로 */
+        var items = [];
+        parts.w.forEach(function (p) { items.push({ x: p.x / 100, y: (250 - p.y) / 100, z: p.z, t: p.temp }); });
+        parts.c.forEach(function (p) { items.push({ x: 4.9 + p.x / 100, y: (250 - p.y) / 100, z: p.z, t: p.temp }); });
+        /* 한류 칸 안개(낮은 층) */
+        if (fogA > 0.02) {
+          ctx.globalAlpha = fogA * 0.8;
+          box3(4.9, 4.9 + 3.3, 0, 0.72, 0.05, 1.55, "rgba(255,255,255,.55)", "rgba(255,255,255,.6)", "rgba(255,255,255,.45)");
+          ctx.globalAlpha = 1;
+        }
+        items.forEach(function (it) { it.d = P3(it.x, it.y, it.z)[2]; });
+        items.sort(function (a, b) { return b.d - a.d; });
+        items.forEach(function (it) {
+          var p = P3(it.x, it.y, it.z), r = 0.085 * BK * p[3], c = tColor(it.t == null ? 18 : it.t).match(/\d+/g).map(Number);
+          var g = ctx.createRadialGradient(p[0] - r * 0.35, p[1] - r * 0.4, r * 0.1, p[0], p[1], r);
+          g.addColorStop(0, rgb(c, 1.25)); g.addColorStop(1, rgb(c, 0.85));
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, 2 * Math.PI); ctx.fill();
+          ctx.lineWidth = 1.2; ctx.strokeStyle = "#fff"; ctx.stroke();
+        });
+        /* 난류 칸: 구름 · 비 · 올라가는 화살표 */
+        rain3(1.9, 2.75, 0.8, 1);
+        cloud3(2.35, 1.3, 0.8, 1);
+        var up = l3([4.35, 0.25, 0.8], [4.35, 1.5, 0.8], WARM, 4 * TS);
+        arrowHead(up[0], up[1], 16 * TS, 8 * TS, WARM);
+        var cl = P3(3.2, 1.35, 0.8); ctext("구름 · 비", cl[0], cl[1], { bold: true, size: 13, color: "#5b636d" });
+        /* 한류 칸: 안개 묶음 / 구름 · 비 묶음(바다 온도에 따라 진하기) */
+        if (fogA > 0.02) {
+          ctx.globalAlpha = fogA;
+          var fl = l3([5.3, 1.0, 0.8], [7.6, 1.0, 0.8], "#868e96", 3 * TS, [6, 6]);
+          arrowHead(fl[0], fl[1], 13 * TS, 6.5 * TS, "#868e96");
+          var ft = P3(6.45, 1.16, 0.8); ctext("위로 올라가지 못합니다", ft[0], ft[1], { align: "center", bold: true, size: 13, color: "#5b636d" });
+          var fg = P3(6.45, 0.45, 0.05); ctext("안개 · 낮은 구름", fg[0], fg[1], { align: "center", bold: true, size: 13, color: "#5b636d" });
+          ctx.globalAlpha = 1;
+        }
+        if (wetA > 0.02) {
+          rain3(4.9 + 1.2, 4.9 + 1.9, 0.8, wetA);
+          cloud3(4.9 + 1.55, 1.3, 0.8, wetA);
+          ctx.globalAlpha = wetA;
+          var u2 = l3([4.9 + 2.9, 0.25, 0.8], [4.9 + 2.9, 1.5, 0.8], WARM, 4 * TS);
+          arrowHead(u2[0], u2[1], 16 * TS, 8 * TS, WARM);
+          ctx.globalAlpha = 1;
+        }
+        /* 앞 기둥 테두리 */
+        [0, 4.9].forEach(function (ox) {
+          [[ox, ox], [ox + 4.7, ox + 4.7]].forEach(function (q) { l3([q[0], 0, 0], [q[1], 2.04, 0], "rgba(150,170,195,.6)", 1); });
+          l3([ox, 2.04, 0], [ox + 4.7, 2.04, 0], "rgba(150,170,195,.6)", 1);
+        });
+        /* 이름표 */
+        var hW = P3(2.35, 2.04, 0), hC = P3(4.9 + 2.35, 2.04, 0);
+        ctext("난류 위 — 공기가 올라갑니다", hW[0], hW[1] - 14 * TS, { align: "center", bold: true, size: 14, pill: true });
+        ctext(K.seaT < 18 ? "한류 위 — 공기가 바다 위에 머뭅니다" : K.seaT < 22 ? "바다가 데워지면 — 공기가 조금씩 올라갑니다" : "따뜻한 바다 위 — 공기가 올라갑니다",
+          hC[0], hC[1] - 14 * TS, { align: "center", bold: true, size: 14, pill: true });
+        var sW = P3(2.35, -0.22, 0), sC = P3(4.9 + 1.55, -0.22, 0), dz = P3(4.9 + 3.9, -0.16, 0);
+        ctext("난류 · 바다 약 24℃", sW[0], sW[1], { align: "center", bold: true, size: 13, color: "#fff", halo: 0 });
+        ctext((K.seaT <= 17 ? "한류 · " : K.seaT >= 22 ? "따뜻한 바다 · " : "") + "바다 약 " + K.seaT + "℃", sC[0], sC[1], { align: "center", bold: true, size: 13, color: "#fff", halo: 0 });
+        ctx.globalAlpha = K.seaT < 18 ? 1 : 0.35;
+        ctext("해안 사막", dz[0], dz[1], { align: "center", bold: true, size: 13, color: "#8a6d3b", halo: 0 });
+        ctx.globalAlpha = 1;
+        ctext("끌어서 돌려 봅니다", top.x + 12, top.y + 16, { size: 12, color: "#5b636d" });
+
+        /* 남아메리카 서안: 작은 지구 */
+        backdrop(low);
+        clipRect(low);
+        PG.fit(low);
+        PG.render();
+        drawCur(PG, CU("peru"), PD, { alpha: 1, wide: true, phase: K.phase });
+        var pl = PG.P(-90, -27, 1.01);
+        if (pl[2]) ctext("페루 해류", pl[0], pl[1], { align: "center", bold: true, size: 13, color: "#1864ab" });
+        var lp = PG.P(lima.lon, lima.lat, 1.002);
+        if (lp[2]) {
+          ctx.beginPath(); ctx.arc(lp[0], lp[1], 6.5 * TS, 0, 2 * Math.PI); ctx.fillStyle = "#1c7ed6"; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = "#fff"; ctx.stroke();
+          ctext("리마", lp[0] + 11 * TS, lp[1], { bold: true, size: 14 });
+        }
+        var ap = PG.P(-69.3, -23.5, 1.002);
+        if (ap[2]) ctext("아타카마 사막", ap[0] + 4, ap[1], { bold: true, size: 13, color: "#8a6d3b" });
+        var tp = PG.P(-92, -6, 1);
+        if (tp[2]) ctext("태평양", tp[0], tp[1], { align: "center", size: 14, color: "#5f87ad", halo: 3 });
+        ctx.restore();
+      };
+      K.hit = function (x, y) {
+        var l = K.low;
+        return l && x >= l.x && x <= l.x + l.w && y >= l.y && y <= l.y + l.h ? "peru" : "rot";
+      };
+      K.reset = function () { K.yaw = -16; K.pitch = 12; PG.lon = -76; PG.lat = -19; };
+      return K;
+    })();
+
+    /* ================= 3D 조작: 끌어 돌리기 · 해류/도시 누르기 · 키보드 ================= */
+    (function () {
+      var mode = null, st = null;
+      function scene() { return view === "map" ? world : view === "warm" ? warm : cold; }
+      function local(e) { var r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+      function turn(sc, h, dx, dy) {
+        if (sc === cold && h !== "peru") { cold.yaw = clamp(cold.yaw + dx * 0.3, -40, 40); cold.pitch = clamp(cold.pitch + dy * 0.2, 6, 45); }
+        else { var G = sc === cold ? cold.PG : sc.G; G.turn(-dx * 0.3, dy * 0.3); if (sc === world) world.tw = null; }
+        requestRender();
+      }
+      function setLod(on) { [world.G, warm.G, cold.PG].forEach(function (G) { G.lod = on; }); }
+      cv.addEventListener("pointerdown", function (e) {
+        var p = local(e), sc = scene();
+        mode = sc.hit(p[0], p[1]);
+        st = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false };
+        if (cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+        e.preventDefault();
+      });
+      cv.addEventListener("pointermove", function (e) {
+        var p = local(e), sc = scene();
+        if (!mode) { var h = sc.hit(p[0], p[1]); cv.style.cursor = h === "rot" || h === "peru" ? "grab" : "pointer"; return; }
+        if (Math.abs(e.clientX - st.x) + Math.abs(e.clientY - st.y) > 4) st.moved = true;
+        if (!st.moved) return;
+        cv.style.cursor = "grabbing";
+        setLod(true);
+        turn(sc, mode === "peru" ? "peru" : "rot", e.clientX - st.lx, e.clientY - st.ly);
+        st.lx = e.clientX; st.ly = e.clientY;
+      });
+      function end() {
+        if (mode && !st.moved) {
+          if (mode.cur) world.select(world.sel === mode.cur ? null : mode.cur);
+          else if (mode.pair != null) warm.set(mode.pair);
+        }
+        mode = null; cv.style.cursor = "grab";
+        setLod(false); requestRender();
+      }
+      cv.addEventListener("pointerup", end);
+      cv.addEventListener("pointercancel", end);
+      cv.addEventListener("keydown", function (e) {
+        var k = e.key, sc = scene(), d = { ArrowLeft: [-30, 0], ArrowRight: [30, 0], ArrowUp: [0, -30], ArrowDown: [0, 30] }[k];
+        if (!d) return;
+        e.preventDefault();
+        turn(sc, "rot", d[0], d[1]);
+      });
+      $(".oc-resetview").addEventListener("click", function () { scene().reset(); requestRender(); });
+    })();
+
+    /* ================= 패널: 읽은 값 ================= */
+    var elReadH = $(".oc-readh"), elRes = $(".oc-result"), elRk = $(".oc-rk"), elRt = $(".oc-rt"), elNote = $(".oc-readnote");
+    var K_ = [1, 2, 3, 4].map(function (i) { return { k: $(".oc-k" + i), v: $(".oc-v" + i) }; });
+    function stat(i, k, v, cls) {
+      var c = "oc-v oc-v" + (i + 1) + (cls ? " " + cls : "");
+      setText(K_[i].k, k); setText(K_[i].v, v);
+      if (K_[i].v.className !== c) K_[i].v.className = c;
+    }
+    function readMap() {
+      var c = world.sel ? CU(world.sel) : null;
+      if (!c) {
+        var nw = CURS.filter(function (x) { return x.w; }).length;
+        elReadH.textContent = "읽은 값 · 세계의 해류";
+        stat(0, "난류", nw + "줄기", "warm");
+        stat(1, "한류", (CURS.length - nw) + "줄기", "cold");
+        stat(2, "난류가 흐르는 쪽", "저위도 → 고위도", "warm");
+        stat(3, "한류가 흐르는 쪽", "고위도 → 저위도", "cold");
+        elRes.className = "oc-result";
+        elRk.textContent = "해류를 하나 골라 봅니다";
+        elRt.textContent = "지도의 화살표나 패널의 해류 이름을 누르면 그 해류의 종류와 흐르는 방향을 볼 수 있습니다.";
+      } else {
+        var le = latEnds(c);
+        elReadH.textContent = "읽은 값 · " + c.n;
+        stat(0, "종류", c.w ? "난류 · 따뜻함" : "한류 · 차가움", c.w ? "warm" : "cold");
+        stat(1, "흐르는 쪽", dirOf(c), "");
+        stat(2, (le[0] < 0 ? "남위" : "북위") + " (출발 → 도착)", Math.abs(le[0]) + "° → " + Math.abs(le[1]) + "°", c.w ? "warm" : "cold");
+        stat(3, c.eff ? "영향을 받는 곳" : "바다", c.eff ? c.eff.n : c.sea, c.eff ? "long" : "");
+        elRes.className = "oc-result " + (c.w ? "hot" : "mild");
+        elRk.textContent = c.n + "는 " + (c.w ? "난류" : "한류") + "입니다";
+        elRt.textContent = c.why;
+      }
+      elNote.textContent = "해류 경로는 교과서 그림처럼 단순하게 나타냈습니다.";
+    }
+    function readWarm() {
+      var pr = PAIRS[warm.i], w = C(pr.w), c = C(pr.c);
+      elReadH.textContent = "읽은 값 · 1월 평균 기온";
+      stat(0, w.kr + " 위치", latTxt(w), "");
+      stat(1, c.kr + " 위치", latTxt(c), "");
+      stat(2, w.kr + " 1월", deg(w.t[0]), "warm");
+      stat(3, c.kr + " 1월", deg(c.t[0]), "cold");
+      elRes.className = "oc-result hot";
+      elRk.textContent = w.kr + "의 1월이 " + f1(w.t[0] - c.t[0]) + "℃ 더 따뜻합니다";
+      elRt.textContent = pr.lead + " 북대서양 해류(난류) 위를 지나며 데워진 공기를 편서풍이 서유럽으로 실어 옵니다. 캐나다 동부 앞바다에는 래브라도 해류(한류)가 흐르고, 바람도 대륙 쪽에서 불어옵니다.";
+      elNote.textContent = "도시 기온은 WMO 기후 평년값입니다.";
+    }
+    function readCold() {
+      var l = C("Lima"), d = C("Darwin");
+      elReadH.textContent = "읽은 값 · 리마와 다윈";
+      stat(0, "리마 위치", latTxt(l), "");
+      stat(1, "다윈 위치", latTxt(d), "");
+      stat(2, "리마 1년 강수량", mm(sum(l.p)), "cold");
+      stat(3, "다윈 1년 강수량", mm(sum(d.p)), "");
+      elRes.className = "oc-result mild";
+      elRk.textContent = "리마는 1년 비가 약 " + mm(sum(l.p)) + "뿐입니다";
+      elRt.textContent = "리마 앞바다에는 페루 해류(한류)가 흐릅니다. 차가운 바다 위의 공기는 아래가 차가워 위로 올라가지 못하므로 비구름이 잘 생기지 않습니다. 대신 안개와 낮은 구름이 자주 낍니다.";
+      elNote.textContent = "다윈은 같은 위도의 비교 도시입니다. 다윈의 비는 주로 여름 계절풍이 가져옵니다.";
+    }
+
+    /* 난류와 한류 구별법 (작은 그림) */
+    (function () {
+      var rc = $(".oc-rule");
+      S("rect", { x: 70, y: 6, width: 210, height: 106, rx: 10, fill: "#e9f2fc" }, rc);
+      S("text", { x: 8, y: 22, "class": "oc-rt2" }, rc, "고위도");
+      S("text", { x: 8, y: 106, "class": "oc-rt2" }, rc, "저위도");
+      S("text", { x: 8, y: 64, "class": "oc-rt2" }, rc, "↕");
+      var gw = S("g", { "class": "oc-cur warm" }, rc);
+      S("path", { d: "M120 100 C110 70 130 50 120 26", "class": "oc-cl" }, gw);
+      head(gw, [121, 34], [120, 24], 13, "oc-ch");
+      S("text", { x: 134, y: 60, "class": "oc-rt3 warm" }, rc, "난류");
+      S("text", { x: 134, y: 78, "class": "oc-rt2" }, rc, "따뜻한 물");
+      var gc = S("g", { "class": "oc-cur cold" }, rc);
+      S("path", { d: "M220 24 C230 50 210 70 220 98", "class": "oc-cl" }, gc);
+      head(gc, [219, 90], [220, 100], 13, "oc-ch");
+      S("text", { x: 234, y: 60, "class": "oc-rt3 cold" }, rc, "한류");
+      S("text", { x: 234, y: 78, "class": "oc-rt2" }, rc, "차가운 물");
+    })();
+
+    /* ================= 애니메이션 ================= */
+    var raf = 0, lastT = 0;
+    function needAnim() {
+      if (RM) return false;
+      if (view === "warm") return true;
+      if (view === "cold") return flowOn || cold.run;
+      return flowOn || world.busy();
+    }
+    function tick(t) {
+      raf = 0;
+      var dt = lastT ? Math.min(100, t - lastT) : 16;
+      lastT = t;
+      (view === "map" ? world : view === "warm" ? warm : cold).update(dt);
+      render();
+      if (needAnim()) raf = requestAnimationFrame(tick); else lastT = 0;
+    }
+    function kick() { if (!raf && needAnim()) { lastT = 0; raf = requestAnimationFrame(tick); } }
+
+    /* ================= 패널: 조작 ================= */
+    var vbtns = $$(".oc-vbtn"), vctls = $$(".oc-vctl"), auxs = $$(".oc-aux");
+    var svgs = { map: world.svg, warm: warm.svg, cold: cold.svg };
+    function setView(v) {
+      if (!svgs[v]) v = "map";
+      view = v;
+      Object.keys(svgs).forEach(function (k) { svgs[k].classList.toggle("oc-off", k !== v); });
+      vbtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-view") === v ? "true" : "false"); });
+      vctls.forEach(function (c) { c.classList.toggle("oc-off", c.getAttribute("data-for") !== v); });
+      auxs.forEach(function (c) { c.classList.toggle("oc-off", c.getAttribute("data-for") !== (v === "cold" ? "rise" : "rule")); });
+      if (v === "map") readMap();
+      else if (v === "warm") readWarm();
+      else readCold();
+      cv.setAttribute("aria-label", v === "map" ? "3D 지구 위의 해류. 끌어서 돌려 봅니다. 화살표 키로도 돌립니다."
+        : v === "warm" ? "3D 지구의 북대서양. 북대서양 해류와 편서풍, 도시의 1월 기온 기둥. 끌어서 돌려 봅니다."
+        : "난류 위와 한류 위 공기 상자, 남아메리카 서안 지구. 끌어서 돌려 봅니다.");
+      requestRender();
+      kick();
+    }
+    vbtns.forEach(function (b) { b.addEventListener("click", function () { setView(b.getAttribute("data-view")); }); });
+
+    var flowBox = $(".oc-flowbox");
+    function setFlow(on) {
+      flowOn = on;
+      flowBox.checked = on;
+      root.classList.toggle("oc-noflow", !on);
+      requestRender();
+      kick();
+    }
+    flowBox.addEventListener("change", function () { setFlow(flowBox.checked); });
+
+    $$(".oc-filtseg .oc-segb").forEach(function (b) { b.addEventListener("click", function () { world.filter(b.getAttribute("data-filt")); }); });
+    $$(".oc-curbtns").forEach(function (box) {
+      var kind = box.getAttribute("data-kind");
+      CURS.forEach(function (c) {
+        if ((c.w ? "w" : "c") !== kind) return;
+        var b = E("button", "oc-btn " + (c.w ? "warm" : "cold"), box, c.n);
+        b.type = "button";
+        b.title = c.n;
+        b.setAttribute("data-cur", c.id);
+        b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function () { world.select(world.sel === c.id ? null : c.id); });
+      });
+    });
+    $(".oc-unsel").addEventListener("click", function () { world.select(null); });
+
+    PAIRS.forEach(function (p, i) {
+      var b = E("button", "oc-btn", $(".oc-pairbtns"), C(p.w).kr + " · " + C(p.c).kr);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () { warm.set(i); });
+    });
+
+    var seaIn = $(".oc-seat-in"), seaV = $(".oc-seatv");
+    function syncSea() { seaV.textContent = cold.seaT + "℃"; seaV.classList.toggle("w", cold.seaT >= 22); seaIn.value = String(cold.seaT); }
+    seaIn.addEventListener("input", function () { cold.setSea(Number(seaIn.value)); syncSea(); });
+    var playBtn = $(".oc-play");
+    function syncPlay() { playBtn.textContent = cold.run ? "멈춤" : "재생"; }
+    playBtn.addEventListener("click", function () { cold.run = !cold.run; syncPlay(); kick(); });
+
+    /* 패널 위치 · 접기 · 끌어 옮기기 */
+    var panel = $(".oc-panel"), phead = $(".oc-head"), fold = $(".oc-fold");
+    var mode = "right", panelMoved = false;
+    var posBtns = $$(".oc-posseg .oc-segb");
+    function layout() {
+      if (mode === "float" && panelMoved) {
+        /* 화면이 줄어도 옮긴 플로팅 패널이 무대 밖으로 나가지 않게 */
+        var px = parseFloat(panel.style.left) || 0, py = parseFloat(panel.style.top) || 0;
+        panel.style.left = clamp(px, 0, Math.max(0, root.clientWidth - panel.offsetWidth)) + "px";
+        panel.style.top = clamp(py, 0, Math.max(0, root.clientHeight - Math.min(panel.offsetHeight, 60))) + "px";
+      }
+      /* 플로팅 패널 옆에 그림 자리가 280px 이상 남으면 그 자리에 맞춰 그림을 줄임(전에는 680px 미만에서 패널이 그림을 덮음) */
+      var pad = 18, side = panel.offsetWidth + 32;
+      if (mode === "float" && !panelMoved && !root.classList.contains("oc-collapsed") && views.clientWidth - side >= 280) pad = side;
+      views.style.paddingLeft = pad + "px";
+      sizeCanvas();
+      requestRender();
+    }
+    function setPanel(m) {
+      if (["right", "left", "float"].indexOf(m) < 0) m = "right";
+      mode = m; panelMoved = false;
+      root.classList.remove("oc-pos-right", "oc-pos-left", "oc-pos-float", "oc-collapsed");
+      root.classList.add("oc-pos-" + m);
+      panel.style.left = ""; panel.style.top = "";
+      fold.textContent = "접기";
+      fold.setAttribute("aria-expanded", "true");
+      posBtns.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-pos") === m ? "true" : "false"); });
+      layout();
+    }
+    posBtns.forEach(function (b) { b.addEventListener("click", function () { setPanel(b.getAttribute("data-pos")); }); });
+    fold.addEventListener("click", function () {
+      var c = root.classList.toggle("oc-collapsed");
+      fold.textContent = c ? "펴기" : "접기";
+      fold.setAttribute("aria-expanded", c ? "false" : "true");
+      layout();
+    });
+    var pDrag = null;
+    phead.addEventListener("pointerdown", function (e) {
+      if (mode !== "float" || e.target.closest("button")) return;
+      var pb = panel.getBoundingClientRect(), rb = root.getBoundingClientRect();
+      pDrag = { dx: e.clientX - pb.left, dy: e.clientY - pb.top, rb: rb, w: pb.width, h: pb.height };
+      if (phead.setPointerCapture) phead.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    phead.addEventListener("pointermove", function (e) {
+      if (!pDrag) return;
+      var x = clamp(e.clientX - pDrag.rb.left - pDrag.dx, 0, Math.max(0, pDrag.rb.width - pDrag.w));
+      var y = clamp(e.clientY - pDrag.rb.top - pDrag.dy, 0, Math.max(0, pDrag.rb.height - Math.min(pDrag.h, 60)));
+      panel.style.left = x + "px"; panel.style.top = y + "px";
+      if (!panelMoved) { panelMoved = true; layout(); }
+    });
+    phead.addEventListener("pointerup", function () { pDrag = null; });
+    phead.addEventListener("pointercancel", function () { pDrag = null; });
+
+    /* ================= 확인 문제 (버튼 → 창) ================= */
+    var answered = QUIZ.map(function () { return null; });
+    var qStatus = [];
+    var qBtns = QUIZ.map(function (item, i) {
+      var b = E("button", "oc-qbtn", $(".oc-qlist"));
+      b.type = "button";
+      E("span", "oc-qno", b, String(i + 1));
+      E("span", "oc-qtt", b, item.title);
+      qStatus.push(E("span", "oc-qst", b, "풀기"));
+      b.addEventListener("click", function () { openQuiz(i, b); });
+      return b;
+    });
+    var modal = $(".oc-modal"), dialog = $(".oc-dialog");
+    var dNum = $(".oc-dnum"), dQ = $(".oc-dq"), dOpts = $(".oc-dopts"), dFb = $(".oc-dfb");
+    var dPrev = $(".oc-prev"), dNext = $(".oc-next"), dX = $(".oc-x");
+    dQ.id = uid + "-q";
+    dialog.setAttribute("aria-labelledby", uid + "-q");
+    var qCur = 0, backFocus = null;
+    function renderQuiz() {
+      var item = QUIZ[qCur], picked = answered[qCur];
+      dNum.textContent = "확인 문제 " + (qCur + 1) + " / " + QUIZ.length;
+      dQ.textContent = item.q;
+      dOpts.textContent = "";
+      item.opts.forEach(function (txt, i) {
+        var b = E("button", "oc-opt", dOpts, txt);
+        b.type = "button";
+        if (picked === i) b.classList.add(i === item.ans ? "ok" : "no");
+        b.addEventListener("click", function () { answered[qCur] = i; renderQuiz(); updateQuizList(); dOpts.children[i].focus(); });
+      });
+      if (picked === null) { dFb.className = "oc-dfb"; dFb.textContent = ""; }
+      else { var right = picked === item.ans; dFb.className = "oc-dfb " + (right ? "ok" : "no"); dFb.textContent = right ? item.ok : item.no; }
+      dPrev.disabled = qCur === 0;
+      dNext.disabled = qCur === QUIZ.length - 1;
+    }
+    function updateQuizList() {
+      QUIZ.forEach(function (item, i) {
+        var p = answered[i], st = qStatus[i];
+        if (p === null) { st.className = "oc-qst"; st.textContent = "풀기"; }
+        else if (p === item.ans) { st.className = "oc-qst ok"; st.textContent = "정답"; }
+        else { st.className = "oc-qst no"; st.textContent = "다시"; }
+      });
+    }
+    function openQuiz(i, from) {
+      qCur = i; backFocus = from || null;
+      renderQuiz();
+      modal.hidden = false;
+      var first = dOpts.querySelector(".oc-opt");
+      if (first) first.focus();
+    }
+    function closeQuiz() {
+      modal.hidden = true;
+      if (backFocus) backFocus.focus();
+    }
+    dX.addEventListener("click", closeQuiz);
+    dPrev.addEventListener("click", function () { if (qCur > 0) { qCur--; renderQuiz(); backFocus = qBtns[qCur]; } });
+    dNext.addEventListener("click", function () { if (qCur < QUIZ.length - 1) { qCur++; renderQuiz(); backFocus = qBtns[qCur]; } });
+    modal.addEventListener("click", function (e) { if (e.target === modal) closeQuiz(); });
+    modal.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); closeQuiz(); return; }
+      if (e.key !== "Tab") return;
+      var f = Array.prototype.slice.call(dialog.querySelectorAll("button")).filter(function (b) { return !b.disabled; });
+      if (!f.length) return;
+      var i = f.indexOf(e.target);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    });
+
+    /* ================= 처음 상태: ?view=map&cur=peru&filter=c · ?view=warm&pair=1 · ?view=cold&play=0&seat=24 · &flow=0 · &panel=float ================= */
+    var qs = new URLSearchParams(location.search);
+    world.filter(qs.get("filter") || "all");
+    world.ready = true;
+    world.select(qs.get("cur"));
+    warm.set(parseInt(qs.get("pair"), 10));
+    if (qs.get("play") === "0") cold.run = false;
+    cold.setSea(parseInt(qs.get("seat"), 10));
+    syncSea();
+    syncPlay();
+    setFlow(qs.get("flow") !== "0");
+    setPanel(qs.get("panel") || "right");
+    updateQuizList();
+    setView(qs.get("view") || "map");
+    if (window.ResizeObserver) new ResizeObserver(layout).observe(root);
+    else window.addEventListener("resize", layout);
+  }
+  Up(document.currentScript.parentElement);
+})();
+</script>
+</div>
+</body>
+</html>
