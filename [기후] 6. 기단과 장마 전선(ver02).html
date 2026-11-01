@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>기단과 장마 전선 (ver01)</title>
+<title>기단과 장마 전선 (ver02)</title>
 <style>.ds-page{margin:0}</style>
 </head>
 <body class="ds-page" style="margin:0">
@@ -221,25 +221,201 @@
   .ds-airmass.am-pos-left .am-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
   .ds-airmass .am-views{padding:8px}
 }
+
+/* ===== 양식 맞춤(10-28): 출판사 예시 t1-u5-metro와 같은 모양 ===== */
+.ds-airmass.ds-airmass{--bg:#f6f5f1;--panel:#fff;--card:#fff;--accent-soft:#e6efff;font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+.ds-airmass.ds-airmass .am-panel{background:#fff}
+.ds-airmass.ds-airmass .am-head{background:#fff;padding:14px 16px 12px}
+.ds-airmass.ds-airmass .am-body{gap:18px;padding:16px}
+.ds-airmass.ds-airmass .am-card{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px}
+.ds-airmass.ds-airmass .am-h,.ds-airmass.ds-airmass .am-csum,.ds-airmass.ds-airmass .am-extra > .am-sum{font-size:14px;font-weight:700;color:var(--ink)}
+.ds-airmass.ds-airmass .am-h::before,.ds-airmass.ds-airmass .am-csum::before{content:none;display:none}
+.ds-airmass.ds-airmass .am-csum::after{content:"›";font-size:16px;line-height:1;transform:rotate(90deg)}
+.ds-airmass.ds-airmass .am-readcard:not([open]) > .am-csum::after,.ds-airmass.ds-airmass .am-extra:not([open]) > .am-csum::after{transform:none}
+.ds-airmass.ds-airmass .am-sub{font-size:13px;font-weight:400;color:var(--ink2)}
+.ds-airmass.ds-airmass .am-hint,.ds-airmass.ds-airmass .am-hint2{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-airmass.ds-airmass .am-note,.ds-airmass.ds-airmass .am-readnote{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-airmass.ds-airmass .am-p,.ds-airmass.ds-airmass .am-place,.ds-airmass.ds-airmass .am-mdesc{font-size:13.5px;line-height:1.6}
+.ds-airmass.ds-airmass .am-place{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.ds-airmass.ds-airmass .am-mterm{font-size:13.5px}
+/* 붙은 탭 모양 선택 단추: 고른 것은 연한 파랑 바탕 · 파란 굵은 글씨 */
+.ds-airmass.ds-airmass .am-seg{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-airmass.ds-airmass .am-segb{font-size:13.5px;padding:7px 6px;background:#fff;color:var(--ink2)}
+.ds-airmass.ds-airmass .am-segb:hover{background:#f6f5f1}
+.ds-airmass.ds-airmass .am-seg .am-segb[aria-pressed="true"],.ds-airmass.ds-airmass .am-segb[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ds-airmass.ds-airmass .am-stages{gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-airmass.ds-airmass .am-stg{border:0;border-radius:0;font-size:13.5px;padding:7px 2px;color:var(--ink2);background:#fff}
+.ds-airmass.ds-airmass .am-stg + .am-stg{border-left:1px solid var(--line)}
+.ds-airmass.ds-airmass .am-stg[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--line)}
+.ds-airmass.ds-airmass .am-stb[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-airmass.ds-airmass .am-stb[aria-pressed="true"] .am-sts{color:var(--accent)}
+.ds-airmass.ds-airmass .am-vbtn{border-radius:8px;font-size:14px;padding:8px 10px}
+/* 단추 */
+.ds-airmass.ds-airmass .am-btn{font-size:14px;padding:8px 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:none}
+.ds-airmass.ds-airmass .am-btn:hover{background:#f1f0eb}
+.ds-airmass.ds-airmass .am-btn.main{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:none}
+.ds-airmass.ds-airmass .am-btn.main:hover{background:var(--accent);filter:brightness(1.05)}
+.ds-airmass.ds-airmass .am-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--line);color:var(--accent)}
+.ds-airmass.ds-airmass .am-prow .am-play,.ds-airmass.ds-airmass .am-row .am-play{flex:1 1 0;width:auto;letter-spacing:0;font-size:14px}
+.ds-airmass.ds-airmass .am-play::before{content:"";flex:none;width:0;height:0;margin-right:2px;border-left:10px solid currentColor;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.ds-airmass.ds-airmass .am-play:not([aria-label])::before{content:none}
+.ds-airmass.ds-airmass .am-play[aria-label="멈춤"]::before{width:3px;height:12px;border:0;border-left:3px solid currentColor;border-right:3px solid currentColor}
+.ds-airmass.ds-airmass .am-reset::before{content:"↻";flex:none;font-size:16px;line-height:1}
+.ds-airmass.ds-airmass .am-reset{flex:1 1 0}
+.ds-airmass.ds-airmass .am-mini{border-radius:8px;font-size:12.5px;padding:3px 10px}
+/* 켜기/끄기는 스위치: 글자 왼쪽 · 스위치 오른쪽 */
+.ds-airmass.ds-airmass .am-onoff{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;font-size:14px;font-weight:400;padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--ink)}
+.ds-airmass.ds-airmass .am-onoff:hover,.ds-airmass.ds-airmass .am-onoff[aria-pressed="true"]{background:transparent;color:var(--ink);font-weight:400;border:0}
+.ds-airmass.ds-airmass .am-onoff::after{content:"";flex:none;width:36px;height:20px;border-radius:999px;background:#d6d3cb radial-gradient(circle at 10px 10px,#fff 7px,transparent 7.5px);transition:background-position .15s}
+.ds-airmass.ds-airmass .am-onoff[aria-pressed="true"]::after{background:var(--accent) radial-gradient(circle at 26px 10px,#fff 7px,transparent 7.5px)}
+.ds-airmass.ds-airmass .am-onoff:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-airmass.ds-airmass .am-row:has(> .am-onoff){flex-direction:column;gap:2px}
+.ds-airmass.ds-airmass .am-onoffl{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding:2px 0;user-select:none}
+.ds-airmass.ds-airmass .am-onoffl .am-check-in{-webkit-appearance:none;appearance:none;width:36px;height:20px;margin:0;border-radius:999px;background:#d6d3cb;position:relative;cursor:pointer;flex:none;transition:background .15s}
+.ds-airmass.ds-airmass .am-onoffl .am-check-in::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.ds-airmass.ds-airmass .am-onoffl .am-check-in:checked{background:var(--accent)}
+.ds-airmass.ds-airmass .am-onoffl .am-check-in:checked::after{transform:translateX(16px)}
+.ds-airmass.ds-airmass .am-onoffl .am-check-in:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 값은 「이름 … 값」 목록 */
+.ds-airmass.ds-airmass .am-stats{display:grid;grid-template-columns:1fr;gap:4px}
+.ds-airmass.ds-airmass .am-stat,.ds-airmass.ds-airmass .am-mrow{display:flex;flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;background:transparent;border:0;border-radius:0;padding:0}
+.ds-airmass.ds-airmass .am-k{font-size:14px;color:var(--ink2);line-height:1.5}
+.ds-airmass.ds-airmass .am-v{font-size:14px;font-weight:700;line-height:1.5;text-align:right;font-variant-numeric:tabular-nums}
+/* 설명은 연한 베이지 카드 */
+.ds-airmass.ds-airmass.ds-airmass .am-result{border:1px solid var(--line);border-left:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fcfbf8;gap:6px}
+.ds-airmass.ds-airmass .am-rk{font-size:16px;line-height:1.4}
+.ds-airmass.ds-airmass .am-rt{font-size:14px;line-height:1.6;color:var(--ink)}
+.ds-airmass.ds-airmass .am-range,.ds-airmass.ds-airmass .am-trange{accent-color:var(--accent)}
+.ds-airmass.ds-airmass .am-rv{font-size:13px;font-weight:600;color:var(--ink)}
+/* 완성도(10-29): 2 · 3칸 격자 단추가 넓어진 여백 때문에 칸 밖으로 넘치던 것 */
+.ds-airmass.ds-airmass .am-grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ds-airmass.ds-airmass .am-grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-airmass.ds-airmass .am-grid2 .am-btn,.ds-airmass.ds-airmass .am-grid3 .am-btn{min-width:0;padding:7px 4px;white-space:normal;line-height:1.3}
+/* 완성도(10-29): 「이름표 + 선택 단추」 한 줄이 좁으면 이름표가 줄바꿈(하천 「살펴볼 곳에서 자르기」가 3px 넘치던 것) */
+.ds-airmass.ds-airmass .am-line2 > .am-sub{min-width:0}
+.ds-airmass.ds-airmass .am-line2 .am-seg{min-width:0}
+.ds-airmass.ds-airmass .am-segb{min-width:0;padding-left:4px;padding-right:4px}
+/* 업그레이드(10-29): 단계 단추 이름 · 무대 위 단계 표시 */
+.ds-airmass.ds-airmass .am-stg{font-size:13px;line-height:1.25;padding:7px 2px;word-break:keep-all}
+.ds-airmass.ds-airmass .am-hud{margin:3px 0 0;font-size:15px;font-weight:700;color:var(--accent);line-height:1.3}
+.ds-airmass.ds-airmass .am-hud[hidden]{display:none}
+/* 휴대폰(10-29): 기후 「산을 넘는 바람」처럼 폭이 꽉 찬 그래프는 좁은 배치에서 글자만 키움 */
+.ds-airmass.ds-airmass .am-narbump .am-tick,.ds-airmass.ds-airmass .am-narbump .am-rht,.ds-airmass.ds-airmass .am-narbump .am-ptv,.ds-airmass.ds-airmass .am-narbump .am-tsub{font-size:19px}
+.ds-airmass.ds-airmass .am-narbump .am-small{font-size:15px}
+/* 업그레이드(10-29): 설명 카드의 핵심 낱말(예시의 파란 굵은 낱말) */
+.ds-airmass.ds-airmass .am-term{color:var(--accent);font-weight:700}
+/* 업그레이드(10-29): 휴대폰 폭 — 패널은 늘 무대 아래라 패널 위치 고르기는 숨김, 무대 안내 말풍선은 숨김(제목 · 설명을 가림),
+   확인 문제 카드가 무대보다 길면 무대 안에서 스크롤 */
+@media (max-width:560px){
+  .ds-airmass.ds-airmass .am-toast{display:none}
+  .ds-airmass.ds-airmass .am-line2:has(> .am-posseg),.ds-airmass.ds-airmass .am-hmi.am-gear{display:none}
+  .ds-airmass.ds-airmass .am-title{font-size:17px}
+  .ds-airmass.ds-airmass .am-hud{font-size:14px}
+  .ds-airmass.ds-airmass .am-guide{font-size:13px}
+  .ds-airmass.ds-airmass .am-cap{max-width:calc(100% - 160px)}
+  .ds-airmass.ds-airmass .am-quiz{align-items:flex-start;overflow-y:auto;padding:10px}
+  .ds-airmass.ds-airmass .am-qcard{padding:14px 14px 12px}
+  .ds-airmass.ds-airmass .am-body{padding:14px 14px 18px;gap:16px}
+  /* 휴대폰(10-29): 무대 · 패널을 한 화면에 나누지 않고 위아래로 이어 페이지가 스크롤. 무대는 폭에 비례해 길게(기후 1.5배 · 지형 1.25배) */
+  .ds-airmass.ds-airmass.ds-airmass{height:auto;min-height:0;grid-template-rows:auto auto}
+  .ds-airmass.ds-airmass .am-stage{height:min(150vw,88vh)}
+  .ds-airmass.ds-airmass .am-panel{max-height:none;overflow:visible}
+}
+/* 완성도(10-29): 키보드로 옮겨 갔을 때 어디인지 보이게 */
+.ds-airmass.ds-airmass .am-segb:focus-visible,.ds-airmass.ds-airmass .am-stg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ds-airmass.ds-airmass .am-btn:focus-visible,.ds-airmass.ds-airmass .am-vbtn:focus-visible,.ds-airmass.ds-airmass .am-mini:focus-visible,.ds-airmass.ds-airmass .am-toci:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== 컴퓨터 화면 손질(10-29) ===== */
+/* A2 시점 되돌리기(작은 단추)에는 재생용 ↻ 아이콘을 붙이지 않음 */
+.ds-airmass.ds-airmass .am-mini.am-reset::before{content:none}
+/* A3 색 견본이 있는 스위치(대지형 「보이는 대지형」)도 이름은 왼쪽, 스위치는 오른쪽 끝 */
+.ds-airmass.ds-airmass .am-onoff{justify-content:flex-start}
+.ds-airmass.ds-airmass .am-onoff::after{margin-left:auto}
+/* A5 표지 뒤 무대(단면 그래프 등)가 또렷하게 비치지 않게 */
+.ds-airmass.ds-airmass .am-cover{background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.8) 100%)}
+/* A6 위도와 태양 에너지: 그래프 칸을 넓혀 눈금 글자를 키움(좁은 쌓기 배치는 그대로) */
+.ds-airmass.ds-airmass .am-stage:not(.am-gstack) .am-gwrap{width:clamp(300px,42%,640px)}
+/* B7 접는 카드(기후 설명 · 확인 문제) */
+.ds-airmass.ds-airmass .am-csum{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.ds-airmass.ds-airmass .am-csum::-webkit-details-marker{display:none}
+.ds-airmass.ds-airmass .am-csum::after{margin-left:auto}
+.ds-airmass.ds-airmass .am-fold:not([open]) > .am-csum::after{transform:none}
+.ds-airmass.ds-airmass .am-fold[open] > .am-csum{margin-bottom:6px}
+/* B8 기후 「패널 위치」는 패널 머리 단추 → 아래로 펼침 */
+.ds-airmass.ds-airmass .am-head-row .am-ptitle{flex:1;min-width:0}
+.ds-airmass.ds-airmass .am-posbtn[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-airmass.ds-airmass .am-posbox{padding-top:8px}
+.ds-airmass.ds-airmass .am-posbox[hidden]{display:none}
+/* B9 프로젝터 · 큰 모니터(1600px 이상): 패널을 1.15배로(폭 368px) */
+@media (min-width:1600px){
+  .ds-airmass.ds-airmass.ds-airmass.am-pos-right:not(.am-collapsed):not(.am-quizmode){grid-template-columns:minmax(0,1fr) 368px}
+  .ds-airmass.ds-airmass.ds-airmass.am-pos-left:not(.am-collapsed):not(.am-quizmode){grid-template-columns:368px minmax(0,1fr)}
+  .ds-airmass.ds-airmass.ds-airmass.am-quizmode.am-pos-right{grid-template-columns:minmax(0,1fr) 276px}
+  .ds-airmass.ds-airmass.ds-airmass.am-quizmode.am-pos-left{grid-template-columns:276px minmax(0,1fr)}
+  .ds-airmass.ds-airmass .am-panel{zoom:1.15}
+}
+@media (max-width:560px){
+  .ds-airmass.ds-airmass .am-posbtn{display:none}
+}
+
+/* ===== 표지(10-30): 지형과 같은 모양 ===== */
+.ds-airmass.ds-airmass .am-cover{position:absolute;inset:0;z-index:25;display:flex;align-items:center;padding:32px 40px;box-sizing:border-box;background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.82) 100%)}
+.ds-airmass.ds-airmass .am-cover[hidden]{display:none}
+.ds-airmass.ds-airmass .am-covin{max-width:540px;display:flex;flex-direction:column;gap:14px}
+.ds-airmass.ds-airmass .am-coveye{margin:0;font-size:13px;font-weight:700;color:var(--accent)}
+.ds-airmass.ds-airmass .am-covt{margin:0;font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.ds-airmass.ds-airmass .am-covs{margin:0;font-size:15px;line-height:1.65;color:var(--ink2)}
+.ds-airmass.ds-airmass .am-covl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.ds-airmass.ds-airmass .am-covl.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px}
+.ds-airmass.ds-airmass .am-covc{display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer}
+.ds-airmass.ds-airmass .am-covc:hover{border-color:var(--accent);color:var(--accent)}
+.ds-airmass.ds-airmass .am-covc:focus-visible,.ds-airmass.ds-airmass .am-covgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-airmass.ds-airmass .am-covn{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-airmass.ds-airmass .am-covgo{align-self:flex-start;padding:12px 20px;font-size:15px;margin-top:4px}
+.ds-airmass.ds-airmass .am-covh{margin:0;font-size:13px;color:var(--ink2)}
+.ds-airmass.ds-airmass.ds-airmass.am-covermode .am-hint,.ds-airmass.ds-airmass.ds-airmass.am-covermode .am-legend{visibility:hidden}
+@media (max-width:720px){
+  .ds-airmass.ds-airmass .am-cover{padding:20px 16px;background:rgba(247,249,251,.95)}
+  .ds-airmass.ds-airmass .am-covt{font-size:30px}
+  .ds-airmass.ds-airmass .am-covl,.ds-airmass.ds-airmass .am-covh{display:none}
+}
+
+/* 패널 머리 집 아이콘(10-30): 표지(처음 화면)로 */
+.ds-airmass.ds-airmass .am-homebtn{flex:none;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ds-airmass.ds-airmass .am-homebtn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-airmass.ds-airmass .am-homebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-airmass.ds-airmass .am-head-row{justify-content:flex-start;gap:10px}
+.ds-airmass.ds-airmass .am-head-row .am-posbtn{margin-left:auto}
 </style>
 
 <div class="am-stage">
-  <canvas class="am-cv" tabindex="0" role="img" aria-label="3D 지구 위 우리나라에 오는 기단. 끌어서 돌려 봅니다. 화살표 키로도 돌립니다."></canvas>
+  <div class="am-cover" hidden>
+    <div class="am-covin">
+      <p class="am-coveye">중학 사회 ② · 기후</p>
+      <p class="am-covt">기단과 장마 전선</p>
+      <p class="am-covs">성질이 다른 공기 덩어리인 기단이 우리나라의 날씨에 영향을 준다. 기단이 만나 전선이 생기고 장마 전선이 오르내리는 과정을 살펴본다.</p>
+      <div class="am-covl">
+        <button type="button" class="am-covc" data-view="mass"><b class="am-covn">1</b>우리나라에 오는 기단</button>
+        <button type="button" class="am-covc" data-view="front"><b class="am-covn">2</b>전선이 생기는 까닭</button>
+        <button type="button" class="am-covc" data-view="baiu"><b class="am-covn">3</b>장마 전선의 이동</button>
+      </div>
+      <button type="button" class="am-btn main am-covgo" data-view="mass">우리나라에 오는 기단부터 시작한다</button>
+      <p class="am-covh">패널의 「보기」에서 골라도 된다.</p>
+    </div>
+  </div>
+  <canvas class="am-cv" tabindex="0" role="img" aria-label="3D 지구 위 우리나라에 오는 기단. 끌어서 돌릴 수 있다. 화살표 키로도 돌린다."></canvas>
   <div class="am-views"></div>
 </div>
 
 <aside class="am-panel" aria-label="조작 패널">
   <div class="am-head">
     <div class="am-head-row">
+      <button type="button" class="am-homebtn" aria-label="처음 화면(표지)" title="처음 화면"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M4 11.2 12 4.5l8 6.7"/><path d="M6.5 9.6V19h11V9.6"/><path d="M10.2 19v-5h3.6v5"/></svg></button>
       <h2 class="am-ptitle">기단과 장마 전선</h2>
+      <button type="button" class="am-mini am-posbtn" aria-expanded="false">패널 위치</button>
       <button type="button" class="am-mini am-fold" aria-expanded="true">접기</button>
     </div>
-    <p class="am-src">중학 사회 ② · 기후</p>
-  </div>
-
-  <div class="am-body">
-    <section class="am-card">
-      <h3 class="am-h">조작</h3>
+    <div class="am-posbox" hidden>
       <div class="am-line2">
         <span class="am-sub">패널 위치</span>
         <div class="am-seg am-posseg" role="group" aria-label="패널 위치">
@@ -248,13 +424,20 @@
           <button type="button" class="am-segb" data-pos="float" aria-pressed="false">플로팅</button>
         </div>
       </div>
+    </div>
+    <p class="am-src">중학 사회 ② · 기후</p>
+  </div>
+
+  <div class="am-body">
+    <section class="am-card">
+      <h3 class="am-h">조작</h3>
       <span class="am-sub">보기</span>
       <div class="am-vlist" role="group" aria-label="보기">
         <button type="button" class="am-vbtn" data-view="mass" aria-pressed="true"><span class="am-vno">1</span>우리나라에 오는 기단</button>
         <button type="button" class="am-vbtn" data-view="front" aria-pressed="false"><span class="am-vno">2</span>전선이 생기는 까닭</button>
         <button type="button" class="am-vbtn" data-view="baiu" aria-pressed="false"><span class="am-vno">3</span>장마 전선의 이동</button>
       </div>
-      <label class="am-check"><input class="am-check-in am-flowbox" type="checkbox" checked>바람의 흐름을 알갱이로 보여 줍니다</label>
+      <label class="am-check am-onoffl"><input class="am-check-in am-flowbox" type="checkbox" checked>바람의 흐름을 알갱이로 보여 준다</label>
       <div class="am-line2">
         <span class="am-sub">3D 보기</span>
         <button type="button" class="am-mini am-resetview">처음 시점으로</button>
@@ -263,7 +446,7 @@
       <div class="am-vctl" data-for="mass">
         <span class="am-sub">계절</span>
         <div class="am-grid3 am-seasonbtns"></div>
-        <span class="am-sub">기단 (누르면 성질을 봅니다)</span>
+        <span class="am-sub">기단 (누르면 성질을 본다)</span>
         <div class="am-grid2 am-massbtns"></div>
       </div>
 
@@ -299,21 +482,21 @@
       <p class="am-note am-readnote"></p>
     </section>
 
-    <section class="am-card am-aux" data-for="mass">
-      <h3 class="am-h">기단의 성질은 발원지를 닮습니다</h3>
-      <p class="am-p">기단은 넓은 대륙이나 바다 위에 오래 머물며 그곳의 성질을 닮습니다. 대륙에서 생기면 건조하고 바다에서 생기면 습합니다. 고위도에서 생기면 차갑고 저위도에서 생기면 따뜻합니다.</p>
-    </section>
-    <section class="am-card am-aux am-off" data-for="front baiu">
-      <h3 class="am-h">전선과 전선성 강수</h3>
-      <p class="am-p">성질이 다른 두 기단이 만나는 경계를 전선이라고 합니다. 따뜻한 공기가 찬 공기 위로 올라가며 식어 구름과 비가 생기는데, 이를 전선성 강수라고 합니다.</p>
-      <p class="am-p">장마 전선은 두 기단의 힘이 비슷해 한곳에 오래 머무는 전선입니다.</p>
-    </section>
+    <details class="am-card am-aux am-fold" data-for="mass">
+      <summary class="am-csum">기단의 성질은 발원지를 닮는다</summary>
+      <p class="am-p">기단은 넓은 대륙이나 바다 위에 오래 머물며 그곳의 성질을 닮는다. 대륙에서 생기면 건조하고 바다에서 생기면 습하다. 고위도에서 생기면 차갑고 저위도에서 생기면 따뜻하다.</p>
+    </details>
+    <details class="am-card am-aux am-off am-fold" data-for="front baiu">
+      <summary class="am-csum">전선과 전선성 강수</summary>
+      <p class="am-p">성질이 다른 두 기단이 만나는 경계를 전선이라고 한다. 따뜻한 공기가 찬 공기 위로 올라가며 식어 구름과 비가 생기는데, 이를 전선성 강수라고 한다.</p>
+      <p class="am-p">장마 전선은 두 기단의 힘이 비슷해 한곳에 오래 머무는 전선이다.</p>
+    </details>
 
-    <section class="am-card">
-      <h3 class="am-h">확인 문제</h3>
+    <details class="am-card am-fold">
+      <summary class="am-csum">확인 문제</summary>
       <div class="am-qlist"></div>
-    </section>
-    <p class="am-credit">해안선 Natural Earth · 도시 기후 WMO 기후 평년값 · 기단과 전선의 위치는 모식도입니다</p>
+    </details>
+    <p class="am-credit">해안선 Natural Earth · 도시 기후 WMO 기후 평년값 · 기단과 전선의 위치는 모식도다</p>
   </div>
 </aside>
 
@@ -353,32 +536,32 @@
        원본 계절 설명의 「영동의 높새바람」은 「영서」로 고쳐 씀 */
     var MASSES = [
       { id: "sib", n: "시베리아 기단", at: [104, 51], cell: 0, src: "대륙 · 고위도", prop: "한랭 건조", when: "겨울", wx: "춥고 건조함",
-        eff: "겨울에 차고 건조한 북서 계절풍을 보내 한파를 몰고 옵니다. 추위가 사흘쯤 이어지다 풀리기를 되풀이하는 삼한사온이 나타나기도 합니다." },
+        eff: "겨울에 차고 건조한 북서 계절풍을 보내 한파를 몰고 온다. 추위가 사흘쯤 이어지다 풀리기를 되풀이하는 삼한사온이 나타나기도 한다." },
       { id: "okh", n: "오호츠크해 기단", at: [150, 53], cell: 2, src: "해양 · 고위도", prop: "한랭 다습", when: "초여름", wx: "서늘하고 습함",
-        eff: "초여름에 북태평양 기단과 만나 장마 전선을 만듭니다. 이 기단에서 부는 바람이 태백산맥을 넘으면 영서 지방에 덥고 건조한 높새바람이 붑니다." },
+        eff: "초여름에 북태평양 기단과 만나 장마 전선을 만든다. 이 기단에서 부는 바람이 태백산맥을 넘으면 영서 지방에 덥고 건조한 높새바람이 분다." },
       { id: "npa", n: "북태평양 기단", at: [158, 30], cell: 3, src: "해양 · 저위도", prop: "고온 다습", when: "한여름", wx: "무덥고 습함",
-        eff: "한여름에 우리나라를 덮어 무덥고 습한 날씨와 열대야를 가져옵니다. 초여름에는 오호츠크해 기단과 만나 장마 전선을 만듭니다." },
+        eff: "한여름에 우리나라를 덮어 무덥고 습한 날씨와 열대야를 가져온다. 초여름에는 오호츠크해 기단과 만나 장마 전선을 만든다." },
       { id: "equ", n: "적도 기단", at: [140, 9], cell: 3, src: "해양 · 저위도", prop: "고온 다습", when: "늦여름~가을", wx: "태풍 · 많은 비",
-        eff: "늦여름부터 가을 사이 덥고 습한 공기가 태풍과 함께 올라와 많은 비와 강한 바람을 몰고 옵니다." }
+        eff: "늦여름부터 가을 사이 덥고 습한 공기가 태풍과 함께 올라와 많은 비와 강한 바람을 몰고 온다." }
     ];
     var AM_CELLS = [["대륙", "한랭", "한랭 건조"], ["대륙", "온난", "고온 건조"], ["해양", "한랭", "한랭 다습"], ["해양", "온난", "고온 다습"]];
     var KOREA = [127.5, 36.6];
     var SEASON = [
-      { id: "all", n: "전체", act: [0, 1, 2, 3], wx: "—", t: "지도의 기단이나 패널의 기단 이름을 누르면 성질과 영향을 볼 수 있습니다." },
-      { id: "winter", n: "겨울", act: [0], wx: "춥고 건조함", t: "겨울에는 시베리아 기단이 차고 건조한 북서 계절풍을 보내 한파가 찾아옵니다." },
-      { id: "early", n: "초여름", act: [1, 2], wx: "장마", t: "초여름에는 오호츠크해 기단과 북태평양 기단이 만나 장마 전선이 생깁니다. 오호츠크해 기단에서 부는 바람이 태백산맥을 넘으면 영서 지방에 높새바람이 붑니다." },
-      { id: "summer", n: "한여름", act: [2], wx: "무덥고 습함", t: "한여름에는 북태평양 기단이 우리나라를 덮어 무덥고 습한 날씨와 열대야가 이어집니다." },
-      { id: "late", n: "늦여름~가을", act: [3, 2], wx: "태풍 · 많은 비", t: "늦여름부터 가을 사이에는 적도 기단의 덥고 습한 공기가 태풍과 함께 올라와 많은 비와 강한 바람을 몰고 옵니다." }
+      { id: "all", n: "전체", act: [0, 1, 2, 3], wx: "—", t: "지도의 기단이나 패널의 기단 이름을 누르면 성질과 영향을 볼 수 있다." },
+      { id: "winter", n: "겨울", act: [0], wx: "춥고 건조함", t: "겨울에는 시베리아 기단이 차고 건조한 북서 계절풍을 보내 한파가 찾아온다." },
+      { id: "early", n: "초여름", act: [1, 2], wx: "장마", t: "초여름에는 오호츠크해 기단과 북태평양 기단이 만나 장마 전선이 생긴다. 오호츠크해 기단에서 부는 바람이 태백산맥을 넘으면 영서 지방에 높새바람이 분다." },
+      { id: "summer", n: "한여름", act: [2], wx: "무덥고 습함", t: "한여름에는 북태평양 기단이 우리나라를 덮어 무덥고 습한 날씨와 열대야가 이어진다." },
+      { id: "late", n: "늦여름~가을", act: [3, 2], wx: "태풍 · 많은 비", t: "늦여름부터 가을 사이에는 적도 기단의 덥고 습한 공기가 태풍과 함께 올라와 많은 비와 강한 바람을 몰고 온다." }
     ];
 
     /* 전선 단면: 자료발췌/로직/기후/air-mass.js 의 FRONT_STEPS · FRONT_GEOM (600×360 → 이 무대에 맞게 늘림) */
     var FRONT_STEPS = ["두 기단", "다가감", "만남 — 전선", "따뜻한 공기 상승", "구름 · 비"];
     var FRONT_TXT = [
-      "성질이 다른 두 기단이 떨어져 있습니다.",
-      "두 기단이 서로 다가갑니다.",
-      "두 기단이 만나면 섞이지 않고 경계가 생깁니다. 이 경계를 전선이라고 합니다.",
-      "무거운 찬 공기는 아래로 파고들고, 가벼운 따뜻한 공기는 전선면을 따라 올라갑니다.",
-      "올라간 따뜻한 공기가 식어 구름이 생기고 비가 내립니다. 이를 전선성 강수라고 합니다."
+      "성질이 다른 두 기단이 떨어져 있다.",
+      "두 기단이 서로 다가간다.",
+      "두 기단이 만나면 섞이지 않고 경계가 생긴다. 이 경계를 전선이라고 한다.",
+      "무거운 찬 공기는 아래로 파고들고, 가벼운 따뜻한 공기는 전선면을 따라 올라간다.",
+      "올라간 따뜻한 공기가 식어 구름이 생기고 비가 내린다. 이를 전선성 강수라고 한다."
     ];
     var FRONT_READ = [
       ["떨어져 있음", "떨어져 있음", "맑음"],
@@ -390,9 +573,9 @@
 
     /* 장마 전선: 자료발췌/로직/기후/air-mass.js 의 BAIU · baiuLine (위치는 모식 값) */
     var BAIU = [
-      { n: "6월 하순", lat: 31, m: 5, rk: "장마가 남부 지방에서 시작됩니다" },
-      { n: "7월", lat: 36.5, m: 6, rk: "장마 전선이 중부 지방까지 올라옵니다" },
-      { n: "8월", lat: 42, m: 7, rk: "장마 전선이 북쪽으로 물러납니다" }
+      { n: "6월 하순", lat: 31, m: 5, rk: "장마가 남부 지방에서 시작된다" },
+      { n: "7월", lat: 36.5, m: 6, rk: "장마 전선이 중부 지방까지 올라온다" },
+      { n: "8월", lat: 42, m: 7, rk: "장마 전선이 북쪽으로 물러난다" }
     ];
     function baiuLine(lat) {
       var out = [];
@@ -403,51 +586,116 @@
     var QUIZ = [
       {
         title: "겨울의 기단",
-        q: "우리나라 겨울에 춥고 건조한 날씨를 가져오는 기단은 무엇일까요?",
+        q: "우리나라 겨울에 춥고 건조한 날씨를 가져오는 기단은 무엇일까?",
         opts: ["북태평양 기단", "시베리아 기단", "적도 기단"],
         ans: 1,
-        ok: "맞습니다. 시베리아 기단은 대륙의 고위도에서 생겨 차갑고 건조합니다. 겨울에 북서 계절풍을 보내 한파를 몰고 옵니다.",
-        no: "다시 생각해 보세요. 보기 1 「우리나라에 오는 기단」에서 「겨울」을 눌러 봅니다."
+        ok: "정답이다. 시베리아 기단은 대륙의 고위도에서 생겨 차갑고 건조하다. 겨울에 북서 계절풍을 보내 한파를 몰고 온다.",
+        no: "다시 생각해 보자. 보기 1 「우리나라에 오는 기단」에서 「겨울」을 눌러 본다."
       },
       {
         title: "전선에서 비가 오는 까닭",
-        q: "성질이 다른 두 기단이 만나는 전선에서 비가 내리는 까닭으로 알맞은 것은 무엇일까요?",
+        q: "성질이 다른 두 기단이 만나는 전선에서 비가 내리는 까닭으로 알맞은 것은 무엇일까?",
         opts: [
-          "따뜻한 공기가 찬 공기 위로 올라가며 식어 구름이 생기기 때문입니다.",
-          "찬 공기가 따뜻한 공기 위로 올라가기 때문입니다.",
-          "두 기단이 만나면 바람이 완전히 멈추기 때문입니다."
+          "따뜻한 공기가 찬 공기 위로 올라가며 식어 구름이 생기기 때문이다.",
+          "찬 공기가 따뜻한 공기 위로 올라가기 때문이다.",
+          "두 기단이 만나면 바람이 완전히 멈추기 때문이다."
         ],
         ans: 0,
-        ok: "맞습니다. 가벼운 따뜻한 공기가 무거운 찬 공기 위로 올라가면서 식어 구름과 비가 생깁니다. 이를 전선성 강수라고 합니다.",
-        no: "다시 생각해 보세요. 보기 2 「전선이 생기는 까닭」에서 4단계와 5단계를 살펴봅니다."
+        ok: "정답이다. 가벼운 따뜻한 공기가 무거운 찬 공기 위로 올라가면서 식어 구름과 비가 생긴다. 이를 전선성 강수라고 한다.",
+        no: "다시 생각해 보자. 보기 2 「전선이 생기는 까닭」에서 4단계와 5단계를 살펴본다."
       },
       {
         title: "장마 전선의 이동",
-        q: "초여름 장마 전선은 대체로 어느 쪽으로 움직일까요?",
-        opts: ["북쪽에서 남쪽으로 움직입니다.", "동쪽에서 서쪽으로 움직입니다.", "남쪽에서 북쪽으로 움직입니다."],
+        q: "초여름 장마 전선은 대체로 어느 쪽으로 움직일까?",
+        opts: ["북쪽에서 남쪽으로 움직인다.", "동쪽에서 서쪽으로 움직인다.", "남쪽에서 북쪽으로 움직인다."],
         ans: 2,
-        ok: "맞습니다. 장마 전선은 6월 하순 남부 지방에서 시작해 7월에 중부 지방까지 올라옵니다. 그래서 부산은 6월, 서울은 7월에 비가 더 많습니다.",
-        no: "다시 생각해 보세요. 보기 3 「장마 전선의 이동」에서 시기를 차례로 바꾸어 봅니다."
+        ok: "정답이다. 장마 전선은 6월 하순 남부 지방에서 시작해 7월에 중부 지방까지 올라온다. 그래서 부산은 6월, 서울은 7월에 비가 더 많다.",
+        no: "다시 생각해 보자. 보기 3 「장마 전선의 이동」에서 시기를 차례로 바꾸어 본다."
       },
       {
         title: "영서 지방의 높새바람",
-        q: "초여름에 오호츠크해 기단에서 부는 바람이 태백산맥을 넘으면, 덥고 건조한 높새바람이 부는 곳은 어디일까요?",
+        q: "초여름에 오호츠크해 기단에서 부는 바람이 태백산맥을 넘으면, 덥고 건조한 높새바람이 부는 곳은 어디일까?",
         opts: ["영동 지방", "영서 지방", "남해안 지방"],
         ans: 1,
-        ok: "맞습니다. 동쪽에서 온 바람이 태백산맥을 넘어 내려가면서 덥고 건조해집니다. 그래서 산맥 서쪽인 영서 지방에 높새바람이 붑니다.",
-        no: "다시 생각해 보세요. 보기 1 「우리나라에 오는 기단」에서 「초여름」을 눌러 설명을 읽어 봅니다."
+        ok: "정답이다. 동쪽에서 온 바람이 태백산맥을 넘어 내려가면서 덥고 건조해진다. 그래서 산맥 서쪽인 영서 지방에 높새바람이 분다.",
+        no: "다시 생각해 보자. 보기 1 「우리나라에 오는 기단」에서 「초여름」을 눌러 설명을 읽어 본다."
       },
       {
         title: "한여름의 무더위",
-        q: "한여름에 우리나라를 덮어 무덥고 습한 날씨와 열대야를 가져오는 기단은 무엇일까요?",
+        q: "한여름에 우리나라를 덮어 무덥고 습한 날씨와 열대야를 가져오는 기단은 무엇일까?",
         opts: ["오호츠크해 기단", "시베리아 기단", "북태평양 기단"],
         ans: 2,
-        ok: "맞습니다. 북태평양 기단은 저위도 바다에서 생겨 덥고 습합니다. 한여름에 우리나라를 덮으면 무더위와 열대야가 이어집니다.",
-        no: "다시 생각해 보세요. 보기 3 「장마 전선의 이동」에서 8월을 고르고 북태평양 기단이 어디까지 오는지 봅니다."
+        ok: "정답이다. 북태평양 기단은 저위도 바다에서 생겨 덥고 습하다. 한여름에 우리나라를 덮으면 무더위와 열대야가 이어진다.",
+        no: "다시 생각해 보자. 보기 3 「장마 전선의 이동」에서 8월을 고르고 북태평양 기단이 어디까지 오는지 본다."
       }
     ];
 
     function $(sel) { return root.querySelector(sel); }
+    /* 키보드(10-30): 「패널 위치」 상자는 Esc로 닫음 · 표지에서 고르면 초점을 그 보기 단추로 */
+    (function () {
+      var b = $(".am-posbtn"), box = $(".am-posbox");
+      if (b && box) [b, box].forEach(function (el) { el.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) { box.hidden = true; b.setAttribute("aria-expanded", "false"); b.focus(); e.preventDefault(); } }); });
+      var cv = $(".am-cover"); if (!cv) return;
+      Array.prototype.forEach.call(cv.querySelectorAll(".am-covc, .am-covgo"), function (c) { c.addEventListener("click", function () {
+        setTimeout(function () { var v = c.getAttribute("data-view"), t = (v && root.querySelector(".am-vbtn[data-view=\"" + v + "\"]")) || root.querySelector(".am-vbtn") || root.querySelector(".am-panel button"); if (t) t.focus(); }, 0);
+      }); });
+    })();
+    /* 속도 확인(10-30): 주소에 ?fps=1 을 붙이면 무대 오른쪽 아래에 초당 화면 수(최근 1초 · 최근 5초 최저)와 캔버스 크기를 띄움. 교실 PC · 전자칠판 확인용 */
+    (function () {
+      if (!/[?&]fps=1(&|$)/.test(location.search)) return;
+      var st = $(".am-stage") || root, box = document.createElement("div");
+      box.setAttribute("aria-hidden", "true");
+      box.style.cssText = "position:absolute;right:10px;bottom:10px;z-index:60;font:600 12px/1.4 Consolas,monospace;color:#fff;background:rgba(29,33,38,.8);padding:4px 8px;border-radius:6px;pointer-events:none";
+      box.textContent = "fps 재는 중";
+      st.appendChild(box);
+      var n = 0, t0 = performance.now(), hist = [];
+      function f(t) {
+        n++;
+        if (t - t0 >= 1000) {
+          var fps = Math.round(n * 1000 / (t - t0)), cv = root.querySelector("canvas");
+          hist.push(fps); if (hist.length > 5) hist.shift();
+          box.textContent = fps + " fps · 5초 최저 " + Math.min.apply(null, hist) + (cv ? " · " + cv.width + "×" + cv.height : "");
+          n = 0; t0 = t;
+        }
+        requestAnimationFrame(f);
+      }
+      requestAnimationFrame(f);
+    })();
+
+    /* 업그레이드(10-29): 설명 카드의 핵심 낱말을 파란 굵은 글씨로(예시처럼). 글이 바뀌면 낱말마다 처음 한 번만 <b>로 감쌈.
+       innerHTML 없이 글 조각 · 요소를 만들어 넣음. 이미 감싼 글이면 건드리지 않음(감시가 되풀이되지 않게) */
+    (function () {
+      var W = ["오호츠크해 기단", "북태평양 기단", "시베리아 기단", "양쯔강 기단", "전선성 강수", "장마 전선", "적도 기단", "전선", "장마", "기단"], el = $(".am-rt"); if (!el || !window.MutationObserver) return;
+      var re = new RegExp("(" + W.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+      function mark() {
+        if (el.querySelector(".am-term")) return;
+        var s = el.textContent; if (!s) return; re.lastIndex = 0; if (!re.test(s)) return;
+        var seen = {}, parts = s.split(re), frag = document.createDocumentFragment();
+        parts.forEach(function (t, i) { if (!t) return; if (i % 2 === 1 && !seen[t]) { seen[t] = 1; var b = document.createElement("b"); b.className = "am-term"; b.textContent = t; frag.appendChild(b); } else frag.appendChild(document.createTextNode(t)); });
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(frag);
+      }
+      new MutationObserver(mark).observe(el, { childList: true, characterData: true, subtree: true });
+      mark();
+    })();
+
+    /* 표지(10-30): 처음 열 때(주소에 보기 · 값 지정이 없을 때) 무대에 표지. 카드 · 시작 단추 · 패널 보기 단추를 누르면 닫힘, 머리 「처음 화면」으로 다시 엶 */
+    (function () {
+      var cv = $(".am-cover"), hb = $(".am-homebtn"); if (!cv) return;
+      function show(on) { cv.hidden = !on; root.classList.toggle("am-covermode", on); }
+      function pick(v) { show(false); if (!v) return; var b = root.querySelector(".am-vbtn[data-view=\"" + v + "\"]"); if (b) b.click(); }
+      Array.prototype.forEach.call(cv.querySelectorAll(".am-covc, .am-covgo"), function (b) { b.addEventListener("click", function () { pick(b.getAttribute("data-view")); }); });
+      Array.prototype.forEach.call(root.querySelectorAll(".am-vbtn"), function (b) { b.addEventListener("click", function () { show(false); }); });
+      if (hb) hb.addEventListener("click", function () { show(true); var f = cv.querySelector(".am-covgo"); if (f) f.focus(); });
+      var q = location.search.replace(/[?&]panel=[^&]*/g, "").replace(/^[?&]+/, ""); if (!q) show(true);
+    })();
+
+    /* 컴퓨터 화면 손질(10-29): 패널 머리 「패널 위치」 단추로 위치 고르기 상자를 펼치고 닫음 */
+    (function () {
+      var b = $(".am-posbtn"), box = $(".am-posbox"); if (!b || !box) return;
+      b.addEventListener("click", function () { var o = box.hidden; box.hidden = !o; b.setAttribute("aria-expanded", o ? "true" : "false"); });
+      Array.prototype.forEach.call(box.querySelectorAll(".am-segb"), function (x) { x.addEventListener("click", function () { box.hidden = true; b.setAttribute("aria-expanded", "false"); }); });
+    })();
     function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
     function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
     function S(tag, at, parent, text) {
@@ -770,7 +1018,7 @@
       S("text", { x: 640, y: 380, "class": "am-small" }, side, "대륙 → 건조 · 해양 → 습함");
       S("text", { x: 640, y: 400, "class": "am-small" }, side, "고위도 → 한랭 · 저위도 → 온난");
       var expl = S("text", { x: 640, y: 450, "class": "am-expl" }, side, "");
-      var NOTE1 = "기단의 위치와 크기, 화살표는 모식도입니다.", NOTE2 = "지구의 기단을 누르면 성질 표에서 그 칸이 진해집니다.";
+      var NOTE1 = "기단의 위치와 크기, 화살표는 모식도다.", NOTE2 = "지구의 기단을 누르면 성질 표에서 그 칸이 진해진다.";
       var noteA = S("text", { x: 20, "class": "am-small" }, svg, ""), noteB = S("text", { x: 20, "class": "am-small" }, svg, "");
 
       var M = { svg: svg, G: G, box: [20, 46, 580, 470], season: 0, sel: -1, flow: 0, polys: [], narrow: null };
@@ -788,7 +1036,7 @@
         /* 성질 표: 기단을 고르면 그 칸, 계절만 고르면 그 계절 기단의 칸만 진하게(1차본은 네 칸이 모두 진했음) */
         var lit = M.sel >= 0 ? [MASSES[M.sel].cell] : s.act.map(function (i) { return MASSES[i].cell; });
         cells.forEach(function (g, i) { g.setAttribute("class", "am-cellg" + (lit.indexOf(i) < 0 ? " dim" : M.sel >= 0 ? " on" : "")); });
-        sub.textContent = s.id === "all" ? "기단을 누르거나 계절을 골라 봅니다" : s.n + " · " + s.act.map(function (i) { return MASSES[i].n; }).join(" · ");
+        sub.textContent = s.id === "all" ? "기단을 누르거나 계절을 골라 본다" : s.n + " · " + s.act.map(function (i) { return MASSES[i].n; }).join(" · ");
         expl.textContent = M.sel >= 0 ? MASSES[M.sel].n + " · " + MASSES[M.sel].prop : s.id === "all" ? "" : s.n + " · " + s.wx;
         $$(".am-seasonbtns .am-btn").forEach(function (b, i) { b.setAttribute("aria-pressed", i === M.season ? "true" : "false"); });
         $$(".am-massbtns .am-btn").forEach(function (b, i) { b.setAttribute("aria-pressed", i === M.sel ? "true" : "false"); });
@@ -832,7 +1080,7 @@
         var kp = G.P(KOREA[0], KOREA[1], 1.004);
         if (kp[2]) { dot(kp, 7, "#212529", "#fff"); ctext("우리나라", kp[0] - 12 * TS, kp[1], { align: "right", bold: true, size: 14 }); }
         ctx.restore();
-        ctext("끌어서 돌려 봅니다 · 기단을 누르면 성질을 봅니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+        ctext("끌어서 돌리기 · 기단을 누르면 성질을 본다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
       };
       M.hit = function (x, y) {
         for (var k = M.polys.length - 1; k >= 0; k--) if (inPoly(x, y, M.polys[k].ps)) return { mass: M.polys[k].i };
@@ -857,7 +1105,7 @@
         return r;
       });
       var expl = S("text", { x: 60, y: 548, "class": "am-expl" }, svg, "");
-      S("text", { x: 60, y: 590, "class": "am-small" }, svg, "공기의 움직임과 기온은 예시 모형입니다. 빈 곳을 끌면 돌려 봅니다.");
+      S("text", { x: 60, y: 590, "class": "am-small" }, svg, "공기의 움직임과 기온은 예시 모형이다. 빈 곳을 끌면 돌아간다.");
 
       var Fr = { svg: svg, box: [20, 46, 960, 400], step: 4, play: false, acc: 0, k: 0, yaw: -14, pitch: 14 };
       Fr.set = function (i) {
@@ -952,9 +1200,9 @@
           fw(); fc();
           var lw = P3((wx[0] + wx[1]) / 2, 0.95, 0), lc = P3((cx[0] + cx[1]) / 2, 0.95, 0), sw = P3((wx[0] + wx[1]) / 2, 0.68, 0), sc2 = P3((cx[0] + cx[1]) / 2, 0.68, 0);
           ctext("따뜻한 공기", lw[0], lw[1], { align: "center", bold: true, size: 20, color: "#fff", halo: 0 });
-          ctext("가볍고 습합니다", sw[0], sw[1], { align: "center", size: 14, color: "#fff", halo: 0 });
+          ctext("가볍고 습하다", sw[0], sw[1], { align: "center", size: 14, color: "#fff", halo: 0 });
           ctext("찬 공기", lc[0], lc[1], { align: "center", bold: true, size: 20, color: "#fff", halo: 0 });
-          ctext("무겁고 차갑습니다", sc2[0], sc2[1], { align: "center", size: 14, color: "#fff", halo: 0 });
+          ctext("무겁고 차갑다", sc2[0], sc2[1], { align: "center", size: 14, color: "#fff", halo: 0 });
           if (st === 1) {
             arrow3([wx[1] - 0.5, 1.9, 0.6], [wx[1] + 0.05, 1.9, 0.6], "#343a40", 5);
             arrow3([cx[0] + 0.5, 1.9, 0.6], [cx[0] - 0.05, 1.9, 0.6], "#343a40", 5);
@@ -1032,7 +1280,7 @@
       var BX0 = 660, BX1 = 975, BY0 = 120, BY1 = 400, MX = 450;
       function py(v) { return BY1 - v / MX * (BY1 - BY0); }
       S("text", { x: 620, y: 66, "class": "am-tsub" }, side, "월강수량(mm) · 서울과 부산");
-      var chart = S("g", { "class": "am-focus am-hit", tabindex: "0", role: "slider", "aria-label": "월강수량 그래프. 왼쪽·오른쪽 화살표로 시기를 고릅니다", "aria-valuemin": "1", "aria-valuemax": "3" }, side);
+      var chart = S("g", { "class": "am-focus am-hit", tabindex: "0", role: "slider", "aria-label": "월강수량 그래프. 왼쪽·오른쪽 화살표로 시기를 고른다", "aria-valuemin": "1", "aria-valuemax": "3" }, side);
       S("rect", { x: BX0 - 44, y: BY0 - 34, width: BX1 - BX0 + 52, height: BY1 - BY0 + 64, rx: 8, "class": "am-ring" }, chart);
       for (var v = 0; v <= 400; v += 100) {
         S("line", { x1: BX0, x2: BX1, y1: f1(py(v)), y2: f1(py(v)), "class": v === 0 ? "am-axis" : "am-grid" }, chart);
@@ -1066,7 +1314,7 @@
         return r;
       });
       var expl = S("text", { x: 60, y: 580, "class": "am-expl" }, foot, "");
-      S("text", { x: 60, y: 612, "class": "am-small" }, foot, "전선과 기단의 위치는 모식도입니다. 도시 강수량은 WMO 기후 평년값입니다.");
+      S("text", { x: 60, y: 612, "class": "am-small" }, foot, "전선과 기단의 위치는 모식도다. 도시 강수량은 WMO 기후 평년값이다.");
 
       var B = { svg: svg, G: G, box: [20, 46, 580, 440], stage: 1, lat: BAIU[1].lat, play: false, acc: 0, rain: 0, tw: null, narrow: null };
       /* 넓은 무대: 지구 왼쪽 · 그래프 오른쪽(1000×640). 좁은 무대: 지구 위 · 그래프 아래 · 시기 띠 맨 아래(620×1040) */
@@ -1159,7 +1407,7 @@
           ctext(c.kr + (wet ? " · 비" : ""), p2[0] - 12 * TS, ly, { align: "right", bold: true, size: 14, color: wet ? "#1864ab" : "#1d2126", pill: true, pillColor: wet ? "rgba(231,245,255,.95)" : null });
         });
         ctx.restore();
-        ctext("끌어서 돌려 봅니다 · 파란 띠 아래 도시에 비가 옵니다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
+        ctext("끌어서 돌리기 · 파란 띠 아래 도시에 비가 온다", rect.x + 12, rect.y + 16, { size: 12, color: "#5b636d" });
       };
       B.hit = function () { return "rot"; };
       B.turn = function (dx, dy) { G.turn(-dx * 0.1, dy * 0.1); };
@@ -1231,10 +1479,10 @@
         stat(2, "성질", s.id === "all" ? "기단마다 다름" : props.join(" · "));
         stat(3, "날씨", s.wx);
         elRes.className = "am-result" + (s.id === "winter" ? " mild" : s.id === "all" ? "" : " hot");
-        elRk.textContent = s.id === "all" ? "기단을 하나 골라 봅니다" : s.n + "의 기단";
+        elRk.textContent = s.id === "all" ? "기단을 하나 골라 본다" : s.n + "의 기단";
         elRt.textContent = s.t;
       }
-      setText(elNote, "기단의 위치와 화살표는 모식도입니다.");
+      setText(elNote, "기단의 위치와 화살표는 모식도다.");
     }
     function readFront() {
       var r = FRONT_READ[front.step];
@@ -1244,7 +1492,7 @@
       elRes.className = "am-result" + (front.step >= 3 ? " mild" : "");
       elRk.textContent = FRONT_STEPS[front.step];
       elRt.textContent = FRONT_TXT[front.step];
-      setText(elNote, "공기의 움직임과 기온은 예시 모형입니다.");
+      setText(elNote, "공기의 움직임과 기온은 예시 모형이다.");
     }
     function readBaiu() {
       var b = BAIU[baiu.stage], s = C("Seoul"), u = C("Busan");
@@ -1254,12 +1502,12 @@
       elRes.className = "am-result " + (baiu.stage === 2 ? "hot" : "mild");
       elRk.textContent = b.rk;
       elRt.textContent = baiu.stage === 0
-        ? "초여름에 차고 습한 오호츠크해 기단과 덥고 습한 북태평양 기단이 만나 장마 전선이 생깁니다. 6월 하순에는 전선이 남부 지방에 걸려 부산의 6월 강수량(" + mm(u.p[5]) + ")이 서울(" + mm(s.p[5]) + ")보다 많습니다."
+        ? "초여름에 차고 습한 오호츠크해 기단과 덥고 습한 북태평양 기단이 만나 장마 전선이 생긴다. 6월 하순에는 전선이 남부 지방에 걸려 부산의 6월 강수량(" + mm(u.p[5]) + ")이 서울(" + mm(s.p[5]) + ")보다 많다."
         : baiu.stage === 1
-          ? "북태평양 기단이 힘을 키우면서 전선이 북쪽으로 밀려 올라갑니다. 7월에는 서울의 강수량이 " + mm(s.p[6]) + "로 1년 중 가장 많습니다."
-          : "8월에는 북태평양 기단이 우리나라를 덮어 무더위가 이어집니다. 장마가 끝난 뒤에도 소나기나 태풍으로 비가 많이 내립니다.";
+          ? "북태평양 기단이 힘을 키우면서 전선이 북쪽으로 밀려 올라간다. 7월에는 서울의 강수량이 " + mm(s.p[6]) + "로 1년 중 가장 많다."
+          : "8월에는 북태평양 기단이 우리나라를 덮어 무더위가 이어진다. 장마가 끝난 뒤에도 소나기나 태풍으로 비가 많이 내린다.";
       var wet = CITIES.filter(function (c) { return baiu.raining(c); }).map(function (c) { return c.kr; });
-      setText(elNote, "지금 비구름 띠 아래: " + (wet.length ? wet.join(" · ") : "없음") + ". 도시 강수량은 WMO 기후 평년값입니다. 전선 위치는 모식 값입니다.");
+      setText(elNote, "지금 비구름 띠 아래: " + (wet.length ? wet.join(" · ") : "없음") + ". 도시 강수량은 WMO 기후 평년값이다. 전선 위치는 모식 값이다.");
     }
 
     /* ================= 애니메이션 ================= */
@@ -1290,9 +1538,9 @@
       vctls.forEach(function (c) { c.classList.toggle("am-off", c.getAttribute("data-for") !== v); });
       auxs.forEach(function (c) { c.classList.toggle("am-off", c.getAttribute("data-for").split(" ").indexOf(v) < 0); });
       if (v === "mass") readMass(); else if (v === "front") readFront(); else readBaiu();
-      cv.setAttribute("aria-label", v === "mass" ? "3D 지구 위 우리나라에 오는 기단. 기단을 누르면 성질을 봅니다. 끌어서 돌려 봅니다."
-        : v === "front" ? "따뜻한 공기와 찬 공기가 만나는 전선의 3D 단면. 끌어서 돌려 봅니다."
-        : "3D 지구 위 장마 전선과 비구름 띠, 서울과 부산. 끌어서 돌려 봅니다.");
+      cv.setAttribute("aria-label", v === "mass" ? "3D 지구 위 우리나라에 오는 기단. 기단을 누르면 성질을 본다. 끌어서 돌릴 수 있다."
+        : v === "front" ? "따뜻한 공기와 찬 공기가 만나는 전선의 3D 단면. 끌어서 돌릴 수 있다."
+        : "3D 지구 위 장마 전선과 비구름 띠, 서울과 부산. 끌어서 돌릴 수 있다.");
       requestRender();
       kick();
     }

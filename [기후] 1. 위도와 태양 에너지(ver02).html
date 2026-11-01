@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>위도와 태양 에너지 (ver01)</title>
+<title>위도와 태양 에너지 (ver02)</title>
 <style>.ds-page{margin:0}</style>
 </head>
 <body class="ds-page" style="margin:0">
@@ -34,11 +34,9 @@
 .ds-lat-energy .le-sw{display:inline-block;width:14px;height:10px;border-radius:3px}
 .ds-lat-energy .le-sw.foot{background:#ff9f1a}
 .ds-lat-energy .le-sw.flow{height:0;border-top:3px dashed #ff8a3d;border-radius:0;width:18px}
-.ds-lat-energy .le-sw.ocean{height:0;border-top:3px solid #ff3b5c;border-radius:0;width:18px}
 .ds-lat-energy .le-sw.sur{background:#e9925f}
 .ds-lat-energy .le-sw.def{background:#5f97e6}
 .ds-lat-energy.le-noflow .le-lgi.flow,
-.ds-lat-energy.le-noocean .le-lgi.ocean,
 .ds-lat-energy.le-nobeam .le-lgi.foot,
 .ds-lat-energy.le-nozone .le-lgi.zone{display:none}
 
@@ -196,36 +194,227 @@
   .ds-lat-energy .le-panel,
   .ds-lat-energy.le-pos-left .le-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
 }
+
+/* ===== 양식 맞춤(10-28): 출판사 예시 t1-u5-metro와 같은 모양 ===== */
+.ds-lat-energy.ds-lat-energy{--bg:#f6f5f1;--panel:#fff;--card:#fff;--accent-soft:#e6efff;font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+.ds-lat-energy.ds-lat-energy .le-panel{background:#fff}
+.ds-lat-energy.ds-lat-energy .le-head{background:#fff;padding:14px 16px 12px}
+.ds-lat-energy.ds-lat-energy .le-body{gap:18px;padding:16px}
+.ds-lat-energy.ds-lat-energy .le-card{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px}
+.ds-lat-energy.ds-lat-energy .le-h,.ds-lat-energy.ds-lat-energy .le-csum,.ds-lat-energy.ds-lat-energy .le-extra > .le-sum{font-size:14px;font-weight:700;color:var(--ink)}
+.ds-lat-energy.ds-lat-energy .le-h::before,.ds-lat-energy.ds-lat-energy .le-csum::before{content:none;display:none}
+.ds-lat-energy.ds-lat-energy .le-csum::after{content:"›";font-size:16px;line-height:1;transform:rotate(90deg)}
+.ds-lat-energy.ds-lat-energy .le-readcard:not([open]) > .le-csum::after,.ds-lat-energy.ds-lat-energy .le-extra:not([open]) > .le-csum::after{transform:none}
+.ds-lat-energy.ds-lat-energy .le-sub{font-size:13px;font-weight:400;color:var(--ink2)}
+.ds-lat-energy.ds-lat-energy .le-hint,.ds-lat-energy.ds-lat-energy .le-hint2{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-lat-energy.ds-lat-energy .le-note,.ds-lat-energy.ds-lat-energy .le-readnote{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-lat-energy.ds-lat-energy .le-p,.ds-lat-energy.ds-lat-energy .le-place,.ds-lat-energy.ds-lat-energy .le-mdesc{font-size:13.5px;line-height:1.6}
+.ds-lat-energy.ds-lat-energy .le-place{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.ds-lat-energy.ds-lat-energy .le-mterm{font-size:13.5px}
+/* 붙은 탭 모양 선택 단추: 고른 것은 연한 파랑 바탕 · 파란 굵은 글씨 */
+.ds-lat-energy.ds-lat-energy .le-seg{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-lat-energy.ds-lat-energy .le-segb{font-size:13.5px;padding:7px 6px;background:#fff;color:var(--ink2)}
+.ds-lat-energy.ds-lat-energy .le-segb:hover{background:#f6f5f1}
+.ds-lat-energy.ds-lat-energy .le-seg .le-segb[aria-pressed="true"],.ds-lat-energy.ds-lat-energy .le-segb[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ds-lat-energy.ds-lat-energy .le-stages{gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-lat-energy.ds-lat-energy .le-stg{border:0;border-radius:0;font-size:13.5px;padding:7px 2px;color:var(--ink2);background:#fff}
+.ds-lat-energy.ds-lat-energy .le-stg + .le-stg{border-left:1px solid var(--line)}
+.ds-lat-energy.ds-lat-energy .le-stg[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--line)}
+.ds-lat-energy.ds-lat-energy .le-stb[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-stb[aria-pressed="true"] .le-sts{color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-vbtn{border-radius:8px;font-size:14px;padding:8px 10px}
+/* 단추 */
+.ds-lat-energy.ds-lat-energy .le-btn{font-size:14px;padding:8px 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:none}
+.ds-lat-energy.ds-lat-energy .le-btn:hover{background:#f1f0eb}
+.ds-lat-energy.ds-lat-energy .le-btn.main{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:none}
+.ds-lat-energy.ds-lat-energy .le-btn.main:hover{background:var(--accent);filter:brightness(1.05)}
+.ds-lat-energy.ds-lat-energy .le-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--line);color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-prow .le-play,.ds-lat-energy.ds-lat-energy .le-row .le-play{flex:1 1 0;width:auto;letter-spacing:0;font-size:14px}
+.ds-lat-energy.ds-lat-energy .le-play::before{content:"";flex:none;width:0;height:0;margin-right:2px;border-left:10px solid currentColor;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.ds-lat-energy.ds-lat-energy .le-play:not([aria-label])::before{content:none}
+.ds-lat-energy.ds-lat-energy .le-play[aria-label="멈춤"]::before{width:3px;height:12px;border:0;border-left:3px solid currentColor;border-right:3px solid currentColor}
+.ds-lat-energy.ds-lat-energy .le-reset::before{content:"↻";flex:none;font-size:16px;line-height:1}
+.ds-lat-energy.ds-lat-energy .le-reset{flex:1 1 0}
+.ds-lat-energy.ds-lat-energy .le-mini{border-radius:8px;font-size:12.5px;padding:3px 10px}
+/* 켜기/끄기는 스위치: 글자 왼쪽 · 스위치 오른쪽 */
+.ds-lat-energy.ds-lat-energy .le-onoff{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;font-size:14px;font-weight:400;padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--ink)}
+.ds-lat-energy.ds-lat-energy .le-onoff:hover,.ds-lat-energy.ds-lat-energy .le-onoff[aria-pressed="true"]{background:transparent;color:var(--ink);font-weight:400;border:0}
+.ds-lat-energy.ds-lat-energy .le-onoff::after{content:"";flex:none;width:36px;height:20px;border-radius:999px;background:#d6d3cb radial-gradient(circle at 10px 10px,#fff 7px,transparent 7.5px);transition:background-position .15s}
+.ds-lat-energy.ds-lat-energy .le-onoff[aria-pressed="true"]::after{background:var(--accent) radial-gradient(circle at 26px 10px,#fff 7px,transparent 7.5px)}
+.ds-lat-energy.ds-lat-energy .le-onoff:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-lat-energy.ds-lat-energy .le-row:has(> .le-onoff){flex-direction:column;gap:2px}
+.ds-lat-energy.ds-lat-energy .le-onoffl{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding:2px 0;user-select:none}
+.ds-lat-energy.ds-lat-energy .le-onoffl .le-check-in{-webkit-appearance:none;appearance:none;width:36px;height:20px;margin:0;border-radius:999px;background:#d6d3cb;position:relative;cursor:pointer;flex:none;transition:background .15s}
+.ds-lat-energy.ds-lat-energy .le-onoffl .le-check-in::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.ds-lat-energy.ds-lat-energy .le-onoffl .le-check-in:checked{background:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-onoffl .le-check-in:checked::after{transform:translateX(16px)}
+.ds-lat-energy.ds-lat-energy .le-onoffl .le-check-in:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 값은 「이름 … 값」 목록 */
+.ds-lat-energy.ds-lat-energy .le-stats{display:grid;grid-template-columns:1fr;gap:4px}
+.ds-lat-energy.ds-lat-energy .le-stat,.ds-lat-energy.ds-lat-energy .le-mrow{display:flex;flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;background:transparent;border:0;border-radius:0;padding:0}
+.ds-lat-energy.ds-lat-energy .le-k{font-size:14px;color:var(--ink2);line-height:1.5}
+.ds-lat-energy.ds-lat-energy .le-v{font-size:14px;font-weight:700;line-height:1.5;text-align:right;font-variant-numeric:tabular-nums}
+/* 설명은 연한 베이지 카드 */
+.ds-lat-energy.ds-lat-energy.ds-lat-energy .le-result{border:1px solid var(--line);border-left:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fcfbf8;gap:6px}
+.ds-lat-energy.ds-lat-energy .le-rk{font-size:16px;line-height:1.4}
+.ds-lat-energy.ds-lat-energy .le-rt{font-size:14px;line-height:1.6;color:var(--ink)}
+.ds-lat-energy.ds-lat-energy .le-range,.ds-lat-energy.ds-lat-energy .le-trange{accent-color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-rv{font-size:13px;font-weight:600;color:var(--ink)}
+/* 완성도(10-29): 2 · 3칸 격자 단추가 넓어진 여백 때문에 칸 밖으로 넘치던 것 */
+.ds-lat-energy.ds-lat-energy .le-grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ds-lat-energy.ds-lat-energy .le-grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-lat-energy.ds-lat-energy .le-grid2 .le-btn,.ds-lat-energy.ds-lat-energy .le-grid3 .le-btn{min-width:0;padding:7px 4px;white-space:normal;line-height:1.3}
+/* 완성도(10-29): 「이름표 + 선택 단추」 한 줄이 좁으면 이름표가 줄바꿈(하천 「살펴볼 곳에서 자르기」가 3px 넘치던 것) */
+.ds-lat-energy.ds-lat-energy .le-line2 > .le-sub{min-width:0}
+.ds-lat-energy.ds-lat-energy .le-line2 .le-seg{min-width:0}
+.ds-lat-energy.ds-lat-energy .le-segb{min-width:0;padding-left:4px;padding-right:4px}
+/* 업그레이드(10-29): 단계 단추 이름 · 무대 위 단계 표시 */
+.ds-lat-energy.ds-lat-energy .le-stg{font-size:13px;line-height:1.25;padding:7px 2px;word-break:keep-all}
+.ds-lat-energy.ds-lat-energy .le-hud{margin:3px 0 0;font-size:15px;font-weight:700;color:var(--accent);line-height:1.3}
+.ds-lat-energy.ds-lat-energy .le-hud[hidden]{display:none}
+/* 휴대폰(10-29): 기후 「산을 넘는 바람」처럼 폭이 꽉 찬 그래프는 좁은 배치에서 글자만 키움 */
+.ds-lat-energy.ds-lat-energy .le-narbump .le-tick,.ds-lat-energy.ds-lat-energy .le-narbump .le-rht,.ds-lat-energy.ds-lat-energy .le-narbump .le-ptv,.ds-lat-energy.ds-lat-energy .le-narbump .le-tsub{font-size:19px}
+.ds-lat-energy.ds-lat-energy .le-narbump .le-small{font-size:15px}
+/* 업그레이드(10-29): 설명 카드의 핵심 낱말(예시의 파란 굵은 낱말) */
+.ds-lat-energy.ds-lat-energy .le-term{color:var(--accent);font-weight:700}
+/* 업그레이드(10-29): 휴대폰 폭 — 패널은 늘 무대 아래라 패널 위치 고르기는 숨김, 무대 안내 말풍선은 숨김(제목 · 설명을 가림),
+   확인 문제 카드가 무대보다 길면 무대 안에서 스크롤 */
+@media (max-width:560px){
+  .ds-lat-energy.ds-lat-energy .le-toast{display:none}
+  .ds-lat-energy.ds-lat-energy .le-line2:has(> .le-posseg),.ds-lat-energy.ds-lat-energy .le-hmi.le-gear{display:none}
+  .ds-lat-energy.ds-lat-energy .le-title{font-size:17px}
+  .ds-lat-energy.ds-lat-energy .le-hud{font-size:14px}
+  .ds-lat-energy.ds-lat-energy .le-guide{font-size:13px}
+  .ds-lat-energy.ds-lat-energy .le-cap{max-width:calc(100% - 160px)}
+  .ds-lat-energy.ds-lat-energy .le-quiz{align-items:flex-start;overflow-y:auto;padding:10px}
+  .ds-lat-energy.ds-lat-energy .le-qcard{padding:14px 14px 12px}
+  .ds-lat-energy.ds-lat-energy .le-body{padding:14px 14px 18px;gap:16px}
+  /* 휴대폰(10-29): 무대 · 패널을 한 화면에 나누지 않고 위아래로 이어 페이지가 스크롤. 무대는 폭에 비례해 길게(기후 1.5배 · 지형 1.25배) */
+  .ds-lat-energy.ds-lat-energy.ds-lat-energy{height:auto;min-height:0;grid-template-rows:auto auto}
+  .ds-lat-energy.ds-lat-energy .le-stage{height:min(150vw,88vh)}
+  .ds-lat-energy.ds-lat-energy .le-panel{max-height:none;overflow:visible}
+}
+/* 완성도(10-29): 키보드로 옮겨 갔을 때 어디인지 보이게 */
+.ds-lat-energy.ds-lat-energy .le-segb:focus-visible,.ds-lat-energy.ds-lat-energy .le-stg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ds-lat-energy.ds-lat-energy .le-btn:focus-visible,.ds-lat-energy.ds-lat-energy .le-vbtn:focus-visible,.ds-lat-energy.ds-lat-energy .le-mini:focus-visible,.ds-lat-energy.ds-lat-energy .le-toci:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== 컴퓨터 화면 손질(10-29) ===== */
+/* A2 시점 되돌리기(작은 단추)에는 재생용 ↻ 아이콘을 붙이지 않음 */
+.ds-lat-energy.ds-lat-energy .le-mini.le-reset::before{content:none}
+/* A3 색 견본이 있는 스위치(대지형 「보이는 대지형」)도 이름은 왼쪽, 스위치는 오른쪽 끝 */
+.ds-lat-energy.ds-lat-energy .le-onoff{justify-content:flex-start}
+.ds-lat-energy.ds-lat-energy .le-onoff::after{margin-left:auto}
+/* A5 표지 뒤 무대(단면 그래프 등)가 또렷하게 비치지 않게 */
+.ds-lat-energy.ds-lat-energy .le-cover{background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.8) 100%)}
+/* A6 위도와 태양 에너지: 그래프 칸을 넓혀 눈금 글자를 키움(좁은 쌓기 배치는 그대로) */
+.ds-lat-energy.ds-lat-energy .le-stage:not(.le-gstack) .le-gwrap{width:clamp(300px,42%,640px)}
+/* B7 접는 카드(기후 설명 · 확인 문제) */
+.ds-lat-energy.ds-lat-energy .le-csum{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.ds-lat-energy.ds-lat-energy .le-csum::-webkit-details-marker{display:none}
+.ds-lat-energy.ds-lat-energy .le-csum::after{margin-left:auto}
+.ds-lat-energy.ds-lat-energy .le-fold:not([open]) > .le-csum::after{transform:none}
+.ds-lat-energy.ds-lat-energy .le-fold[open] > .le-csum{margin-bottom:6px}
+/* B8 기후 「패널 위치」는 패널 머리 단추 → 아래로 펼침 */
+.ds-lat-energy.ds-lat-energy .le-head-row .le-ptitle{flex:1;min-width:0}
+.ds-lat-energy.ds-lat-energy .le-posbtn[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-posbox{padding-top:8px}
+.ds-lat-energy.ds-lat-energy .le-posbox[hidden]{display:none}
+/* B9 프로젝터 · 큰 모니터(1600px 이상): 패널을 1.15배로(폭 368px) */
+@media (min-width:1600px){
+  .ds-lat-energy.ds-lat-energy.ds-lat-energy.le-pos-right:not(.le-collapsed):not(.le-quizmode){grid-template-columns:minmax(0,1fr) 368px}
+  .ds-lat-energy.ds-lat-energy.ds-lat-energy.le-pos-left:not(.le-collapsed):not(.le-quizmode){grid-template-columns:368px minmax(0,1fr)}
+  .ds-lat-energy.ds-lat-energy.ds-lat-energy.le-quizmode.le-pos-right{grid-template-columns:minmax(0,1fr) 276px}
+  .ds-lat-energy.ds-lat-energy.ds-lat-energy.le-quizmode.le-pos-left{grid-template-columns:276px minmax(0,1fr)}
+  .ds-lat-energy.ds-lat-energy .le-panel{zoom:1.15}
+}
+@media (max-width:560px){
+  .ds-lat-energy.ds-lat-energy .le-posbtn{display:none}
+}
+
+/* ===== 표지(10-30): 지형과 같은 모양 ===== */
+.ds-lat-energy.ds-lat-energy .le-cover{position:absolute;inset:0;z-index:25;display:flex;align-items:center;padding:32px 40px;box-sizing:border-box;background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.82) 100%)}
+.ds-lat-energy.ds-lat-energy .le-cover[hidden]{display:none}
+.ds-lat-energy.ds-lat-energy .le-covin{max-width:540px;display:flex;flex-direction:column;gap:14px}
+.ds-lat-energy.ds-lat-energy .le-coveye{margin:0;font-size:13px;font-weight:700;color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-covt{margin:0;font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.ds-lat-energy.ds-lat-energy .le-covs{margin:0;font-size:15px;line-height:1.65;color:var(--ink2)}
+.ds-lat-energy.ds-lat-energy .le-covl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.ds-lat-energy.ds-lat-energy .le-covl.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px}
+.ds-lat-energy.ds-lat-energy .le-covc{display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer}
+.ds-lat-energy.ds-lat-energy .le-covc:hover{border-color:var(--accent);color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-covc:focus-visible,.ds-lat-energy.ds-lat-energy .le-covgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-lat-energy.ds-lat-energy .le-covn{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-lat-energy.ds-lat-energy .le-covgo{align-self:flex-start;padding:12px 20px;font-size:15px;margin-top:4px}
+.ds-lat-energy.ds-lat-energy .le-covh{margin:0;font-size:13px;color:var(--ink2)}
+.ds-lat-energy.ds-lat-energy.ds-lat-energy.le-covermode .le-hint,.ds-lat-energy.ds-lat-energy.ds-lat-energy.le-covermode .le-legend{visibility:hidden}
+@media (max-width:720px){
+  .ds-lat-energy.ds-lat-energy .le-cover{padding:20px 16px;background:rgba(247,249,251,.95)}
+  .ds-lat-energy.ds-lat-energy .le-covt{font-size:30px}
+  .ds-lat-energy.ds-lat-energy .le-covl,.ds-lat-energy.ds-lat-energy .le-covh{display:none}
+}
+
+/* ===== 밝은 무대(10-30): 위도와 태양 에너지도 다른 시뮬레이터처럼 ===== */
+.ds-lat-energy.ds-lat-energy .le-stage{background:linear-gradient(180deg,#f7f9fb 0%,#edf2f6 100%)}
+.ds-lat-energy.ds-lat-energy .le-hint,.ds-lat-energy.ds-lat-energy .le-legend{color:var(--ink2);background:rgba(255,255,255,.88);border-color:var(--line)}
+.ds-lat-energy.ds-lat-energy .le-gtitle{color:var(--ink)}
+.ds-lat-energy.ds-lat-energy .le-gtitle::before{background:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-graph .le-tick{fill:#5b636d}
+.ds-lat-energy.ds-lat-energy .le-graph .le-small{fill:#6b7480}
+.ds-lat-energy.ds-lat-energy .le-graph .le-axis{stroke:rgba(60,72,92,.45)}
+.ds-lat-energy.ds-lat-energy .le-graph .le-grid{stroke:rgba(20,32,52,.08)}
+.ds-lat-energy.ds-lat-energy .le-graph .le-cross{stroke:rgba(40,52,72,.4)}
+.ds-lat-energy.ds-lat-energy .le-graph .le-cin{stroke:#f08c00}
+.ds-lat-energy.ds-lat-energy .le-graph .le-cout{stroke:#7950f2}
+.ds-lat-energy.ds-lat-energy .le-graph .le-din{fill:#f08c00;stroke:#fff}
+.ds-lat-energy.ds-lat-energy .le-graph .le-dout{fill:#7950f2;stroke:#fff}
+.ds-lat-energy.ds-lat-energy .le-graph .le-gap.sur{stroke:#e8590c}
+.ds-lat-energy.ds-lat-energy .le-graph .le-gap.def{stroke:#1c7ed6}
+.ds-lat-energy.ds-lat-energy .le-graph .le-gaptx{stroke:rgba(255,255,255,.92)}
+.ds-lat-energy.ds-lat-energy .le-graph .le-zlab.sur,.ds-lat-energy.ds-lat-energy .le-graph .le-gaptx.sur{fill:#d9480f}
+.ds-lat-energy.ds-lat-energy .le-graph .le-zlab.def,.ds-lat-energy.ds-lat-energy .le-graph .le-gaptx.def{fill:#1971c2}
+.ds-lat-energy.ds-lat-energy .le-graph:focus-visible{outline-color:var(--accent)}
+
+/* 패널 머리 집 아이콘(10-30): 표지(처음 화면)로 */
+.ds-lat-energy.ds-lat-energy .le-homebtn{flex:none;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ds-lat-energy.ds-lat-energy .le-homebtn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-lat-energy.ds-lat-energy .le-homebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-lat-energy.ds-lat-energy .le-head-row{justify-content:flex-start;gap:10px}
+.ds-lat-energy.ds-lat-energy .le-head-row .le-posbtn{margin-left:auto}
 </style>
 
 <div class="le-stage">
-  <canvas class="le-canvas" tabindex="0" role="img" aria-label="햇빛을 받는 3D 지구. 끌어서 돌리고, 햇빛 띠를 위아래로 끌거나 지구를 누르면 위도를 고릅니다. 화살표 키로 돌리고, Shift와 위아래 화살표 키로 위도를 바꿀 수 있습니다."></canvas>
-  <div class="le-hint">지구를 끌면 돌아갑니다 · 햇빛 띠를 위아래로 끌면 위도가 바뀝니다</div>
+  <div class="le-cover" hidden>
+    <div class="le-covin">
+      <p class="le-coveye">중학 사회 ① · 기후</p>
+      <p class="le-covt">위도와 태양 에너지</p>
+      <p class="le-covs">위도에 따라 햇빛이 땅에 닿는 각도가 달라, 같은 양의 햇빛이 비추는 넓이와 받는 에너지가 달라진다. 저위도의 남는 열이 고위도로 옮겨 가는 과정을 3D 지구로 살펴본다.</p>
+      <button type="button" class="le-btn main le-covgo">살펴보기 시작</button>
+      <p class="le-covh"></p>
+    </div>
+  </div>
+  <canvas class="le-canvas" tabindex="0" role="img" aria-label="햇빛을 받는 3D 지구. 끌어서 돌리고, 햇빛 띠를 위아래로 끌거나 지구를 누르면 위도를 고른다. 화살표 키로 돌리고, Shift와 위아래 화살표 키로 위도를 바꿀 수 있다."></canvas>
+  <div class="le-hint">지구를 끌면 돌아간다 · 햇빛 띠를 위아래로 끌면 위도가 바뀐다</div>
   <div class="le-legend">
     <span class="le-lgi foot"><span class="le-sw foot"></span>같은 양의 햇빛이 닿는 곳</span>
     <span class="le-lgi flow"><span class="le-sw flow"></span>대기의 열 이동</span>
-    <span class="le-lgi ocean"><span class="le-sw ocean"></span>난류의 열 이동</span>
     <span class="le-lgi zone"><span class="le-sw sur"></span>에너지 과잉</span>
     <span class="le-lgi zone"><span class="le-sw def"></span>에너지 부족</span>
   </div>
   <section class="le-gwrap" aria-label="위도별 에너지 그래프">
     <h3 class="le-gtitle">위도별 에너지 (연평균 · 상댓값)</h3>
-    <svg class="le-graph" viewBox="0 0 440 560" preserveAspectRatio="xMidYMid meet" aria-label="위도별 받는 태양 에너지와 내보내는 에너지 그래프. 위아래 화살표 키로 위도를 바꿉니다."></svg>
+    <svg class="le-graph" viewBox="0 0 440 560" preserveAspectRatio="xMidYMid meet" aria-label="위도별 받는 태양 에너지와 내보내는 에너지 그래프. 위아래 화살표 키로 위도를 바꾼다."></svg>
   </section>
 </div>
 
 <aside class="le-panel" aria-label="조작 패널">
   <div class="le-head">
     <div class="le-head-row">
+      <button type="button" class="le-homebtn" aria-label="처음 화면(표지)" title="처음 화면"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M4 11.2 12 4.5l8 6.7"/><path d="M6.5 9.6V19h11V9.6"/><path d="M10.2 19v-5h3.6v5"/></svg></button>
       <h2 class="le-title">위도와 태양 에너지</h2>
+      <button type="button" class="le-mini le-posbtn" aria-expanded="false">패널 위치</button>
       <button type="button" class="le-mini le-fold" aria-expanded="true">접기</button>
     </div>
-    <p class="le-src">중학 사회 ① · 기후</p>
-  </div>
-
-  <div class="le-body">
-    <section class="le-card">
-      <h3 class="le-h">조작</h3>
+    <div class="le-posbox" hidden>
       <div class="le-line">
         <span class="le-sub">패널 위치</span>
         <div class="le-seg" role="group" aria-label="패널 위치">
@@ -234,6 +423,13 @@
           <button type="button" class="le-segb" data-pos="float" aria-pressed="false">플로팅</button>
         </div>
       </div>
+    </div>
+    <p class="le-src">중학 사회 ① · 기후</p>
+  </div>
+
+  <div class="le-body">
+    <section class="le-card">
+      <h3 class="le-h">조작</h3>
       <div class="le-line">
         <span class="le-sub">계절</span>
         <div class="le-seg" role="group" aria-label="계절">
@@ -243,15 +439,14 @@
         </div>
       </div>
       <div class="le-line">
-        <span class="le-sub">보기</span>
+        <span class="le-sub">3D 보기</span>
         <button type="button" class="le-mini le-reset">처음 시점으로</button>
       </div>
       <div class="le-checks">
-        <label class="le-check"><input class="le-check-in" data-opt="flow" type="checkbox" checked>대기 열 이동</label>
-        <label class="le-check"><input class="le-check-in" data-opt="ocean" type="checkbox" checked>해류 열 이동</label>
-        <label class="le-check"><input class="le-check-in" data-opt="beam" type="checkbox" checked>햇빛 띠</label>
-        <label class="le-check"><input class="le-check-in" data-opt="zone" type="checkbox" checked>과잉·부족 색</label>
-        <label class="le-check"><input class="le-check-in" data-opt="spin" type="checkbox">자동 회전</label>
+        <label class="le-check le-onoffl"><input class="le-check-in" data-opt="flow" type="checkbox" checked>대기 열 이동</label>
+        <label class="le-check le-onoffl"><input class="le-check-in" data-opt="beam" type="checkbox" checked>햇빛 띠</label>
+        <label class="le-check le-onoffl"><input class="le-check-in" data-opt="zone" type="checkbox" checked>과잉·부족 색</label>
+        <label class="le-check le-onoffl"><input class="le-check-in" data-opt="spin" type="checkbox">자동 회전</label>
       </div>
     </section>
 
@@ -263,9 +458,9 @@
       <div class="le-row le-presets"></div>
       <div class="le-stats">
         <div class="le-stat le-alt-box"><span class="le-k">태양 고도 (정오)</span><span class="le-v le-alt"></span></div>
-        <div class="le-stat" title="같은 양의 햇빛이 비추는 넓이를, 햇빛이 수직으로 닿는 곳과 비교한 값입니다."><span class="le-k">햇빛 넓이 (수직 = 1)</span><span class="le-v le-spread"></span></div>
-        <div class="le-stat" title="1년 동안 평균한 값입니다."><span class="le-k">받는 에너지 (연평균)</span><span class="le-v in le-in"></span></div>
-        <div class="le-stat" title="1년 동안 평균한 값입니다."><span class="le-k">내보내는 에너지 (연평균)</span><span class="le-v out le-out"></span></div>
+        <div class="le-stat" title="같은 양의 햇빛이 비추는 넓이를, 햇빛이 수직으로 닿는 곳과 비교한 값이다."><span class="le-k">햇빛 넓이 (수직 = 1)</span><span class="le-v le-spread"></span></div>
+        <div class="le-stat" title="1년 동안 평균한 값이다."><span class="le-k">받는 에너지 (연평균)</span><span class="le-v in le-in"></span></div>
+        <div class="le-stat" title="1년 동안 평균한 값이다."><span class="le-k">내보내는 에너지 (연평균)</span><span class="le-v out le-out"></span></div>
       </div>
       <p class="le-snote" hidden></p>
       <div class="le-result" aria-live="polite">
@@ -279,13 +474,13 @@
       <h3 class="le-h">연평균 기온</h3>
       <svg class="le-tchart" viewBox="0 0 288 124" role="img" aria-label="도시의 위도와 연평균 기온"></svg>
       <p class="le-city"></p>
-      <p class="le-note">가로축은 위도(남·북반구 함께)입니다. 점을 누르면 그 위도로 옮겨 갑니다.</p>
+      <p class="le-note">가로축은 위도(남·북반구 함께)이다. 점을 누르면 그 위도로 옮겨 간다.</p>
     </section>
 
-    <section class="le-card">
-      <h3 class="le-h">확인 문제</h3>
+    <details class="le-card le-fold">
+      <summary class="le-csum">확인 문제</summary>
       <div class="le-qlist"></div>
-    </section>
+    </details>
 
     <p class="le-credit">자료: 기후 구분 Beck 외(2023) CC BY 4.0 · 해안선 Natural Earth · 도시 기온 WMO 평년값</p>
   </div>
@@ -350,64 +545,121 @@
     CITIES.forEach(function (c) {
       c.mean = c.t.reduce(function (a, b) { return a + b; }, 0) / c.t.length;
     });
-    /* 난류 모식 경로 [위도, 경도]: 저위도의 열을 고위도로 옮기는 주요 난류 */
-    var CURRENTS = [
-      [[20, 124], [26, 127.5], [31, 133], [35, 141], [38, 150], [40, 162]],                          /* 쿠로시오 해류 */
-      [[25, -80], [31, -79.5], [36, -73], [40, -60], [45, -45], [50, -30], [55, -17], [61, -5]],     /* 멕시코 만류 → 북대서양 해류 */
-      [[-12, -36], [-20, -38.5], [-27, -45], [-35, -52]],                                           /* 브라질 해류 */
-      [[-14, 155], [-21, 155.5], [-28, 154.5], [-34, 152.5]],                                       /* 동오스트레일리아 해류 */
-      [[-14, 43], [-20, 40], [-26, 34.5], [-31, 31.5], [-35, 26]]                                   /* 모잠비크 해류 → 아굴라스 해류 */
-    ];
     var PRESETS = [["적도", 0], ["서울", 38], ["모스크바", 56], ["배로", 71]];
 
     var QUIZ = [
       {
         title: "에너지가 남는 곳",
-        q: "받는 태양 에너지가 내보내는 에너지보다 많은 곳은 어디일까요?",
+        q: "받는 태양 에너지가 내보내는 에너지보다 많은 곳은 어디일까?",
         opts: ["적도 부근의 저위도", "극지방 부근의 고위도"],
         ans: 0,
-        ok: "맞습니다. 저위도는 햇빛을 높은 각도로 받아 좁은 면적에 에너지가 모이므로 에너지가 남습니다.",
-        no: "다시 생각해 보세요. 그래프에서 주황색 선이 보라색 선보다 오른쪽에 있는 위도를 찾아봅니다."
+        ok: "정답이다. 저위도는 햇빛을 높은 각도로 받아 좁은 면적에 에너지가 모이므로 에너지가 남는다.",
+        no: "다시 생각해 보자. 그래프에서 주황색 선이 보라색 선보다 오른쪽에 있는 위도를 찾아본다."
       },
       {
         title: "햇빛이 퍼지는 넓이",
-        q: "위도가 높아질수록 같은 양의 햇빛이 비추는 땅의 넓이는 어떻게 될까요?",
-        opts: ["넓어집니다.", "좁아집니다.", "변하지 않습니다."],
+        q: "위도가 높아질수록 같은 양의 햇빛이 비추는 땅의 넓이는 어떻게 될까?",
+        opts: ["넓어진다.", "좁아진다.", "변하지 않는다."],
         ans: 0,
-        ok: "맞습니다. 고위도로 갈수록 햇빛이 비스듬히 닿아 같은 양의 에너지가 넓은 땅에 퍼집니다. 그래서 같은 넓이의 땅이 받는 에너지가 줄어듭니다.",
-        no: "다시 생각해 보세요. 위도를 바꾸면서 지구 위 주황색 햇빛 자국의 크기를 비교해 봅니다."
+        ok: "정답이다. 고위도로 갈수록 햇빛이 비스듬히 닿아 같은 양의 에너지가 넓은 땅에 퍼진다. 그래서 같은 넓이의 땅이 받는 에너지가 줄어든다.",
+        no: "다시 생각해 보자. 위도를 바꾸면서 지구 위 주황색 햇빛 자국의 크기를 비교해 본다."
       },
       {
         title: "고위도로 옮겨 가는 열",
-        q: "고위도는 에너지가 부족한데도 기온이 끝없이 내려가지 않습니다. 그 까닭으로 알맞은 것은 무엇일까요?",
+        q: "고위도는 에너지가 부족한데도 기온이 끝없이 내려가지 않는다. 그 까닭으로 알맞은 것은 무엇일까?",
         opts: [
-          "저위도의 남는 열이 대기와 바다를 따라 옮겨 오기 때문입니다.",
-          "고위도는 에너지를 밖으로 내보내지 않기 때문입니다.",
-          "고위도가 적도보다 햇빛을 더 많이 받기 때문입니다."
+          "저위도의 남는 열이 대기와 바다를 따라 옮겨 오기 때문이다.",
+          "고위도는 에너지를 밖으로 내보내지 않기 때문이다.",
+          "고위도가 적도보다 햇빛을 더 많이 받기 때문이다."
         ],
         ans: 0,
-        ok: "맞습니다. 대기와 바다가 저위도의 남는 열을 고위도로 옮겨 지구 전체의 에너지 균형을 맞춥니다.",
-        no: "다시 생각해 보세요. 지구 위 주황색 점선(대기)과 빨간 실선(난류)이 어느 쪽으로 움직이는지 살펴봅니다."
+        ok: "정답이다. 대기와 바다가 저위도의 남는 열을 고위도로 옮겨 지구 전체의 에너지 균형을 맞춘다.",
+        no: "다시 생각해 보자. 지구 위 주황색 점선(대기의 열 이동)이 어느 쪽으로 움직이는지 살펴본다."
       },
       {
         title: "서울의 태양 고도",
-        q: "춘분에 서울(북위 38°)에서 정오의 태양 고도는 몇 도일까요?",
+        q: "춘분에 서울(북위 38°)에서 정오의 태양 고도는 몇 도일까?",
         opts: ["38°", "52°", "90°"],
         ans: 1,
-        ok: "맞습니다. 춘분·추분 정오의 태양 고도는 90°에서 위도를 뺀 값입니다. 90° − 38° = 52°입니다.",
-        no: "다시 생각해 보세요. 계절을 「춘·추분」으로 두고 「서울」 버튼을 누른 뒤 태양 고도 값을 확인해 봅니다."
+        ok: "정답이다. 춘분·추분 정오의 태양 고도는 90°에서 위도를 뺀 값이다. 90° − 38° = 52°이다.",
+        no: "다시 생각해 보자. 계절을 「춘·추분」으로 두고 「서울」 버튼을 누른 뒤 태양 고도 값을 확인해 본다."
       },
       {
         title: "위도와 연평균 기온",
-        q: "연평균 기온 그래프에서 위도가 높아질수록 연평균 기온은 대체로 어떻게 될까요?",
-        opts: ["높아집니다.", "낮아집니다.", "위도와 관계없이 비슷합니다."],
+        q: "연평균 기온 그래프에서 위도가 높아질수록 연평균 기온은 대체로 어떻게 될까?",
+        opts: ["높아진다.", "낮아진다.", "위도와 관계없이 비슷하다."],
         ans: 1,
-        ok: "맞습니다. 고위도로 갈수록 받는 태양 에너지가 줄어 연평균 기온이 대체로 낮아집니다. 싱가포르는 약 28℃, 배로는 약 −12℃입니다.",
-        no: "다시 생각해 보세요. 연평균 기온 카드에서 왼쪽(저위도) 점과 오른쪽(고위도) 점의 높이를 비교해 봅니다."
+        ok: "정답이다. 고위도로 갈수록 받는 태양 에너지가 줄어 연평균 기온이 대체로 낮아진다. 싱가포르는 약 28℃, 배로는 약 −12℃이다.",
+        no: "다시 생각해 보자. 연평균 기온 카드에서 왼쪽(저위도) 점과 오른쪽(고위도) 점의 높이를 비교해 본다."
       }
     ];
 
     function $(sel) { return root.querySelector(sel); }
+    /* 키보드(10-30): 「패널 위치」 상자는 Esc로 닫음 · 표지에서 고르면 초점을 그 보기 단추로 */
+    (function () {
+      var b = $(".le-posbtn"), box = $(".le-posbox");
+      if (b && box) [b, box].forEach(function (el) { el.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) { box.hidden = true; b.setAttribute("aria-expanded", "false"); b.focus(); e.preventDefault(); } }); });
+      var cv = $(".le-cover"); if (!cv) return;
+      Array.prototype.forEach.call(cv.querySelectorAll(".le-covc, .le-covgo"), function (c) { c.addEventListener("click", function () {
+        setTimeout(function () { var v = c.getAttribute("data-view"), t = (v && root.querySelector(".le-vbtn[data-view=\"" + v + "\"]")) || root.querySelector(".le-vbtn") || root.querySelector(".le-panel button"); if (t) t.focus(); }, 0);
+      }); });
+    })();
+    /* 속도 확인(10-30): 주소에 ?fps=1 을 붙이면 무대 오른쪽 아래에 초당 화면 수(최근 1초 · 최근 5초 최저)와 캔버스 크기를 띄움. 교실 PC · 전자칠판 확인용 */
+    (function () {
+      if (!/[?&]fps=1(&|$)/.test(location.search)) return;
+      var st = $(".le-stage") || root, box = document.createElement("div");
+      box.setAttribute("aria-hidden", "true");
+      box.style.cssText = "position:absolute;right:10px;bottom:10px;z-index:60;font:600 12px/1.4 Consolas,monospace;color:#fff;background:rgba(29,33,38,.8);padding:4px 8px;border-radius:6px;pointer-events:none";
+      box.textContent = "fps 재는 중";
+      st.appendChild(box);
+      var n = 0, t0 = performance.now(), hist = [];
+      function f(t) {
+        n++;
+        if (t - t0 >= 1000) {
+          var fps = Math.round(n * 1000 / (t - t0)), cv = root.querySelector("canvas");
+          hist.push(fps); if (hist.length > 5) hist.shift();
+          box.textContent = fps + " fps · 5초 최저 " + Math.min.apply(null, hist) + (cv ? " · " + cv.width + "×" + cv.height : "");
+          n = 0; t0 = t;
+        }
+        requestAnimationFrame(f);
+      }
+      requestAnimationFrame(f);
+    })();
+
+    /* 업그레이드(10-29): 설명 카드의 핵심 낱말을 파란 굵은 글씨로(예시처럼). 글이 바뀌면 낱말마다 처음 한 번만 <b>로 감쌈.
+       innerHTML 없이 글 조각 · 요소를 만들어 넣음. 이미 감싼 글이면 건드리지 않음(감시가 되풀이되지 않게) */
+    (function () {
+      var W = ["에너지 과잉", "에너지 부족", "태양 고도", "열 이동", "고위도", "저위도", "적도"], el = $(".le-rt"); if (!el || !window.MutationObserver) return;
+      var re = new RegExp("(" + W.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+      function mark() {
+        if (el.querySelector(".le-term")) return;
+        var s = el.textContent; if (!s) return; re.lastIndex = 0; if (!re.test(s)) return;
+        var seen = {}, parts = s.split(re), frag = document.createDocumentFragment();
+        parts.forEach(function (t, i) { if (!t) return; if (i % 2 === 1 && !seen[t]) { seen[t] = 1; var b = document.createElement("b"); b.className = "le-term"; b.textContent = t; frag.appendChild(b); } else frag.appendChild(document.createTextNode(t)); });
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(frag);
+      }
+      new MutationObserver(mark).observe(el, { childList: true, characterData: true, subtree: true });
+      mark();
+    })();
+
+    /* 표지(10-30): 처음 열 때(주소에 보기 · 값 지정이 없을 때) 무대에 표지. 카드 · 시작 단추 · 패널 보기 단추를 누르면 닫힘, 머리 「처음 화면」으로 다시 엶 */
+    (function () {
+      var cv = $(".le-cover"), hb = $(".le-homebtn"); if (!cv) return;
+      function show(on) { cv.hidden = !on; root.classList.toggle("le-covermode", on); }
+      function pick(v) { show(false); if (!v) return; var b = root.querySelector(".le-vbtn[data-view=\"" + v + "\"]"); if (b) b.click(); }
+      Array.prototype.forEach.call(cv.querySelectorAll(".le-covc, .le-covgo"), function (b) { b.addEventListener("click", function () { pick(b.getAttribute("data-view")); }); });
+      Array.prototype.forEach.call(root.querySelectorAll(".le-vbtn"), function (b) { b.addEventListener("click", function () { show(false); }); });
+      if (hb) hb.addEventListener("click", function () { show(true); var f = cv.querySelector(".le-covgo"); if (f) f.focus(); });
+      var q = location.search.replace(/[?&]panel=[^&]*/g, "").replace(/^[?&]+/, ""); if (!q) show(true);
+    })();
+
+    /* 컴퓨터 화면 손질(10-29): 패널 머리 「패널 위치」 단추로 위치 고르기 상자를 펼치고 닫음 */
+    (function () {
+      var b = $(".le-posbtn"), box = $(".le-posbox"); if (!b || !box) return;
+      b.addEventListener("click", function () { var o = box.hidden; box.hidden = !o; b.setAttribute("aria-expanded", o ? "true" : "false"); });
+      Array.prototype.forEach.call(box.querySelectorAll(".le-segb"), function (x) { x.addEventListener("click", function () { box.hidden = true; b.setAttribute("aria-expanded", "false"); }); });
+    })();
     function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
     function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
     function S(tag, at, parent, text) {
@@ -434,7 +686,7 @@
     function latShort(l) { return l === 0 ? "적도" : (l > 0 ? "북위 " : "남위 ") + Math.abs(l) + "°"; }
     function latLong(l) { return l === 0 ? "적도 (0°)" : latShort(l); }
 
-    var opt = { flow: true, ocean: true, beam: true, zone: true, spin: false };
+    var opt = { flow: true, beam: true, zone: true, spin: false };
     var RM = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var cur = 0;
     /* 계절: 정오에 태양이 머리 위에 오는 위도(°). 지구는 그대로 두고 햇빛 방향을 그만큼 기울여 그림 */
@@ -590,8 +842,9 @@
           var r = tex[ti], g = tex[ti + 1], b = tex[ti + 2];
           var lam = -wx * cD + wy * sD, l2 = (lam + 0.08) / 1.08;
           l2 = l2 < 0 ? 0 : l2 > 1 ? 1 : l2;
-          var k = 0.13 + 0.87 * l2;
-          var R = r * k, G = g * k + (1 - k) * 8, B = b * k + (1 - k) * 26;
+          /* 밝은 무대(10-30): 밤쪽도 너무 어둡지 않게(최저 0.13 → 0.42, 밤 색조는 옅은 청회색) */
+          var k = 0.42 + 0.58 * l2;
+          var R = r * k + (1 - k) * 40, G = g * k + (1 - k) * 52, B = b * k + (1 - k) * 82;
           if (lam > 0 && b > r + 30) {
             var ax = camX - wx, ay = camY - wy, az = camZ - wz, al = Math.sqrt(ax * ax + ay * ay + az * az);
             var hx = -cD + ax / al, hy = sD + ay / al, hz = az / al, hl = Math.sqrt(hx * hx + hy * hy + hz * hz);
@@ -671,14 +924,14 @@
       return o;
     }
     function drawBeam(y0, withFoot) {
-      ctx.fillStyle = "rgba(255,206,60,.22)";
+      ctx.fillStyle = "rgba(255,190,40,.3)";
       for (var k = 0; k < 4; k++) {
         var e = beamEdge(k, y0, 8);
         ctx.beginPath();
         poly3(e.map(function (yz) { return sr([XS, yz[0], yz[1]]); }).concat(e.slice().reverse().map(function (yz) { return sr(hit(yz[0], yz[1])); })));
         ctx.fill();
       }
-      ctx.strokeStyle = "#ffc23d"; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+      ctx.strokeStyle = "#f0a000"; ctx.lineWidth = 1.6; ctx.setLineDash([]);
       ctx.beginPath();
       [-1, 0, 1].forEach(function (a) {
         [-1, 0, 1].forEach(function (b) {
@@ -697,7 +950,7 @@
       }
     }
     function drawFaintRays(y0, wantFront) {
-      ctx.strokeStyle = "rgba(255,214,120,.45)"; ctx.lineWidth = 1; ctx.setLineDash([3, 6]);
+      ctx.strokeStyle = "rgba(225,150,30,.6)"; ctx.lineWidth = 1; ctx.setLineDash([3, 6]);
       ctx.beginPath();
       [-0.8, -0.5, -0.2, 0.2, 0.5, 0.8].forEach(function (y) {
         if (opt.beam && Math.abs(y - y0) < 0.16) return;
@@ -709,7 +962,7 @@
       ctx.setLineDash([]);
     }
     function drawAxis(wantFront) {
-      ctx.strokeStyle = "rgba(200,214,232,.8)"; ctx.lineWidth = 2; ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(70,86,110,.7)"; ctx.lineWidth = 2; ctx.setLineDash([]);
       [1, -1].forEach(function (s) {
         if (front(tv([0, s, 0])) !== wantFront) return;
         ctx.beginPath(); moveTo(P([0, s, 0])); lineTo(P([0, s * 1.3, 0])); ctx.stroke();
@@ -736,8 +989,8 @@
         ctx.fill();
         ctx.fillStyle = "#fff"; ctx.fillText(text, p[0] + 8, p[1] + 1);
       } else {
-        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6,12,24,.75)"; ctx.strokeText(text, p[0], p[1]);
-        ctx.fillStyle = color || "#dbe6f3"; ctx.fillText(text, p[0], p[1]);
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,.92)"; ctx.strokeText(text, p[0], p[1]);
+        ctx.fillStyle = color || "#2b3440"; ctx.fillText(text, p[0], p[1]);
       }
     }
 
@@ -776,24 +1029,6 @@
         ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1.2; ctx.setLineDash([5, 5]);
         [CROSS, -CROSS].forEach(function (la) { ctx.beginPath(); curve3(circlePts(la, 1.002)); ctx.stroke(); });
         ctx.setLineDash([]);
-      }
-
-      /* 해류(난류)의 열 이동: 지표에 붙은 실선 */
-      if (opt.ocean) {
-        var oHeads = [];
-        ctx.lineCap = "round"; ctx.lineJoin = "round";
-        CURRENTS.forEach(function (route) {
-          var arr = geoPath(route, 1.008);
-          ctx.strokeStyle = "rgba(40,6,14,.55)"; ctx.lineWidth = 6;
-          ctx.beginPath(); curve3(arr); ctx.stroke();
-          ctx.strokeStyle = "#ff3b5c"; ctx.lineWidth = 3.4;
-          ctx.beginPath();
-          var tail = curve3(arr);
-          ctx.stroke();
-          if (tail) oHeads.push(tail);
-        });
-        ctx.lineCap = "butt"; ctx.lineJoin = "miter";
-        arrowHeads(oHeads, "#ff3b5c", 12, 7);
       }
 
       /* 대기의 열 이동: 지표 위에 뜬 점선 */
@@ -842,7 +1077,7 @@
       });
       if (decl && Math.abs(cur - decl) >= 8) {
         var pd = rightmost(decl);
-        if (pd) label((decl > 0 ? "북회귀선" : "남회귀선") + " · 태양이 머리 위", [pd[0] + 6, pd[1]], false, "#ffd466");
+        if (pd) label((decl > 0 ? "북회귀선" : "남회귀선") + " · 태양이 머리 위", [pd[0] + 6, pd[1]], false, "#c2410c");
       }
       var ps = rightmost(cur);
       if (ps) label(latShort(cur), [ps[0] + 6, ps[1]], true);
@@ -858,9 +1093,9 @@
           lp = [edge, s1[1] + (s0[1] - s1[1]) * tt];
         }
         if (lp[1] > 16 && lp[1] < clipB) {
-          ctx.lineWidth = 3; ctx.strokeStyle = "rgba(6,12,24,.8)";
+          ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,.92)";
           ctx.strokeText(txt, lp[0], lp[1] - 10);
-          ctx.fillStyle = "#ffd466"; ctx.fillText(txt, lp[0], lp[1] - 10);
+          ctx.fillStyle = "#c2410c"; ctx.fillText(txt, lp[0], lp[1] - 10);
         }
       }
     }
@@ -1203,7 +1438,7 @@
     var dots = CITIES.map(function (c) {
       var d = S("circle", { cx: f1(tx(Math.abs(c.lat))), cy: f1(ty(c.mean)), r: 4.5, "class": "le-tdot " + (c.mean < 10 ? "cold" : "warm") }, tc);
       S("title", {}, d, c.kr + " · 연평균 " + signed(c.mean, 1) + "℃");
-      attrs(d, { tabindex: "0", role: "button", "aria-label": c.kr + ", " + latShort(Math.round(c.lat)) + ", 연평균 " + signed(c.mean, 1) + "℃. 누르면 이 위도로 옮겨 갑니다." });
+      attrs(d, { tabindex: "0", role: "button", "aria-label": c.kr + ", " + latShort(Math.round(c.lat)) + ", 연평균 " + signed(c.mean, 1) + "℃. 누르면 이 위도로 옮겨 간다." });
       d.addEventListener("click", function () { setLat(Math.round(c.lat)); });
       d.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setLat(Math.round(c.lat)); }
@@ -1227,7 +1462,6 @@
     function applyOpts() {
       checks.forEach(function (c) { opt[c.getAttribute("data-opt")] = c.checked; });
       root.classList.toggle("le-noflow", !opt.flow);
-      root.classList.toggle("le-noocean", !opt.ocean);
       root.classList.toggle("le-nobeam", !opt.beam);
       root.classList.toggle("le-nozone", !opt.zone);
       redraw();
@@ -1380,14 +1614,14 @@
       var zen = Math.abs(lat - decl), alt = 90 - zen, sName = SEASONS[season].name;
       elAlt.textContent = alt <= 0 ? "뜨지 않음" : deg(alt);
       elSpread.textContent = zen >= 89.5 ? "햇빛 없음" : zen >= 89 ? "매우 넓음" : "× " + (1 / Math.cos(zen * RAD)).toFixed(1);
-      elAltBox.title = sName + " 정오 기준입니다.";
-      elBasis.textContent = "태양 고도와 햇빛 넓이는 " + sName + " 정오 기준이고, 에너지는 1년 평균 상댓값입니다(모식도).";
+      elAltBox.title = sName + " 정오 기준이다.";
+      elBasis.textContent = "태양 고도와 햇빛 넓이는 " + sName + " 정오 기준이고, 에너지는 1년 평균 상댓값이다(모식도).";
       var sg = decl > 0 ? 1 : -1, edge = 90 - Math.abs(decl), diff = alt - (90 - Math.abs(lat)), sn = "";
-      if (decl && lat * sg >= edge) sn = sName + "에는 이 위도에서 하루 종일 해가 지지 않습니다(백야).";
-      else if (decl && lat * sg <= -edge) sn = sName + "에는 이 위도에서 하루 종일 해가 뜨지 않습니다(극야).";
+      if (decl && lat * sg >= edge) sn = sName + "에는 이 위도에서 하루 종일 해가 지지 않는다(백야).";
+      else if (decl && lat * sg <= -edge) sn = sName + "에는 이 위도에서 하루 종일 해가 뜨지 않는다(극야).";
       else if (decl) {
-        sn = sName + "에는 정오의 태양이 " + latShort(decl) + " 머리 위에 있습니다.";
-        if (Math.abs(diff) >= 0.05) sn += " 춘분·추분보다 태양 고도가 " + deg(Math.abs(diff)) + (diff > 0 ? " 높습니다." : " 낮습니다.");
+        sn = sName + "에는 정오의 태양이 " + latShort(decl) + " 머리 위에 있다.";
+        if (Math.abs(diff) >= 0.05) sn += " 춘분·추분보다 태양 고도가 " + deg(Math.abs(diff)) + (diff > 0 ? " 높다." : " 낮다.");
       }
       elSnote.textContent = sn;
       elSnote.hidden = !sn;
@@ -1396,13 +1630,13 @@
       elRes.className = "le-result " + kind;
       if (kind === "even") {
         elRk.textContent = "거의 균형";
-        elRt.textContent = "받는 태양 에너지와 내보내는 에너지가 거의 같습니다. 이 부근이 에너지 과잉과 부족의 경계입니다.";
+        elRt.textContent = "받는 태양 에너지와 내보내는 에너지가 거의 같다. 이 부근이 에너지 과잉과 부족의 경계다.";
       } else if (kind === "sur") {
         elRk.textContent = "에너지 과잉 +" + Math.round(d);
-        elRt.textContent = "받는 태양 에너지가 내보내는 에너지보다 많습니다. 남는 열은 대기와 바다를 따라 고위도로 옮겨 갑니다.";
+        elRt.textContent = "받는 태양 에너지가 내보내는 에너지보다 많다. 남는 열은 대기와 바다를 따라 고위도로 옮겨 간다.";
       } else {
         elRk.textContent = "에너지 부족 −" + Math.round(-d);
-        elRt.textContent = "받는 태양 에너지가 내보내는 에너지보다 적습니다. 모자란 열은 저위도에서 옮겨 오는 열로 채워집니다.";
+        elRt.textContent = "받는 태양 에너지가 내보내는 에너지보다 적다. 모자란 열은 저위도에서 옮겨 오는 열로 채워진다.";
       }
 
       var near = nearestCity(lat);
@@ -1423,7 +1657,7 @@
       redraw();
     }
 
-    /* ================= 처음 상태: ?lat=38&season=summer&panel=float&flow=0&ocean=0&beam=0&zone=0&spin=1 ================= */
+    /* ================= 처음 상태: ?lat=38&season=summer&panel=float&flow=0&beam=0&zone=0&spin=1 ================= */
     var qs = new URLSearchParams(location.search);
     var qLat = parseFloat(qs.get("lat"));
     checks.forEach(function (c) {

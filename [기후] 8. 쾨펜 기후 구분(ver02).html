@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>쾨펜 기후 구분 (ver01)</title>
+<title>쾨펜 기후 구분 (ver02)</title>
 <style>.ds-page{margin:0}</style>
 </head>
 <body class="ds-page" style="margin:0">
@@ -211,25 +211,200 @@
   .ds-koppen.kp-pos-left .kp-panel{order:0;border-left:0;border-right:0;border-top:1px solid var(--line);max-height:45vh}
   .ds-koppen .kp-views{padding:8px}
 }
+
+/* ===== 양식 맞춤(10-28): 출판사 예시 t1-u5-metro와 같은 모양 ===== */
+.ds-koppen.ds-koppen{--bg:#f6f5f1;--panel:#fff;--card:#fff;--accent-soft:#e6efff;font-family:Pretendard,'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+.ds-koppen.ds-koppen .kp-panel{background:#fff}
+.ds-koppen.ds-koppen .kp-head{background:#fff;padding:14px 16px 12px}
+.ds-koppen.ds-koppen .kp-body{gap:18px;padding:16px}
+.ds-koppen.ds-koppen .kp-card{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;gap:8px}
+.ds-koppen.ds-koppen .kp-h,.ds-koppen.ds-koppen .kp-csum,.ds-koppen.ds-koppen .kp-extra > .kp-sum{font-size:14px;font-weight:700;color:var(--ink)}
+.ds-koppen.ds-koppen .kp-h::before,.ds-koppen.ds-koppen .kp-csum::before{content:none;display:none}
+.ds-koppen.ds-koppen .kp-csum::after{content:"›";font-size:16px;line-height:1;transform:rotate(90deg)}
+.ds-koppen.ds-koppen .kp-readcard:not([open]) > .kp-csum::after,.ds-koppen.ds-koppen .kp-extra:not([open]) > .kp-csum::after{transform:none}
+.ds-koppen.ds-koppen .kp-sub{font-size:13px;font-weight:400;color:var(--ink2)}
+.ds-koppen.ds-koppen .kp-hint,.ds-koppen.ds-koppen .kp-hint2{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-koppen.ds-koppen .kp-note,.ds-koppen.ds-koppen .kp-readnote{font-size:12px;color:var(--ink2);line-height:1.5}
+.ds-koppen.ds-koppen .kp-p,.ds-koppen.ds-koppen .kp-place,.ds-koppen.ds-koppen .kp-mdesc{font-size:13.5px;line-height:1.6}
+.ds-koppen.ds-koppen .kp-place{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.ds-koppen.ds-koppen .kp-mterm{font-size:13.5px}
+/* 붙은 탭 모양 선택 단추: 고른 것은 연한 파랑 바탕 · 파란 굵은 글씨 */
+.ds-koppen.ds-koppen .kp-seg{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-koppen.ds-koppen .kp-segb{font-size:13.5px;padding:7px 6px;background:#fff;color:var(--ink2)}
+.ds-koppen.ds-koppen .kp-segb:hover{background:#f6f5f1}
+.ds-koppen.ds-koppen .kp-seg .kp-segb[aria-pressed="true"],.ds-koppen.ds-koppen .kp-segb[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.ds-koppen.ds-koppen .kp-stages{gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.ds-koppen.ds-koppen .kp-stg{border:0;border-radius:0;font-size:13.5px;padding:7px 2px;color:var(--ink2);background:#fff}
+.ds-koppen.ds-koppen .kp-stg + .kp-stg{border-left:1px solid var(--line)}
+.ds-koppen.ds-koppen .kp-stg[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--line)}
+.ds-koppen.ds-koppen .kp-stb[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-koppen.ds-koppen .kp-stb[aria-pressed="true"] .kp-sts{color:var(--accent)}
+.ds-koppen.ds-koppen .kp-vbtn{border-radius:8px;font-size:14px;padding:8px 10px}
+/* 단추 */
+.ds-koppen.ds-koppen .kp-btn{font-size:14px;padding:8px 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:none}
+.ds-koppen.ds-koppen .kp-btn:hover{background:#f1f0eb}
+.ds-koppen.ds-koppen .kp-btn.main{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:none}
+.ds-koppen.ds-koppen .kp-btn.main:hover{background:var(--accent);filter:brightness(1.05)}
+.ds-koppen.ds-koppen .kp-btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--line);color:var(--accent)}
+.ds-koppen.ds-koppen .kp-prow .kp-play,.ds-koppen.ds-koppen .kp-row .kp-play{flex:1 1 0;width:auto;letter-spacing:0;font-size:14px}
+.ds-koppen.ds-koppen .kp-play::before{content:"";flex:none;width:0;height:0;margin-right:2px;border-left:10px solid currentColor;border-top:6px solid transparent;border-bottom:6px solid transparent}
+.ds-koppen.ds-koppen .kp-play:not([aria-label])::before{content:none}
+.ds-koppen.ds-koppen .kp-play[aria-label="멈춤"]::before{width:3px;height:12px;border:0;border-left:3px solid currentColor;border-right:3px solid currentColor}
+.ds-koppen.ds-koppen .kp-reset::before{content:"↻";flex:none;font-size:16px;line-height:1}
+.ds-koppen.ds-koppen .kp-reset{flex:1 1 0}
+.ds-koppen.ds-koppen .kp-mini{border-radius:8px;font-size:12.5px;padding:3px 10px}
+/* 켜기/끄기는 스위치: 글자 왼쪽 · 스위치 오른쪽 */
+.ds-koppen.ds-koppen .kp-onoff{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;font-size:14px;font-weight:400;padding:4px 0;border:0;border-radius:0;background:transparent;color:var(--ink)}
+.ds-koppen.ds-koppen .kp-onoff:hover,.ds-koppen.ds-koppen .kp-onoff[aria-pressed="true"]{background:transparent;color:var(--ink);font-weight:400;border:0}
+.ds-koppen.ds-koppen .kp-onoff::after{content:"";flex:none;width:36px;height:20px;border-radius:999px;background:#d6d3cb radial-gradient(circle at 10px 10px,#fff 7px,transparent 7.5px);transition:background-position .15s}
+.ds-koppen.ds-koppen .kp-onoff[aria-pressed="true"]::after{background:var(--accent) radial-gradient(circle at 26px 10px,#fff 7px,transparent 7.5px)}
+.ds-koppen.ds-koppen .kp-onoff:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-koppen.ds-koppen .kp-row:has(> .kp-onoff){flex-direction:column;gap:2px}
+.ds-koppen.ds-koppen .kp-onoffl{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--ink);padding:2px 0;user-select:none}
+.ds-koppen.ds-koppen .kp-onoffl .kp-check-in{-webkit-appearance:none;appearance:none;width:36px;height:20px;margin:0;border-radius:999px;background:#d6d3cb;position:relative;cursor:pointer;flex:none;transition:background .15s}
+.ds-koppen.ds-koppen .kp-onoffl .kp-check-in::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.ds-koppen.ds-koppen .kp-onoffl .kp-check-in:checked{background:var(--accent)}
+.ds-koppen.ds-koppen .kp-onoffl .kp-check-in:checked::after{transform:translateX(16px)}
+.ds-koppen.ds-koppen .kp-onoffl .kp-check-in:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 값은 「이름 … 값」 목록 */
+.ds-koppen.ds-koppen .kp-stats{display:grid;grid-template-columns:1fr;gap:4px}
+.ds-koppen.ds-koppen .kp-stat,.ds-koppen.ds-koppen .kp-mrow{display:flex;flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;background:transparent;border:0;border-radius:0;padding:0}
+.ds-koppen.ds-koppen .kp-k{font-size:14px;color:var(--ink2);line-height:1.5}
+.ds-koppen.ds-koppen .kp-v{font-size:14px;font-weight:700;line-height:1.5;text-align:right;font-variant-numeric:tabular-nums}
+/* 설명은 연한 베이지 카드 */
+.ds-koppen.ds-koppen.ds-koppen .kp-result{border:1px solid var(--line);border-left:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fcfbf8;gap:6px}
+.ds-koppen.ds-koppen .kp-rk{font-size:16px;line-height:1.4}
+.ds-koppen.ds-koppen .kp-rt{font-size:14px;line-height:1.6;color:var(--ink)}
+.ds-koppen.ds-koppen .kp-range,.ds-koppen.ds-koppen .kp-trange{accent-color:var(--accent)}
+.ds-koppen.ds-koppen .kp-rv{font-size:13px;font-weight:600;color:var(--ink)}
+/* 완성도(10-29): 2 · 3칸 격자 단추가 넓어진 여백 때문에 칸 밖으로 넘치던 것 */
+.ds-koppen.ds-koppen .kp-grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.ds-koppen.ds-koppen .kp-grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ds-koppen.ds-koppen .kp-grid2 .kp-btn,.ds-koppen.ds-koppen .kp-grid3 .kp-btn{min-width:0;padding:7px 4px;white-space:normal;line-height:1.3}
+/* 완성도(10-29): 「이름표 + 선택 단추」 한 줄이 좁으면 이름표가 줄바꿈(하천 「살펴볼 곳에서 자르기」가 3px 넘치던 것) */
+.ds-koppen.ds-koppen .kp-line2 > .kp-sub{min-width:0}
+.ds-koppen.ds-koppen .kp-line2 .kp-seg{min-width:0}
+.ds-koppen.ds-koppen .kp-segb{min-width:0;padding-left:4px;padding-right:4px}
+/* 업그레이드(10-29): 단계 단추 이름 · 무대 위 단계 표시 */
+.ds-koppen.ds-koppen .kp-stg{font-size:13px;line-height:1.25;padding:7px 2px;word-break:keep-all}
+.ds-koppen.ds-koppen .kp-hud{margin:3px 0 0;font-size:15px;font-weight:700;color:var(--accent);line-height:1.3}
+.ds-koppen.ds-koppen .kp-hud[hidden]{display:none}
+/* 휴대폰(10-29): 기후 「산을 넘는 바람」처럼 폭이 꽉 찬 그래프는 좁은 배치에서 글자만 키움 */
+.ds-koppen.ds-koppen .kp-narbump .kp-tick,.ds-koppen.ds-koppen .kp-narbump .kp-rht,.ds-koppen.ds-koppen .kp-narbump .kp-ptv,.ds-koppen.ds-koppen .kp-narbump .kp-tsub{font-size:19px}
+.ds-koppen.ds-koppen .kp-narbump .kp-small{font-size:15px}
+/* 업그레이드(10-29): 설명 카드의 핵심 낱말(예시의 파란 굵은 낱말) */
+.ds-koppen.ds-koppen .kp-term{color:var(--accent);font-weight:700}
+/* 업그레이드(10-29): 휴대폰 폭 — 패널은 늘 무대 아래라 패널 위치 고르기는 숨김, 무대 안내 말풍선은 숨김(제목 · 설명을 가림),
+   확인 문제 카드가 무대보다 길면 무대 안에서 스크롤 */
+@media (max-width:560px){
+  .ds-koppen.ds-koppen .kp-toast{display:none}
+  .ds-koppen.ds-koppen .kp-line2:has(> .kp-posseg),.ds-koppen.ds-koppen .kp-hmi.kp-gear{display:none}
+  .ds-koppen.ds-koppen .kp-title{font-size:17px}
+  .ds-koppen.ds-koppen .kp-hud{font-size:14px}
+  .ds-koppen.ds-koppen .kp-guide{font-size:13px}
+  .ds-koppen.ds-koppen .kp-cap{max-width:calc(100% - 160px)}
+  .ds-koppen.ds-koppen .kp-quiz{align-items:flex-start;overflow-y:auto;padding:10px}
+  .ds-koppen.ds-koppen .kp-qcard{padding:14px 14px 12px}
+  .ds-koppen.ds-koppen .kp-body{padding:14px 14px 18px;gap:16px}
+  /* 휴대폰(10-29): 무대 · 패널을 한 화면에 나누지 않고 위아래로 이어 페이지가 스크롤. 무대는 폭에 비례해 길게(기후 1.5배 · 지형 1.25배) */
+  .ds-koppen.ds-koppen.ds-koppen{height:auto;min-height:0;grid-template-rows:auto auto}
+  .ds-koppen.ds-koppen .kp-stage{height:min(150vw,88vh)}
+  .ds-koppen.ds-koppen .kp-panel{max-height:none;overflow:visible}
+}
+/* 완성도(10-29): 키보드로 옮겨 갔을 때 어디인지 보이게 */
+.ds-koppen.ds-koppen .kp-segb:focus-visible,.ds-koppen.ds-koppen .kp-stg:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ds-koppen.ds-koppen .kp-btn:focus-visible,.ds-koppen.ds-koppen .kp-vbtn:focus-visible,.ds-koppen.ds-koppen .kp-mini:focus-visible,.ds-koppen.ds-koppen .kp-toci:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== 컴퓨터 화면 손질(10-29) ===== */
+/* A2 시점 되돌리기(작은 단추)에는 재생용 ↻ 아이콘을 붙이지 않음 */
+.ds-koppen.ds-koppen .kp-mini.kp-reset::before{content:none}
+/* A3 색 견본이 있는 스위치(대지형 「보이는 대지형」)도 이름은 왼쪽, 스위치는 오른쪽 끝 */
+.ds-koppen.ds-koppen .kp-onoff{justify-content:flex-start}
+.ds-koppen.ds-koppen .kp-onoff::after{margin-left:auto}
+/* A5 표지 뒤 무대(단면 그래프 등)가 또렷하게 비치지 않게 */
+.ds-koppen.ds-koppen .kp-cover{background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.8) 100%)}
+/* A6 위도와 태양 에너지: 그래프 칸을 넓혀 눈금 글자를 키움(좁은 쌓기 배치는 그대로) */
+.ds-koppen.ds-koppen .kp-stage:not(.kp-gstack) .kp-gwrap{width:clamp(300px,42%,640px)}
+/* B7 접는 카드(기후 설명 · 확인 문제) */
+.ds-koppen.ds-koppen .kp-csum{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.ds-koppen.ds-koppen .kp-csum::-webkit-details-marker{display:none}
+.ds-koppen.ds-koppen .kp-csum::after{margin-left:auto}
+.ds-koppen.ds-koppen .kp-fold:not([open]) > .kp-csum::after{transform:none}
+.ds-koppen.ds-koppen .kp-fold[open] > .kp-csum{margin-bottom:6px}
+/* B8 기후 「패널 위치」는 패널 머리 단추 → 아래로 펼침 */
+.ds-koppen.ds-koppen .kp-head-row .kp-ptitle{flex:1;min-width:0}
+.ds-koppen.ds-koppen .kp-posbtn[aria-expanded="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-koppen.ds-koppen .kp-posbox{padding-top:8px}
+.ds-koppen.ds-koppen .kp-posbox[hidden]{display:none}
+/* B9 프로젝터 · 큰 모니터(1600px 이상): 패널을 1.15배로(폭 368px) */
+@media (min-width:1600px){
+  .ds-koppen.ds-koppen.ds-koppen.kp-pos-right:not(.kp-collapsed):not(.kp-quizmode){grid-template-columns:minmax(0,1fr) 368px}
+  .ds-koppen.ds-koppen.ds-koppen.kp-pos-left:not(.kp-collapsed):not(.kp-quizmode){grid-template-columns:368px minmax(0,1fr)}
+  .ds-koppen.ds-koppen.ds-koppen.kp-quizmode.kp-pos-right{grid-template-columns:minmax(0,1fr) 276px}
+  .ds-koppen.ds-koppen.ds-koppen.kp-quizmode.kp-pos-left{grid-template-columns:276px minmax(0,1fr)}
+  .ds-koppen.ds-koppen .kp-panel{zoom:1.15}
+}
+@media (max-width:560px){
+  .ds-koppen.ds-koppen .kp-posbtn{display:none}
+}
+
+/* ===== 표지(10-30): 지형과 같은 모양 ===== */
+.ds-koppen.ds-koppen .kp-cover{position:absolute;inset:0;z-index:25;display:flex;align-items:center;padding:32px 40px;box-sizing:border-box;background:linear-gradient(90deg,#f7f9fb 0%,rgba(247,249,251,.97) 45%,rgba(247,249,251,.82) 100%)}
+.ds-koppen.ds-koppen .kp-cover[hidden]{display:none}
+.ds-koppen.ds-koppen .kp-covin{max-width:540px;display:flex;flex-direction:column;gap:14px}
+.ds-koppen.ds-koppen .kp-coveye{margin:0;font-size:13px;font-weight:700;color:var(--accent)}
+.ds-koppen.ds-koppen .kp-covt{margin:0;font-size:40px;line-height:1.15;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.ds-koppen.ds-koppen .kp-covs{margin:0;font-size:15px;line-height:1.65;color:var(--ink2)}
+.ds-koppen.ds-koppen .kp-covl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+.ds-koppen.ds-koppen .kp-covl.two{grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px}
+.ds-koppen.ds-koppen .kp-covc{display:flex;align-items:center;gap:8px;font:inherit;font-size:14px;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.92);color:var(--ink);cursor:pointer}
+.ds-koppen.ds-koppen .kp-covc:hover{border-color:var(--accent);color:var(--accent)}
+.ds-koppen.ds-koppen .kp-covc:focus-visible,.ds-koppen.ds-koppen .kp-covgo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-koppen.ds-koppen .kp-covn{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:12px;display:inline-flex;align-items:center;justify-content:center}
+.ds-koppen.ds-koppen .kp-covgo{align-self:flex-start;padding:12px 20px;font-size:15px;margin-top:4px}
+.ds-koppen.ds-koppen .kp-covh{margin:0;font-size:13px;color:var(--ink2)}
+.ds-koppen.ds-koppen.ds-koppen.kp-covermode .kp-hint,.ds-koppen.ds-koppen.ds-koppen.kp-covermode .kp-legend{visibility:hidden}
+@media (max-width:720px){
+  .ds-koppen.ds-koppen .kp-cover{padding:20px 16px;background:rgba(247,249,251,.95)}
+  .ds-koppen.ds-koppen .kp-covt{font-size:30px}
+  .ds-koppen.ds-koppen .kp-covl,.ds-koppen.ds-koppen .kp-covh{display:none}
+}
+
+/* 패널 머리 집 아이콘(10-30): 표지(처음 화면)로 */
+.ds-koppen.ds-koppen .kp-homebtn{flex:none;width:34px;height:34px;padding:0;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.ds-koppen.ds-koppen .kp-homebtn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ds-koppen.ds-koppen .kp-homebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ds-koppen.ds-koppen .kp-head-row{justify-content:flex-start;gap:10px}
+.ds-koppen.ds-koppen .kp-head-row .kp-posbtn{margin-left:auto}
 </style>
 
 <div class="kp-stage">
+  <div class="kp-cover" hidden>
+    <div class="kp-covin">
+      <p class="kp-coveye">중학 사회 ① · 기후</p>
+      <p class="kp-covt">쾨펜 기후 구분</p>
+      <p class="kp-covs">쾨펜은 기온과 강수량으로 세계의 기후를 나눈다. 판별 순서를 따라 여러 도시의 기후대를 정해 본다.</p>
+      <div class="kp-covl two">
+        <button type="button" class="kp-covc" data-view="flow"><b class="kp-covn">1</b>판별 순서 따라가기</button>
+        <button type="button" class="kp-covc" data-view="try"><b class="kp-covn">2</b>직접 판별해 보기</button>
+      </div>
+      <button type="button" class="kp-btn main kp-covgo" data-view="flow">판별 순서 따라가기부터 시작한다</button>
+      <p class="kp-covh">패널의 「보기」에서 골라도 된다.</p>
+    </div>
+  </div>
   <div class="kp-views"></div>
-  <canvas class="kp-gcv" tabindex="0" role="img" aria-label="11개 도시를 판별한 기후대 색으로 보여 주는 3D 지구. 점을 누르면 그 도시로 바뀝니다. 끌어서 돌려 봅니다."></canvas>
+  <canvas class="kp-gcv" tabindex="0" role="img" aria-label="11개 도시를 판별한 기후대 색으로 보여 주는 3D 지구. 점을 누르면 그 도시로 바뀐다. 끌어서 돌릴 수 있다."></canvas>
 </div>
 
 <aside class="kp-panel" aria-label="조작 패널">
   <div class="kp-head">
     <div class="kp-head-row">
+      <button type="button" class="kp-homebtn" aria-label="처음 화면(표지)" title="처음 화면"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M4 11.2 12 4.5l8 6.7"/><path d="M6.5 9.6V19h11V9.6"/><path d="M10.2 19v-5h3.6v5"/></svg></button>
       <h2 class="kp-ptitle">쾨펜 기후 구분</h2>
+      <button type="button" class="kp-mini kp-posbtn" aria-expanded="false">패널 위치</button>
       <button type="button" class="kp-mini kp-fold" aria-expanded="true">접기</button>
     </div>
-    <p class="kp-src">중학 사회 ① · 기후</p>
-  </div>
-
-  <div class="kp-body">
-    <section class="kp-card">
-      <h3 class="kp-h">조작</h3>
+    <div class="kp-posbox" hidden>
       <div class="kp-line2">
         <span class="kp-sub">패널 위치</span>
         <div class="kp-seg kp-posseg" role="group" aria-label="패널 위치">
@@ -238,6 +413,13 @@
           <button type="button" class="kp-segb" data-pos="float" aria-pressed="false">플로팅</button>
         </div>
       </div>
+    </div>
+    <p class="kp-src">중학 사회 ① · 기후</p>
+  </div>
+
+  <div class="kp-body">
+    <section class="kp-card">
+      <h3 class="kp-h">조작</h3>
       <span class="kp-sub">보기</span>
       <div class="kp-vlist" role="group" aria-label="보기">
         <button type="button" class="kp-vbtn" data-view="flow" aria-pressed="true"><span class="kp-vno">1</span>판별 순서 따라가기</button>
@@ -288,14 +470,14 @@
     <section class="kp-card">
       <h3 class="kp-h">쾨펜 기후 구분 순서</h3>
       <p class="kp-p">1차: 최난월 10℃ 미만 → E(한대) · 연강수량 500mm 미만 → B(건조) · 최한월 18℃ 이상 → A(열대) · 최한월 −3℃ 초과 → C(온대) · 그 밖 → D(냉대)</p>
-      <p class="kp-p">2차: A는 건기, B는 강수량(W · S), C · D는 건조한 계절(f · s · w), E는 최난월 0℃(T · F)로 나눕니다. 3차: 온대 습윤(Cf)만 최난월 22℃로 a · b를 나눕니다.</p>
-      <p class="kp-note">여름 반년은 북반구 4~9월, 남반구 10~3월입니다.</p>
+      <p class="kp-p">2차: A는 건기, B는 강수량(W · S), C · D는 건조한 계절(f · s · w), E는 최난월 0℃(T · F)로 나눈다. 3차: 온대 습윤(Cf)만 최난월 22℃로 a · b를 나눈다.</p>
+      <p class="kp-note">여름 반년은 북반구 4~9월, 남반구 10~3월이다.</p>
     </section>
 
-    <section class="kp-card">
-      <h3 class="kp-h">확인 문제</h3>
+    <details class="kp-card kp-fold">
+      <summary class="kp-csum">확인 문제</summary>
       <div class="kp-qlist"></div>
-    </section>
+    </details>
     <p class="kp-credit">도시 기후 WMO 기후 평년값 · 해안선 Natural Earth · 판별은 교과서의 쾨펜 기준(온대 · 냉대 경계 −3℃, 건조 경계 500mm)</p>
   </div>
 </aside>
@@ -370,33 +552,33 @@
       var steps = [], code;
       function step(o) { steps.push(o); }
 
-      step({ lv: 1, q: "최난월이 10℃ 미만입니까?", ask: "최난월 평균 기온이 10℃ 미만입니까?", v: "최난월 " + deg(tmax), ans: tmax < 10, letter: tmax < 10 ? "E" : null, key: "tmax", guide: 10 });
+      step({ lv: 1, q: "최난월이 10℃ 미만인가?", ask: "최난월 평균 기온이 10℃ 미만인가?", v: "최난월 " + deg(tmax), ans: tmax < 10, letter: tmax < 10 ? "E" : null, key: "tmax", guide: 10 });
       if (tmax >= 10) {
-        step({ lv: 1, q: "연강수량이 500mm 미만입니까?", ask: "연강수량이 500mm 미만입니까?", v: "연강수량 " + mm(pAnn), ans: pAnn < 500, letter: pAnn < 500 ? "B" : null, key: "pann" });
+        step({ lv: 1, q: "연강수량이 500mm 미만인가?", ask: "연강수량이 500mm 미만인가?", v: "연강수량 " + mm(pAnn), ans: pAnn < 500, letter: pAnn < 500 ? "B" : null, key: "pann" });
         if (pAnn >= 500) {
-          step({ lv: 1, q: "최한월이 18℃ 이상입니까?", ask: "최한월 평균 기온이 18℃ 이상입니까?", v: "최한월 " + deg(tmin), ans: tmin >= 18, letter: tmin >= 18 ? "A" : null, key: "tmin", guide: 18 });
-          if (tmin < 18) step({ lv: 1, q: "최한월이 −3℃보다 높습니까?", ask: "최한월 평균 기온이 −3℃보다 높습니까?", v: "최한월 " + deg(tmin), ans: tmin > -3, letter: tmin > -3 ? "C" : "D", key: "tmin", guide: -3 });
+          step({ lv: 1, q: "최한월이 18℃ 이상인가?", ask: "최한월 평균 기온이 18℃ 이상인가?", v: "최한월 " + deg(tmin), ans: tmin >= 18, letter: tmin >= 18 ? "A" : null, key: "tmin", guide: 18 });
+          if (tmin < 18) step({ lv: 1, q: "최한월이 −3℃보다 높은가?", ask: "최한월 평균 기온이 −3℃보다 높은가?", v: "최한월 " + deg(tmin), ans: tmin > -3, letter: tmin > -3 ? "C" : "D", key: "tmin", guide: -3 });
         }
       }
       var Z = steps[steps.length - 1].letter;
 
       if (Z === "E") {
         var F = tmax < 0;
-        step({ lv: 2, q: "최난월이 0℃ 미만입니까?", ask: "최난월 평균 기온이 0℃ 미만입니까?", v: "최난월 " + deg(tmax), ans: F, letter: F ? "F" : "T", key: "tmax", guide: 0 });
+        step({ lv: 2, q: "최난월이 0℃ 미만인가?", ask: "최난월 평균 기온이 0℃ 미만인가?", v: "최난월 " + deg(tmax), ans: F, letter: F ? "F" : "T", key: "tmax", guide: 0 });
         code = F ? "EF" : "ET";
       } else if (Z === "B") {
         var W = pAnn < 250;
-        step({ lv: 2, q: "연강수량이 250mm 미만입니까?", ask: "연강수량이 250mm 미만입니까?", v: "연강수량 " + mm(pAnn), ans: W, letter: W ? "W" : "S", key: "pann" });
+        step({ lv: 2, q: "연강수량이 250mm 미만인가?", ask: "연강수량이 250mm 미만인가?", v: "연강수량 " + mm(pAnn), ans: W, letter: W ? "W" : "S", key: "pann" });
         code = W ? "BW" : "BS";
       } else if (Z === "A") {
         if (pmin >= 60) {
-          step({ lv: 2, q: "최소우월이 60mm 이상입니까?", ask: "최소우월 강수량이 60mm 이상입니까?", v: "최소우월 " + (iPmin + 1) + "월 " + mm(pmin), ans: true, letter: "f", key: "pmin", bars: [iPmin] });
+          step({ lv: 2, q: "최소우월이 60mm 이상인가?", ask: "최소우월 강수량이 60mm 이상인가?", v: "최소우월 " + (iPmin + 1) + "월 " + mm(pmin), ans: true, letter: "f", key: "pmin", bars: [iPmin] });
           code = "Af";
         } else {
           var th = 100 - pAnn / 25;
-          step({ lv: 2, q: "최소우월이 60mm 이상입니까?", ask: "최소우월 강수량이 60mm 이상입니까?", v: "최소우월 " + (iPmin + 1) + "월 " + mm(pmin), ans: false, letter: null, key: "pmin", bars: [iPmin] });
+          step({ lv: 2, q: "최소우월이 60mm 이상인가?", ask: "최소우월 강수량이 60mm 이상인가?", v: "최소우월 " + (iPmin + 1) + "월 " + mm(pmin), ans: false, letter: null, key: "pmin", bars: [iPmin] });
           var mOk = pmin >= th;
-          step({ lv: 2, q: "건기가 짧습니까?", c: "최소우월 ≥ 100 − 연강수량÷25 = " + mm(Math.max(0, th)), ask: "최소우월 강수량이 「100 − 연강수량÷25」(= " + mm(Math.max(0, th)) + ") 이상입니까?", v: "최소우월 " + mm(pmin), ans: mOk, letter: mOk ? "m" : "w", key: "pmin", bars: [iPmin] });
+          step({ lv: 2, q: "건기가 짧은가?", c: "최소우월 ≥ 100 − 연강수량÷25 = " + mm(Math.max(0, th)), ask: "최소우월 강수량이 「100 − 연강수량÷25」(= " + mm(Math.max(0, th)) + ") 이상인가?", v: "최소우월 " + mm(pmin), ans: mOk, letter: mOk ? "m" : "w", key: "pmin", bars: [iPmin] });
           code = mOk ? "Am" : "Aw";
         }
       } else {
@@ -406,15 +588,15 @@
         if (sDry && wDry) sec = p[wMax] / Math.max(1, p[sMin]) >= p[sMax] / Math.max(1, p[wMin]) ? "s" : "w";
         else if (sDry) sec = "s";
         else if (wDry) sec = "w";
-        step({ lv: 2, q: "여름 반년이 건조합니까?", c: "여름 최소우월 40mm 미만, 겨울 최다우월이 그 3배 이상", ask: "여름 반년이 건조합니까? (여름 최소우월이 40mm 미만이고, 겨울 최다우월이 그 3배 이상)",
+        step({ lv: 2, q: "여름 반년이 건조한가?", c: "여름 최소우월 40mm 미만, 겨울 최다우월이 그 3배 이상", ask: "여름 반년이 건조한가? (여름 최소우월이 40mm 미만이고, 겨울 최다우월이 그 3배 이상)",
           v: "여름 최소우월 " + (sMin + 1) + "월 " + mm(p[sMin]) + " · 겨울 최다우월 " + (wMax + 1) + "월 " + mm(p[wMax]), vs: "여름 최소우월 " + mm(p[sMin]) + " · 겨울 최다우월 " + mm(p[wMax]), ans: sec === "s", letter: sec === "s" ? "s" : null, band: su, bars: [sMin, wMax] });
         if (sec !== "s") {
-          step({ lv: 2, q: "겨울 반년이 건조합니까?", c: "여름 최다우월이 겨울 최소우월의 10배 이상", ask: "겨울 반년이 건조합니까? (여름 최다우월이 겨울 최소우월의 10배 이상)",
+          step({ lv: 2, q: "겨울 반년이 건조한가?", c: "여름 최다우월이 겨울 최소우월의 10배 이상", ask: "겨울 반년이 건조한가? (여름 최다우월이 겨울 최소우월의 10배 이상)",
             v: "여름 최다우월 " + (sMax + 1) + "월 " + mm(p[sMax]) + " · 겨울 최소우월 " + (wMin + 1) + "월 " + mm(p[wMin]), vs: "여름 최다우월 " + mm(p[sMax]) + " · 겨울 최소우월 " + mm(p[wMin]), ans: sec === "w", letter: sec === "w" ? "w" : "f", band: su, bars: [sMax, wMin] });
         }
         if (Z === "C" && sec === "f") {
           var a = tmax >= 22;
-          step({ lv: 3, q: "최난월이 22℃ 이상입니까?", ask: "최난월 평균 기온이 22℃ 이상입니까?", v: "최난월 " + deg(tmax), ans: a, letter: a ? "a" : "b", key: "tmax", guide: 22 });
+          step({ lv: 3, q: "최난월이 22℃ 이상인가?", ask: "최난월 평균 기온이 22℃ 이상인가?", v: "최난월 " + deg(tmax), ans: a, letter: a ? "a" : "b", key: "tmax", guide: 22 });
           code = "Cf" + (a ? "a" : "b");
         } else code = Z + sec;
       }
@@ -424,47 +606,112 @@
     var QUIZ = [
       {
         title: "1차 판별의 첫 질문",
-        q: "이 판별 순서에서 1차 판별을 할 때 가장 먼저 확인하는 것은 무엇일까요?",
+        q: "이 판별 순서에서 1차 판별을 할 때 가장 먼저 확인하는 것은 무엇일까?",
         opts: ["최한월 평균 기온이 18℃ 이상인지", "최난월 평균 기온이 10℃ 미만인지", "연강수량이 500mm 미만인지"],
         ans: 1,
-        ok: "맞습니다. 최난월 10℃ 미만(한대) → 연강수량 500mm 미만(건조) → 최한월 18℃ 이상(열대) → 최한월 −3℃ 초과(온대)의 차례로 확인합니다.",
-        no: "다시 생각해 보세요. 보기 1에서 아무 도시나 골라 첫 번째 단계 카드를 살펴봅니다."
+        ok: "정답이다. 최난월 10℃ 미만(한대) → 연강수량 500mm 미만(건조) → 최한월 18℃ 이상(열대) → 최한월 −3℃ 초과(온대)의 차례로 확인한다.",
+        no: "다시 생각해 보자. 보기 1에서 아무 도시나 골라 첫 번째 단계 카드를 살펴본다."
       },
       {
         title: "카이로의 기후대",
-        q: "카이로는 최한월 13.8℃, 최난월 29.8℃, 연강수량 23mm입니다. 1차 판별에서 어느 기후대일까요?",
+        q: "카이로는 최한월 13.8℃, 최난월 29.8℃, 연강수량 23mm이다. 1차 판별에서 어느 기후대일까?",
         opts: ["A 열대", "B 건조", "C 온대"],
         ans: 1,
-        ok: "맞습니다. 최난월이 10℃ 이상이라 한대가 아니고, 연강수량이 500mm 미만이라 건조 기후(B)입니다. 250mm 미만이므로 사막 기후(BW)입니다.",
-        no: "다시 생각해 보세요. 최한월 18℃보다 먼저 연강수량 500mm를 확인합니다."
+        ok: "정답이다. 최난월이 10℃ 이상이라 한대가 아니고, 연강수량이 500mm 미만이라 건조 기후(B)이다. 250mm 미만이므로 사막 기후(BW)이다.",
+        no: "다시 생각해 보자. 최한월 18℃보다 먼저 연강수량 500mm를 확인한다."
       },
       {
         title: "온대와 냉대의 경계",
-        q: "서울(최한월 −2.4℃)과 모스크바(최한월 −6.5℃)를 온대와 냉대로 가르는 기준은 무엇일까요?",
+        q: "서울(최한월 −2.4℃)과 모스크바(최한월 −6.5℃)를 온대와 냉대로 가르는 기준은 무엇일까?",
         opts: ["최한월 평균 기온 −3℃", "최난월 평균 기온 22℃", "연강수량 500mm"],
         ans: 0,
-        ok: "맞습니다. 최한월이 −3℃보다 높으면 온대(C), 그렇지 않으면 냉대(D)입니다. 서울은 −2.4℃라 온대, 모스크바는 −6.5℃라 냉대입니다.",
-        no: "다시 생각해 보세요. 보기 1에서 서울과 모스크바를 차례로 골라 1차 마지막 단계를 비교해 봅니다."
+        ok: "정답이다. 최한월이 −3℃보다 높으면 온대(C), 그렇지 않으면 냉대(D)이다. 서울은 −2.4℃라 온대, 모스크바는 −6.5℃라 냉대다.",
+        no: "다시 생각해 보자. 보기 1에서 서울과 모스크바를 차례로 골라 1차 마지막 단계를 비교해 본다."
       },
       {
         title: "남반구의 여름 반년",
-        q: "퍼스는 남반구에 있습니다. 판별할 때 퍼스의 여름 반년은 언제일까요?",
+        q: "퍼스는 남반구에 있다. 판별할 때 퍼스의 여름 반년은 언제일까?",
         opts: ["4~9월", "10~3월", "1~6월"],
         ans: 1,
-        ok: "맞습니다. 남반구는 계절이 반대라 10~3월이 여름 반년입니다. 퍼스는 이 여름에 비가 적어(최소우월 1월 10mm) 지중해성 기후(Cs)입니다.",
-        no: "다시 생각해 보세요. 보기 1에서 퍼스를 골라 2차 단계의 「여름 반년」 띠를 살펴봅니다."
+        ok: "정답이다. 남반구는 계절이 반대라 10~3월이 여름 반년이다. 퍼스는 이 여름에 비가 적어(최소우월 1월 10mm) 지중해성 기후(Cs)이다.",
+        no: "다시 생각해 보자. 보기 1에서 퍼스를 골라 2차 단계의 「여름 반년」 띠를 살펴본다."
       },
       {
         title: "런던의 3차 판별",
-        q: "런던은 온대 습윤 기후(Cf)입니다. Cfa와 Cfb를 가르는 기준은 무엇일까요?",
+        q: "런던은 온대 습윤 기후(Cf)이다. Cfa와 Cfb를 가르는 기준은 무엇일까?",
         opts: ["최난월 평균 기온 22℃", "최한월 평균 기온 18℃", "연강수량 500mm"],
         ans: 0,
-        ok: "맞습니다. 최난월이 22℃ 이상이면 a, 미만이면 b입니다. 런던은 최난월 18.3℃라 서안 해양성 기후(Cfb)입니다.",
-        no: "다시 생각해 보세요. 보기 1에서 런던을 골라 맨 마지막 3차 단계를 살펴봅니다."
+        ok: "정답이다. 최난월이 22℃ 이상이면 a, 미만이면 b이다. 런던은 최난월 18.3℃라 서안 해양성 기후(Cfb)이다.",
+        no: "다시 생각해 보자. 보기 1에서 런던을 골라 맨 마지막 3차 단계를 살펴본다."
       }
     ];
 
     function $(sel) { return root.querySelector(sel); }
+    /* 키보드(10-30): 「패널 위치」 상자는 Esc로 닫음 · 표지에서 고르면 초점을 그 보기 단추로 */
+    (function () {
+      var b = $(".kp-posbtn"), box = $(".kp-posbox");
+      if (b && box) [b, box].forEach(function (el) { el.addEventListener("keydown", function (e) { if (e.key === "Escape" && !box.hidden) { box.hidden = true; b.setAttribute("aria-expanded", "false"); b.focus(); e.preventDefault(); } }); });
+      var cv = $(".kp-cover"); if (!cv) return;
+      Array.prototype.forEach.call(cv.querySelectorAll(".kp-covc, .kp-covgo"), function (c) { c.addEventListener("click", function () {
+        setTimeout(function () { var v = c.getAttribute("data-view"), t = (v && root.querySelector(".kp-vbtn[data-view=\"" + v + "\"]")) || root.querySelector(".kp-vbtn") || root.querySelector(".kp-panel button"); if (t) t.focus(); }, 0);
+      }); });
+    })();
+    /* 속도 확인(10-30): 주소에 ?fps=1 을 붙이면 무대 오른쪽 아래에 초당 화면 수(최근 1초 · 최근 5초 최저)와 캔버스 크기를 띄움. 교실 PC · 전자칠판 확인용 */
+    (function () {
+      if (!/[?&]fps=1(&|$)/.test(location.search)) return;
+      var st = $(".kp-stage") || root, box = document.createElement("div");
+      box.setAttribute("aria-hidden", "true");
+      box.style.cssText = "position:absolute;right:10px;bottom:10px;z-index:60;font:600 12px/1.4 Consolas,monospace;color:#fff;background:rgba(29,33,38,.8);padding:4px 8px;border-radius:6px;pointer-events:none";
+      box.textContent = "fps 재는 중";
+      st.appendChild(box);
+      var n = 0, t0 = performance.now(), hist = [];
+      function f(t) {
+        n++;
+        if (t - t0 >= 1000) {
+          var fps = Math.round(n * 1000 / (t - t0)), cv = root.querySelector("canvas");
+          hist.push(fps); if (hist.length > 5) hist.shift();
+          box.textContent = fps + " fps · 5초 최저 " + Math.min.apply(null, hist) + (cv ? " · " + cv.width + "×" + cv.height : "");
+          n = 0; t0 = t;
+        }
+        requestAnimationFrame(f);
+      }
+      requestAnimationFrame(f);
+    })();
+
+    /* 업그레이드(10-29): 설명 카드의 핵심 낱말을 파란 굵은 글씨로(예시처럼). 글이 바뀌면 낱말마다 처음 한 번만 <b>로 감쌈.
+       innerHTML 없이 글 조각 · 요소를 만들어 넣음. 이미 감싼 글이면 건드리지 않음(감시가 되풀이되지 않게) */
+    (function () {
+      var W = ["연강수량", "최한월", "최난월", "한대", "건조", "열대", "건기", "고산", "온대", "냉대"], el = $(".kp-rt"); if (!el || !window.MutationObserver) return;
+      var re = new RegExp("(" + W.map(function (w) { return w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+      function mark() {
+        if (el.querySelector(".kp-term")) return;
+        var s = el.textContent; if (!s) return; re.lastIndex = 0; if (!re.test(s)) return;
+        var seen = {}, parts = s.split(re), frag = document.createDocumentFragment();
+        parts.forEach(function (t, i) { if (!t) return; if (i % 2 === 1 && !seen[t]) { seen[t] = 1; var b = document.createElement("b"); b.className = "kp-term"; b.textContent = t; frag.appendChild(b); } else frag.appendChild(document.createTextNode(t)); });
+        while (el.firstChild) el.removeChild(el.firstChild);
+        el.appendChild(frag);
+      }
+      new MutationObserver(mark).observe(el, { childList: true, characterData: true, subtree: true });
+      mark();
+    })();
+
+    /* 표지(10-30): 처음 열 때(주소에 보기 · 값 지정이 없을 때) 무대에 표지. 카드 · 시작 단추 · 패널 보기 단추를 누르면 닫힘, 머리 「처음 화면」으로 다시 엶 */
+    (function () {
+      var cv = $(".kp-cover"), hb = $(".kp-homebtn"); if (!cv) return;
+      function show(on) { cv.hidden = !on; root.classList.toggle("kp-covermode", on); }
+      function pick(v) { show(false); if (!v) return; var b = root.querySelector(".kp-vbtn[data-view=\"" + v + "\"]"); if (b) b.click(); }
+      Array.prototype.forEach.call(cv.querySelectorAll(".kp-covc, .kp-covgo"), function (b) { b.addEventListener("click", function () { pick(b.getAttribute("data-view")); }); });
+      Array.prototype.forEach.call(root.querySelectorAll(".kp-vbtn"), function (b) { b.addEventListener("click", function () { show(false); }); });
+      if (hb) hb.addEventListener("click", function () { show(true); var f = cv.querySelector(".kp-covgo"); if (f) f.focus(); });
+      var q = location.search.replace(/[?&]panel=[^&]*/g, "").replace(/^[?&]+/, ""); if (!q) show(true);
+    })();
+
+    /* 컴퓨터 화면 손질(10-29): 패널 머리 「패널 위치」 단추로 위치 고르기 상자를 펼치고 닫음 */
+    (function () {
+      var b = $(".kp-posbtn"), box = $(".kp-posbox"); if (!b || !box) return;
+      b.addEventListener("click", function () { var o = box.hidden; box.hidden = !o; b.setAttribute("aria-expanded", o ? "true" : "false"); });
+      Array.prototype.forEach.call(box.querySelectorAll(".kp-segb"), function (x) { x.addEventListener("click", function () { box.hidden = true; b.setAttribute("aria-expanded", "false"); }); });
+    })();
     function $$(sel) { return Array.prototype.slice.call(root.querySelectorAll(sel)); }
     function attrs(e, at) { for (var k in at) if (Object.prototype.hasOwnProperty.call(at, k)) e.setAttribute(k, at[k]); }
     function S(tag, at, parent, text) {
@@ -877,7 +1124,7 @@
       hit.addEventListener("pointermove", function (e) { G.showMonth(mOf(e)); });
       hit.addEventListener("pointerdown", function (e) { G.showMonth(mOf(e)); });
       hit.addEventListener("pointerleave", function () { G.showMonth(-1); });
-      var foc = S("g", { "class": "kp-focus", tabindex: "0", role: "slider", "aria-label": "기후 그래프. 왼쪽·오른쪽 화살표로 달을 짚습니다", "aria-valuemin": "1", "aria-valuemax": "12" }, svg);
+      var foc = S("g", { "class": "kp-focus", tabindex: "0", role: "slider", "aria-label": "기후 그래프. 왼쪽·오른쪽 화살표로 달을 짚는다", "aria-valuemin": "1", "aria-valuemax": "12" }, svg);
       S("rect", { x: L - 8, y: T - 12, width: R - L + 16, height: B - T + 16, rx: 8, "class": "kp-ring" }, foc);
       function mv(m) { G.showMonth(m); foc.setAttribute("aria-valuetext", htxt.textContent); }
       onKeys(foc, {
@@ -958,8 +1205,8 @@
         S("rect", { x: 0, y: 14 + i * 25, width: 16, height: 16, rx: 4, fill: ZCOL[z] }, g);
         S("text", { x: 24, y: 27 + i * 25, "class": "kp-lgc" }, g, z + " " + ZONE[z][0]);
       });
-      S("text", { x: 0, y: 150, "class": "kp-small" }, g, "지구의 점은 판별한 기후대 색입니다.");
-      S("text", { x: 0, y: 167, "class": "kp-small" }, g, "점을 누르면 그 도시로 바뀝니다.");
+      S("text", { x: 0, y: 150, "class": "kp-small" }, g, "지구의 점은 판별한 기후대 색이다.");
+      S("text", { x: 0, y: 167, "class": "kp-small" }, g, "점을 누르면 그 도시로 바뀐다.");
       return g;
     }
     /* 넓은 무대 1000×680: 그래프(왼쪽 위) · 지구와 범례(왼쪽 아래) · 단계 카드(오른쪽).
@@ -981,7 +1228,7 @@
       var sub = S("text", { x: 196, y: 30, "class": "kp-tsub" }, svg, "");
       var G = makeGraph(svg, 70, 520, 92, 540);
       var rows = makeRows(svg, 578, 60, 402, 520, function (i) { Fw.halt(); Fw.go(i); });
-      var foot = S("text", { x: 20, y: 670, "class": "kp-small" }, svg, "지금 단계에서 보는 값이 그래프에 표시됩니다. 단계 카드를 누르면 그 단계로 갑니다.");
+      var foot = S("text", { x: 20, y: 670, "class": "kp-small" }, svg, "지금 단계에서 보는 값이 그래프에 표시된다. 단계 카드를 누르면 그 단계로 간다.");
       var Fw = { svg: svg, G: G, rows: rows, lg: legend(svg), id: "Seoul", k: 0, play: !RM, acc: 0, gbox: null, narrow: null };
       Fw.layout = function (narrow) { placeView(Fw, narrow, foot); };
       Fw.layout(false);
@@ -1019,7 +1266,7 @@
       var sub = S("text", { x: 180, y: 30, "class": "kp-tsub" }, svg, "");
       var G = makeGraph(svg, 70, 520, 92, 540);
       var rows = makeRows(svg, 578, 60, 402, 520, null);
-      var foot = S("text", { x: 20, y: 670, "class": "kp-small" }, svg, "카드 아래의 「예 · 아니요」로 답합니다. 「근거 보기」를 누르면 지금 단계에서 볼 값이 그래프에 표시됩니다.");
+      var foot = S("text", { x: 20, y: 670, "class": "kp-small" }, svg, "카드 아래의 「예 · 아니요」로 답한다. 「근거 보기」를 누르면 지금 단계에서 볼 값이 그래프에 표시된다.");
       var Tr = { svg: svg, G: G, rows: rows, lg: legend(svg), id: "Seoul", k: 0, fb: null, hint: false, gbox: null, narrow: null };
       /* 업그레이드 A: 지금 단계 카드 바로 아래에 답하기 단추(아래 단계는 숨어 있어 그 자리가 빔) */
       var abar = S("g", {}, svg);
@@ -1054,7 +1301,7 @@
           bHint.g.setAttribute("class", "kp-sb h" + (Tr.hint ? " on" : ""));
         }
         $(".kp-yes").disabled = done; $(".kp-no").disabled = done; $(".kp-hint").disabled = done;
-        setText($(".kp-ask"), done ? "판별이 끝났습니다. 다른 도시도 해 봅니다." : (Tr.k + 1) + "단계 · " + Tr.j.steps[Tr.k].ask);
+        setText($(".kp-ask"), done ? "판별이 끝났다. 다른 도시도 해 본다." : (Tr.k + 1) + "단계 · " + Tr.j.steps[Tr.k].ask);
         if (view === "try") readTry();
       };
       Tr.answer = function (yes) {
@@ -1079,7 +1326,7 @@
       stat(2, "연강수량", mm(s.pann));
       stat(3, "최소우월", (s.iPmin + 1) + "월 " + mm(s.pmin));
     }
-    function note(j) { return (j.south ? "남반구라 여름 반년은 10~3월입니다. " : "북반구라 여름 반년은 4~9월입니다. ") + "도시 기후는 WMO 기후 평년값입니다."; }
+    function note(j) { return (j.south ? "남반구라 여름 반년은 10~3월이다. " : "북반구라 여름 반년은 4~9월이다. ") + "도시 기후는 WMO 기후 평년값이다."; }
     function readFlow() {
       var c = C(flow.id), j = flow.j, s = j.steps[flow.k];
       setText(elReadH, "읽은 값 · " + c.kr);
@@ -1087,11 +1334,11 @@
       if (s) {
         elRes.className = "kp-result mild";
         elRk.textContent = s.lv + "차 · " + s.ask;
-        elRt.textContent = s.v + " → " + (s.ans ? "예" : "아니요") + (s.letter ? ". 기호에 「" + s.letter + "」를 붙입니다." : ". 다음 질문으로 갑니다.");
+        elRt.textContent = s.v + " → " + (s.ans ? "예" : "아니요") + (s.letter ? ". 기호에 「" + s.letter + "」를 붙인다." : ". 다음 질문으로 간다.");
       } else {
         elRes.className = "kp-result ok";
         elRk.textContent = j.code + " · " + j.name;
-        elRt.textContent = c.kr + "의 기후는 " + ZONE[j.zone][0] + " 기후(" + j.zone + ")이고, 기호는 " + j.code + "입니다.";
+        elRt.textContent = c.kr + "의 기후는 " + ZONE[j.zone][0] + " 기후(" + j.zone + ")이고, 기호는 " + j.code + "이다.";
       }
       setText(elNote, note(j));
     }
@@ -1102,21 +1349,21 @@
       if (tryv.k >= j.steps.length) {
         elRes.className = "kp-result ok";
         elRk.textContent = "판별 완료 · " + j.code + " " + j.name;
-        elRt.textContent = "모든 단계를 맞혔습니다. " + c.kr + "는 " + ZONE[j.zone][0] + " 기후입니다.";
+        elRt.textContent = "모든 단계를 맞혔다. " + c.kr + "는 " + ZONE[j.zone][0] + " 기후다.";
       } else if (tryv.fb === "no") {
         var s = j.steps[tryv.k];
         elRes.className = "kp-result hot";
-        elRk.textContent = "다시 생각해 보세요";
-        elRt.textContent = "근거: " + s.v + ". 그래프에 표시된 값을 기준과 견주어 봅니다.";
+        elRk.textContent = "다시 생각해 보자";
+        elRt.textContent = "근거: " + s.v + ". 그래프에 표시된 값을 기준과 견주어 본다.";
       } else if (tryv.fb === "ok") {
         var ls = tryv.lastStep;
         elRes.className = "kp-result ok";
-        elRk.textContent = "맞습니다";
-        elRt.textContent = ls.v + (ls.letter ? " → 「" + ls.letter + "」를 붙입니다." : " → 다음 질문으로 갑니다.");
+        elRk.textContent = "정답이다";
+        elRt.textContent = ls.v + (ls.letter ? " → 「" + ls.letter + "」를 붙인다." : " → 다음 질문으로 간다.");
       } else {
         elRes.className = "kp-result";
-        elRk.textContent = "그래프를 보고 답해 봅니다";
-        elRt.textContent = "카드 아래나 패널의 「예 · 아니요」로 답합니다.";
+        elRk.textContent = "그래프를 보고 답해 본다";
+        elRt.textContent = "카드 아래나 패널의 「예 · 아니요」로 답한다.";
       }
       setText(elNote, note(j));
     }
